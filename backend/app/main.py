@@ -29,8 +29,11 @@ async def root():
         "version": settings.APP_VERSION
     }
 
+# 认证路由
+from app.api.auth import router as auth_router
+app.include_router(auth_router, prefix="/api")
+
 # 开发人员 A 的路由
-# from app.api.member_a.auth import router as auth_router
 # from app.api.member_a.chat import router as chat_router
 # from app.api.member_a.test import router as test_router
 # from app.api.member_a.profile import router as profile_router

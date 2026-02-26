@@ -1,0 +1,70 @@
+// 主题色变量
+$primary-color: #409EFF;    // 主色调
+$success-color: #67C23A;    // 成功
+$warning-color: #E6A23C;    // 警告
+$danger-color: #F56C6C;     // 危险
+$info-color: #909399;       // 信息
+
+// 心理主题色
+$calm-color: #87CEEB;       // 平静蓝
+$warm-color: #FFB6C1;       // 温暖粉
+$nature-color: #98FB98;     // 自然绿
+
+// 文字颜色
+$text-primary: #303133;     // 主要文字
+$text-regular: #606266;     // 常规文字
+$text-secondary: #909399;   // 次要文字
+$text-placeholder: #C0C4CC; // 占位文字
+
+// 边框颜色
+$border-base: #DCDFE6;      // 基础边框
+$border-light: #E4E7ED;     // 浅色边框
+$border-lighter: #EBEEF5;   // 更浅边框
+$border-extra-light: #F2F6FC; // 极浅边框
+
+// 背景颜色
+$bg-color: #F5F7FA;         // 页面背景
+$bg-white: #FFFFFF;         // 白色背景
+
+// 间距
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// 圆角
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+
+// 阴影
+$box-shadow-base: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+$box-shadow-dark: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 6px rgba(0, 0, 0, 0.08);
+$box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+
+// 字体大小
+$font-size-extra-small: 12px;
+$font-size-small: 13px;
+$font-size-base: 14px;
+$font-size-medium: 16px;
+$font-size-large: 18px;
+$font-size-extra-large: 20px;
+
+// 过渡动画
+$transition-base: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+$transition-fade: opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+$transition-slide: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+// 布局
+$header-height: 60px;
+$sidebar-width: 240px;
+$container-width: 1200px;
+
+// 响应式断点
+$breakpoint-xs: 480px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 1024px;
+$breakpoint-lg: 1280px;
+$breakpoint-xl: 1920px;

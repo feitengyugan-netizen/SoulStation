@@ -7,6 +7,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 
+// 导入全局样式
+import '@/styles/common.scss'
+
 const app = createApp(App)
 
 // 注册所有图标
