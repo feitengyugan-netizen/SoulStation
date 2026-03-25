@@ -57,7 +57,7 @@ onMounted(() => loadDetail())
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .counselor-detail { min-height: 100vh; background: $bg-color; }
 .container { max-width: 900px; margin: 0 auto; padding: $spacing-lg; }
 .counselor-header { display: flex; align-items: center; gap: $spacing-lg; margin-bottom: $spacing-xl; }

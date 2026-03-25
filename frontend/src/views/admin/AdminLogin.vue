@@ -109,7 +109,7 @@ if (savedUsername) {
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .admin-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .login-container { width: 400px; padding: $spacing-xl; background: white; border-radius: $border-radius-lg; box-shadow: $shadow-lg; }
 .login-header { text-align: center; margin-bottom: $spacing-xl; }

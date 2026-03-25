@@ -1,9 +1,8 @@
 """
-数据库初始化脚本
+数据库初始化脚本（简化版，用于向后兼容）
+请使用 backend/init_database.py 进行完整的数据库初始化
 """
-from app.core.database import engine, Base, SessionLocal
-from app.models.user import User
-from app.core.security import get_password_hash
+from app.core.database import engine, Base
 
 
 def init_db():
@@ -11,38 +10,8 @@ def init_db():
     print("创建数据库表...")
     Base.metadata.create_all(bind=engine)
     print("数据库表创建完成！")
-
-
-def create_test_user():
-    """创建测试用户"""
-    db = SessionLocal()
-    try:
-        # 检查是否已存在测试用户
-        existing_user = db.query(User).filter(User.email == "test@example.com").first()
-        if existing_user:
-            print("测试用户已存在")
-            return
-
-        # 创建测试用户
-        test_user = User(
-            email="test@example.com",
-            password=get_password_hash("123456"),
-            nickname="测试用户",
-            role="user",
-            is_active=True
-        )
-        db.add(test_user)
-        db.commit()
-        print("测试用户创建成功！")
-        print("邮箱: test@example.com")
-        print("密码: 123456")
-    except Exception as e:
-        print(f"创建测试用户失败: {e}")
-        db.rollback()
-    finally:
-        db.close()
+    print("\n提示：请使用 'python backend/init_database.py' 进行完整的数据库初始化")
 
 
 if __name__ == "__main__":
     init_db()
-    create_test_user()

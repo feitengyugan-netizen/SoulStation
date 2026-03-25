@@ -56,6 +56,12 @@ export const useUserStore = defineStore('user', {
         const res = await login(loginData)
         this.setToken(res.data.token)
         this.setUserInfo(res.data.userInfo)
+
+        // 根据后端返回的redirect路径跳转
+        if (res.data.redirect) {
+          window.location.href = res.data.redirect
+        }
+
         return res
       } catch (error) {
         throw error

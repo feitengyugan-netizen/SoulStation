@@ -212,7 +212,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .appointment-form { min-height: 100vh; background: $bg-color; }
 .container { max-width: 800px; margin: 0 auto; padding: $spacing-lg; }

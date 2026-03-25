@@ -219,7 +219,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .admin-dashboard { padding: $spacing-lg; }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: $spacing-xl; }
 .dashboard-header h2 { margin: 0; }

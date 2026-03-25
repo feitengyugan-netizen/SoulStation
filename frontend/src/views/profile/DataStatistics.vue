@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .data-statistics {
   min-height: 100vh;

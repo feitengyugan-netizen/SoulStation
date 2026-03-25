@@ -239,7 +239,7 @@ const sendVerificationCode = async () => {
 
   try {
     sendingCode.value = true
-    await sendEmailCode({ email: registerForm.email })
+    await sendEmailCode(registerForm.email)
     ElMessage.success('验证码已发送至您的邮箱，请注意查收')
 
     // 开始倒计时
@@ -289,6 +289,7 @@ const handleRegister = async () => {
       router.push('/')
     }, 500)
   } catch (error) {
+    // API拦截器已经处理了错误提示，这里只记录日志
     console.error('注册失败:', error)
   } finally {
     loading.value = false

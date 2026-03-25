@@ -139,3 +139,15 @@ export function getChatDistribution() {
     method: 'get'
   })
 }
+
+/**
+ * 注销账户
+ * ⚠️ 危险操作：永久删除账户和所有相关数据
+ */
+export function deleteAccount() {
+  return request({
+    url: '/user/delete-account',
+    method: 'post',
+    data: {}
+  })
+}

@@ -32,7 +32,7 @@
           <div class="question-header">
             <div class="question-number">问题 {{ currentIndex + 1 }}/{{ questions.length }}</div>
             <div class="question-text">
-              {{ currentQuestion.question }}
+              {{ currentQuestion.question_text }}
             </div>
           </div>
 
@@ -51,10 +51,9 @@
                   :label="index"
                   @click.prevent
                 >
-                  {{ String.fromCharCode(65 + index) }}
                 </el-radio>
               </div>
-              <div class="option-text">{{ option }}</div>
+              <div class="option-text">{{ option.label || option }}</div>
             </div>
           </div>
 
@@ -303,12 +302,23 @@ const jumpToQuestion = (index) => {
   currentIndex.value = index
 }
 
+// 将答案数组转换为对象格式
+const answersToObject = (answersArray) => {
+  const obj = {}
+  answersArray.forEach((answer, index) => {
+    if (answer !== null) {
+      obj[index] = answer
+    }
+  })
+  return obj
+}
+
 // 保存进度
 const saveProgress = async () => {
   try {
     saving.value = true
     await saveProgressApi(testId, {
-      answers: answers.value
+      answers: answersToObject(answers.value)
     })
     ElMessage.success('保存成功')
   } catch (error) {
@@ -336,13 +346,13 @@ const submitAnswers = async () => {
     stopTimer()
 
     const res = await submitTest(testId, {
-      answers: answers.value
+      answers: answersToObject(answers.value)
     })
 
     ElMessage.success('提交成功')
 
-    // 跳转到结果页
-    router.push(`/test/${res.data.resultId}/result`)
+    // 跳转到结果页（后端返回的是 id，不是 resultId）
+    router.push(`/test/${res.data.id}/result`)
   } catch (error) {
     if (error !== 'cancel') {
       console.error('提交失败:', error)
@@ -399,7 +409,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .test-taking {
   min-height: 100vh;
@@ -491,6 +501,12 @@ onBeforeUnmount(() => {
 
     .option-radio {
       flex-shrink: 0;
+      margin-right: $spacing-md;
+
+      // 隐藏radio中显示的数字
+      :deep(.el-radio__label) {
+        display: none;
+      }
     }
 
     .option-text {

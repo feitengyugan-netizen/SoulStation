@@ -34,27 +34,66 @@
             <h1>{{ resultData.testName }} - 测试结果</h1>
           </div>
 
-          <!-- 总分展示 -->
+          <!-- 结果展示 -->
           <div class="score-section">
-            <div class="score-display">
-              <div class="score-number">
-                <span class="score">{{ resultData.score }}</span>
-                <span class="divider">/</span>
-                <span class="max-score">{{ resultData.maxScore }}</span>
-              </div>
-              <div class="score-label">总分</div>
-            </div>
-
             <!-- 结果等级 -->
-            <div class="result-level" :class="resultData.levelClass">
-              <el-icon :size="48">
+            <div class="result-level-large" :class="resultData.levelClass">
+              <el-icon :size="64">
                 <component :is="resultData.levelIcon" />
               </el-icon>
-              <div class="level-text">
-                <div class="level-label">您的程度</div>
+              <div class="level-content">
+                <div class="level-label">测试结果</div>
                 <div class="level-name">{{ resultData.level }}</div>
+                <div class="level-description">{{ resultData.levelDescription }}</div>
               </div>
             </div>
+          </div>
+
+          <!-- AI建议卡片 -->
+          <div v-if="resultData.aiSuggestion" class="ai-suggestion-card">
+            <el-card>
+              <template #header>
+                <div class="card-header">
+                  <div class="header-left">
+                    <el-icon :size="20" color="#67C23A"><ChatDotRound /></el-icon>
+                    <span class="card-title">AI智能建议</span>
+                    <el-tag type="success" size="small">由AI生成</el-tag>
+                  </div>
+                </div>
+              </template>
+
+              <div class="ai-suggestion-content">
+                <p>{{ resultData.aiSuggestion }}</p>
+              </div>
+
+              <template #footer>
+                <div class="card-footer">
+                  <el-button
+                    type="primary"
+                    :icon="ChatLineRound"
+                    @click="startAIChat"
+                  >
+                    与AI咨询师深入交流
+                  </el-button>
+                  <el-alert
+                    type="info"
+                    :closable="false"
+                    show-icon
+                  >
+                    AI建议仅供参考，不能替代专业心理咨询或医疗诊断
+                  </el-alert>
+                </div>
+              </template>
+            </el-card>
+          </div>
+
+          <!-- 结果描述 -->
+          <div v-if="resultData.description" class="description-section">
+            <h3>
+              <el-icon><InfoFilled /></el-icon>
+              结果说明
+            </h3>
+            <p class="description-text">{{ resultData.description }}</p>
           </div>
 
           <!-- 维度分析 -->
@@ -157,7 +196,9 @@ import {
   ArrowRight,
   CircleCheck,
   WarningFilled,
-  InfoFilled
+  InfoFilled,
+  ChatDotRound,
+  ChatLineRound
 } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { getTestResult, favoriteResult, unfavoriteResult } from '@/api/test'
@@ -179,10 +220,21 @@ const resultData = ref({
   level: '',
   levelClass: '',
   levelIcon: '',
+  levelDescription: '',  // 新增：等级描述
+  description: '',
+  aiSuggestion: '',  // AI建议
   dimensions: [],
   suggestions: [],
   isFavorited: false
 })
+
+// 等级描述映射
+const levelDescriptions = {
+  '无': '您的心理状态良好，没有明显异常。请继续保持积极的生活方式和健康习惯。',
+  '轻度': '检测到一些轻微的心理困扰，这在生活中很常见。建议通过运动、休息、社交等方式自我调节，一般能够自行缓解。',
+  '中度': '您的心理状态需要关注。建议尝试放松技巧、规律作息，必要时可寻求专业心理咨询师的帮助。',
+  '重度': '您的心理状态需要重视。建议尽快寻求专业心理咨询师或精神科医生的帮助，进行系统的评估和诊断。'
+}
 
 // 推荐测试
 const recommendations = ref([])
@@ -215,18 +267,52 @@ const loadResult = async () => {
     const res = await getTestResult(resultId)
 
     const data = res.data
-    const levelData = levelConfig[data.level] || levelConfig['无']
+
+    // 处理等级配置 - 映射后端返回的等级到前端配置
+    const levelMapping = {
+      'none': '无',
+      'mild': '轻度',
+      'moderate': '中度',
+      'severe': '重度'
+    }
+    const levelText = levelMapping[data.result_level] || '无'
+    const levelData = levelConfig[levelText] || levelConfig['无']
+    const levelDesc = levelDescriptions[levelText] || ''
+
+    // 处理建议文本 - 转换为数组
+    let suggestionsArray = []
+    if (data.suggestions) {
+      // 按句号或换行符分割建议
+      suggestionsArray = data.suggestions
+        .split(/[。\\n]/)
+        .filter(s => s && s.trim())
+        .map(s => s.trim())
+    }
+
+    // 处理维度得分 - 转换格式
+    let dimensionsArray = []
+    if (data.dimension_scores && Array.isArray(data.dimension_scores)) {
+      dimensionsArray = data.dimension_scores.map(dim => ({
+        name: dim.dimension,
+        score: dim.score,
+        maxScore: 80, // 默认最大分，可以根据实际调整
+        level: dim.level
+      }))
+    }
 
     resultData.value = {
-      testName: data.testName,
-      score: data.score,
-      maxScore: data.maxScore,
-      level: data.level,
+      testName: data.test_title || '测试',
+      score: data.total_score || 0,  // 保留但不显示
+      maxScore: 100,  // 保留但不显示
+      level: levelText,
       levelClass: levelData.class,
       levelIcon: levelData.icon,
-      dimensions: data.dimensions || [],
-      suggestions: data.suggestions || [],
-      isFavorited: data.isFavorited || false
+      levelDescription: levelDesc,  // ✅ 新增等级描述
+      description: data.result_description || '',
+      aiSuggestion: data.ai_suggestion || '',
+      dimensions: dimensionsArray,
+      suggestions: suggestionsArray,
+      isFavorited: data.is_favorite || false
     }
 
     recommendations.value = data.recommendations || []
@@ -266,6 +352,18 @@ const retakeTest = () => {
   router.push(`/test/${resultData.value.testId}/taking`)
 }
 
+// 开始AI深度咨询
+const startAIChat = () => {
+  // 跳转到AI咨询页面，携带测试结果ID
+  router.push({
+    path: '/consultation/chat',
+    query: {
+      result_id: resultId,
+      type: 'test_result'
+    }
+  })
+}
+
 // 跳转到推荐测试
 const goToTest = (testId) => {
   router.push(`/test/${testId}`)
@@ -298,7 +396,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .test-result {
   min-height: 100vh;
@@ -341,71 +439,89 @@ onMounted(() => {
   .score-section {
     display: flex;
     justify-content: center;
-    gap: $spacing-xl;
     margin-bottom: $spacing-xl;
     padding: $spacing-xl;
-    background: $bg-color;
-    border-radius: $border-radius-lg;
 
-    .score-display {
+    .result-level-large {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-lg;
+      padding: $spacing-xl;
+      border-radius: $border-radius-lg;
+      width: 100%;
+      max-width: 500px;
       text-align: center;
 
-      .score-number {
-        font-size: 48px;
-        font-weight: 600;
-        color: $primary-color;
-
-        .score {
-          font-size: 64px;
-        }
-
-        .divider {
-          margin: 0 $spacing-sm;
-        }
-
-        .max-score {
-          font-size: 36px;
-          color: $text-secondary;
-        }
+      &.level-none {
+        background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%);
+        color: white;
       }
-
-      .score-label {
-        margin-top: $spacing-sm;
-        font-size: $font-size-base;
-        color: $text-secondary;
-      }
-    }
-
-    .result-level {
-      display: flex;
-      align-items: center;
-      gap: $spacing-md;
-      padding: $spacing-lg;
-      border-radius: $border-radius-lg;
 
       &.level-mild {
         background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        color: #2d3436;
       }
 
       &.level-moderate {
         background: linear-gradient(135deg, #fab1a0 0%, #e17055 100%);
+        color: white;
       }
 
       &.level-severe {
         background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+        color: white;
       }
 
-      .level-text {
+      .level-content {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-sm;
+
         .level-label {
           font-size: $font-size-small;
           opacity: 0.9;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         .level-name {
-          font-size: $font-size-large;
-          font-weight: 600;
+          font-size: 32px;
+          font-weight: 700;
+        }
+
+        .level-description {
+          font-size: $font-size-base;
+          line-height: 1.6;
+          opacity: 0.95;
+          max-width: 400px;
+          margin: 0 auto;
         }
       }
+    }
+  }
+
+  .description-section {
+    margin-bottom: $spacing-xl;
+    padding: $spacing-lg;
+    background: rgba($primary-color, 0.05);
+    border-radius: $border-radius-md;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      font-size: $font-size-large;
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+    }
+
+    .description-text {
+      font-size: $font-size-base;
+      line-height: 1.6;
+      color: $text-secondary;
+      margin: 0;
     }
   }
 
@@ -472,6 +588,50 @@ onMounted(() => {
     }
   }
 
+  .ai-suggestion-card {
+    margin-bottom: $spacing-xl;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+
+        .card-title {
+          font-size: $font-size-large;
+          font-weight: 600;
+          color: $text-primary;
+        }
+      }
+    }
+
+    .ai-suggestion-content {
+      padding: $spacing-md 0;
+      line-height: 1.8;
+
+      p {
+        font-size: $font-size-base;
+        color: $text-primary;
+        margin: 0;
+        white-space: pre-wrap;
+      }
+    }
+
+    .card-footer {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+
+      .el-alert {
+        font-size: $font-size-small;
+      }
+    }
+  }
+
   .action-buttons {
     display: flex;
     justify-content: center;
@@ -523,15 +683,23 @@ onMounted(() => {
 
 // 响应式
 @media (max-width: $breakpoint-md) {
-  .score-section {
-    flex-direction: column !important;
-  }
-
   .action-buttons {
     flex-direction: column !important;
 
     .el-button {
       width: 100%;
+    }
+  }
+
+  .result-level-large {
+    .level-content {
+      .level-name {
+        font-size: 28px;
+      }
+
+      .level-description {
+        font-size: $font-size-small;
+      }
     }
   }
 }

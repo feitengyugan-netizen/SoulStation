@@ -132,6 +132,13 @@
             </div>
             <span>退出登录</span>
           </div>
+
+          <div class="access-item" @click="handleDeleteAccount">
+            <div class="access-icon">
+              <el-icon :size="32" color="#F56C6C"><Delete /></el-icon>
+            </div>
+            <span>注销账户</span>
+          </div>
         </div>
       </el-card>
     </div>
@@ -141,6 +148,7 @@
       v-model="avatarDialogVisible"
       title="更换头像"
       width="400px"
+      @closed="handleDialogClosed"
     >
       <el-upload
         class="avatar-uploader"
@@ -179,12 +187,12 @@ import {
   Lock,
   DataAnalysis,
   SwitchButton,
-  Plus
+  Plus,
+  Delete
 } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
-import { getUserProfile, uploadAvatar as uploadAvatarApi } from '@/api/user'
-import { getUserStatistics } from '@/api/user'
+import { getUserProfile, uploadAvatar as uploadAvatarApi, getUserStatistics, deleteAccount } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -243,8 +251,21 @@ const loadStatistics = async () => {
 
 // 编辑头像
 const editAvatar = () => {
-  avatarPreview.value = userInfo.value?.avatar || ''
+  // 重置状态
+  avatarFile.value = null
+  // 显示当前头像或预览
+  if (userInfo.value?.avatar) {
+    avatarPreview.value = userInfo.value.avatar
+  } else {
+    avatarPreview.value = ''
+  }
   avatarDialogVisible.value = true
+}
+
+// 对话框关闭时的处理
+const handleDialogClosed = () => {
+  avatarFile.value = null
+  avatarPreview.value = ''
 }
 
 // 头像文件选择
@@ -278,11 +299,8 @@ const uploadAvatar = async () => {
     uploading.value = true
     const res = await uploadAvatarApi(avatarFile.value)
 
-    // 更新用户信息
-    userStore.setUserInfo({
-      ...userInfo.value,
-      avatar: res.data.avatar
-    })
+    // 重新获取用户信息，确保显示最新的头像
+    await loadUserProfile()
 
     ElMessage.success('头像更新成功')
     avatarDialogVisible.value = false
@@ -291,6 +309,7 @@ const uploadAvatar = async () => {
     ElMessage.error('上传失败')
   } finally {
     uploading.value = false
+    avatarFile.value = null
   }
 }
 
@@ -329,6 +348,40 @@ const handleLogout = async () => {
   }
 }
 
+// 注销账户
+const handleDeleteAccount = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要注销账户吗？注销后将无法恢复。',
+      '注销账户',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 调用注销账户API
+    await deleteAccount()
+
+    // 清除用户状态
+    userStore.setToken('')
+    userStore.setUserInfo(null)
+
+    ElMessage.success('账户已注销，感谢您的使用')
+
+    // 跳转到首页
+    setTimeout(() => {
+      window.location.href = '/'
+    }, 1000)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('注销账户失败:', error)
+      ElMessage.error('注销账户失败，请稍后重试')
+    }
+  }
+}
+
 // 组件挂载
 onMounted(() => {
   loadUserProfile()
@@ -337,7 +390,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .profile-page {
   min-height: 100vh;

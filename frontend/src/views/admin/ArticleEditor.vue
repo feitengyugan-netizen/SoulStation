@@ -217,7 +217,7 @@ onMounted(() => loadArticle())
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .article-editor { padding: $spacing-lg; }
 .page-header { display: flex; align-items: center; gap: $spacing-lg; margin-bottom: $spacing-lg; }
 .page-header h2 { flex: 1; margin: 0; }

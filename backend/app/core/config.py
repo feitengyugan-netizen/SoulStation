@@ -36,8 +36,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-3.5-turbo"
 
+    # 豆包 API 配置
+    DOUBAO_API_KEY: str = "4edcc3f5-e874-401f-b25b-ffcaff140645"
+    DOUBAO_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
+    DOUBAO_MODEL: str = "doubao-1-5-pro-32k-250115"
+
     # Redis 配置
     REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str = "redis123456"
+    REDIS_ENABLED: bool = True
 
     # 文件上传配置
     UPLOAD_DIR: str = "./app/static/uploads"

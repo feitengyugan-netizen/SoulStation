@@ -364,7 +364,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .consultation-chat-counselor { height: 100vh; display: flex; flex-direction: column; background: $bg-color; }
 .chat-container { flex: 1; display: flex; flex-direction: column; max-width: 1000px; margin: 0 auto; width: 100%; background: white; box-shadow: $shadow; }
 

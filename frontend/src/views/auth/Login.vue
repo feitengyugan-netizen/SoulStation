@@ -127,23 +127,30 @@ const handleLogin = async () => {
 
     // 开始登录
     loading.value = true
+    console.log('开始登录...', { email: loginForm.email })
 
     // 调用登录接口
-    await userStore.login({
+    const res = await userStore.login({
       email: loginForm.email,
       password: loginForm.password
     })
+
+    console.log('登录响应:', res)
 
     // 登录成功提示
     ElMessage.success('登录成功！')
 
     // 跳转到首页
     setTimeout(() => {
+      console.log('准备跳转到首页')
       router.push('/')
     }, 500)
   } catch (error) {
     console.error('登录失败:', error)
-    // ElMessage已在拦截器中处理
+    // 显示错误信息（如果拦截器没有处理）
+    if (error.message) {
+      ElMessage.error(error.message || '登录失败，请检查账号密码')
+    }
   } finally {
     loading.value = false
   }

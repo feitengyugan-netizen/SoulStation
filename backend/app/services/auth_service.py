@@ -165,13 +165,24 @@ class AuthService:
         """验证用户"""
         user = AuthService.get_user_by_email(db, email)
         if not user:
+            logger.warning(f"用户不存在: {email}")
             return None
+
+        logger.info(f"找到用户: {user.email}, status: {user.status}, is_verified: {user.is_verified}")
+
         if not verify_password(password, user.password):
+            logger.warning(f"密码验证失败: {email}")
             return None
+
         if not user.is_active:
+            logger.warning(f"用户未激活: {email}")
             return None
+
         if user.is_banned:
+            logger.warning(f"用户已被封禁: {email}")
             return None
+
+        logger.info(f"用户验证成功: {email}")
         return user
 
     @staticmethod
@@ -195,14 +206,24 @@ class AuthService:
 
         # 创建访问令牌
         access_token = create_access_token(
-            data={"sub": str(user.id), "email": user.email}
+            data={"sub": str(user.id), "email": user.email, "role": user.role}
         )
+
+        # 根据角色确定跳转路径
+        redirect_path = "/"
+        if user.role == "admin":
+            redirect_path = "/admin"
+        elif user.role == "counselor":
+            redirect_path = "/counselor/orders"  # 咨询师工作台
+        else:
+            redirect_path = "/"
 
         # 返回用户信息和令牌
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "user": UserResponse.model_validate(user)
+            "user": UserResponse.model_validate(user),
+            "redirect": redirect_path
         }
 
     @staticmethod

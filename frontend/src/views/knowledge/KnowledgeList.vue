@@ -56,7 +56,7 @@ onMounted(() => loadArticles())
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .knowledge-list-page { min-height: 100vh; background: $bg-color; }
 .container { max-width: 1200px; margin: 0 auto; padding: $spacing-lg; }
 .knowledge-list-page h1 { text-align: center; font-size: 36px; margin-bottom: $spacing-xl; }

@@ -3,13 +3,48 @@
     <!-- 顶部导航栏 -->
     <div class="chat-header">
       <div class="header-left">
+        <!-- 返回按钮 -->
+        <el-button
+          :icon="ArrowLeft"
+          circle
+          size="small"
+          @click="goBack"
+          class="back-button"
+        />
         <el-icon :size="24" color="#409EFF">
           <ChatDotSquare />
         </el-icon>
         <h2>智能心理问答</h2>
       </div>
+      <div class="header-center">
+        <!-- 对话信息 -->
+        <div v-if="currentChatId" class="current-chat-info">
+          <span class="chat-title-display">{{ currentChatTitle }}</span>
+          <el-button
+            text
+            :icon="Edit"
+            size="small"
+            @click="editChatTitle(currentChatId)"
+          />
+        </div>
+      </div>
       <div class="header-right">
-        <el-button circle :icon="Bell" />
+        <!-- 功能按钮组 -->
+        <div class="header-actions">
+          <el-tooltip content="标签管理" placement="bottom">
+            <el-button circle :icon="PriceTag" @click="showTagManager = true" />
+          </el-tooltip>
+          <el-tooltip content="导出对话" placement="bottom">
+            <el-button circle :icon="Download" @click="exportChat" />
+          </el-tooltip>
+          <el-tooltip content="清空对话" placement="bottom">
+            <el-button circle :icon="Delete" @click="clearChat" />
+          </el-tooltip>
+          <el-tooltip content="通知" placement="bottom">
+            <el-button circle :icon="Bell" />
+          </el-tooltip>
+        </div>
+        <!-- 用户菜单 -->
         <el-dropdown @command="handleUserCommand">
           <el-avatar :size="36" :src="userInfo?.avatar">
             <el-icon><User /></el-icon>
@@ -19,6 +54,10 @@
               <el-dropdown-item command="profile">
                 <el-icon><User /></el-icon>
                 个人中心
+              </el-dropdown-item>
+              <el-dropdown-item command="settings">
+                <el-icon><Setting /></el-icon>
+                设置
               </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
                 <el-icon><SwitchButton /></el-icon>
@@ -231,11 +270,55 @@
         </div>
       </div>
     </div>
+
+    <!-- 标签管理对话框 -->
+    <el-dialog
+      v-model="showTagManager"
+      title="标签管理"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <div class="tag-manager">
+        <!-- 创建新标签 -->
+        <div class="tag-create">
+          <h4>创建新标签</h4>
+          <el-input
+            v-model="newTagName"
+            placeholder="标签名称"
+            size="small"
+            style="width: 200px; margin-right: 10px"
+          />
+          <el-color-picker v-model="newTagColor" size="small" />
+          <el-button type="primary" size="small" @click="createTag" :icon="Plus">
+            添加
+          </el-button>
+        </div>
+
+        <!-- 标签列表 -->
+        <div class="tag-list">
+          <h4>我的标签</h4>
+          <el-empty v-if="tags.length === 0" description="暂无标签" :image-size="80" />
+          <div v-else class="tag-items">
+            <el-tag
+              v-for="tag in tags"
+              :key="tag.id"
+              closable
+              :color="tag.color"
+              @close="deleteTag(tag.id)"
+              size="large"
+              style="margin: 5px"
+            >
+              {{ tag.name }}
+            </el-tag>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount, reactive, triggerRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -250,10 +333,15 @@ import {
   Delete,
   Paperclip,
   Microphone,
-  Promotion
+  Promotion,
+  ArrowLeft,
+  PriceTag,
+  Download,
+  Setting,
+  DocumentCopy
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, getChatDetail } from '@/api/chat'
+import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail } from '@/api/chat'
 import { getTags } from '@/api/chat'
 import { formatRelativeTime } from '@/utils/format'
 
@@ -287,6 +375,15 @@ const isRecording = ref(false)
 
 // 标签列表
 const tags = ref([])
+const showTagManager = ref(false)
+const newTagName = ref('')
+const newTagColor = ref('#409EFF')
+
+// 当前对话标题
+const currentChatTitle = computed(() => {
+  const chat = chatList.value.find(c => c.id === currentChatId.value)
+  return chat?.title || '未命名对话'
+})
 
 // 过滤后的对话列表
 const filteredChats = computed(() => {
@@ -460,34 +557,126 @@ const sendMessage = async () => {
     sendingMessage.value = true
     loadingMessages.value = true
 
-    // 发送到后端
-    const res = await sendMessageApi(currentChatId.value, {
-      content,
-      type: 'text'
+    // 创建AI消息占位符（空消息，准备接收流式内容）
+    const aiMessageIndex = messages.value.length
+    messages.value.push({
+      id: Date.now() + 1,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true
+    })
+    scrollToBottom()
+
+    // 使用流式API接收AI回复
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/${currentChatId.value}/message/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ content, type: 'text' }),
+      // 重要：确保流式传输不被缓冲
+      cache: 'no-store',
+      // 某些浏览器可能需要这个
+      priority: 'high'
     })
 
-    // 添加AI回复
-    const aiMessage = {
-      id: res.data.id,
-      role: 'assistant',
-      content: res.data.content,
-      timestamp: new Date()
+    if (!response.ok) {
+      throw new Error('网络响应失败')
     }
-    messages.value.push(aiMessage)
+
+    // 读取流式响应
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let chunkCount = 0  // 用于调试
+
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+
+      // 处理SSE格式的数据
+      const lines = buffer.split('\n\n')
+      buffer = lines.pop() // 保留不完整的数据
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6))
+
+            // 如果有错误
+            if (data.error) {
+              throw new Error(data.error)
+            }
+
+            // 如果完成
+            if (data.done) {
+              console.log('流式接收完成，总chunk数:', chunkCount)
+
+              // 更新消息状态
+              const completedMessage = {
+                ...messages.value[aiMessageIndex],
+                id: data.message_id,
+                isStreaming: false
+              }
+              messages.value.splice(aiMessageIndex, 1, completedMessage)
+
+              sendingMessage.value = false
+              loadingMessages.value = false
+              break
+            }
+
+            // 接收内容并更新UI（打字机效果）
+            if (data.content) {
+              chunkCount++
+              console.log('接收chunk #', chunkCount, ':', data.content)
+
+              // 更新内容（创建新对象以触发Vue更新）
+              const updatedMessage = {
+                ...messages.value[aiMessageIndex],
+                content: messages.value[aiMessageIndex].content + data.content
+              }
+              messages.value.splice(aiMessageIndex, 1, updatedMessage)
+
+              // 立即滚动到底部
+              scrollToBottom()
+            }
+          } catch (e) {
+            console.error('解析数据失败:', e, line)
+          }
+        }
+      }
+    }
 
     // 更新对话列表的最后消息
     const chat = chatList.value.find(c => c.id === currentChatId.value)
     if (chat) {
-      chat.lastMessage = content
-      chat.updatedAt = new Date()
+      // 从数组中获取最新的AI消息
+      const finalMessage = messages.value[aiMessageIndex]
+      if (finalMessage && finalMessage.content) {
+        chat.lastMessage = finalMessage.content.substring(0, 50) + (finalMessage.content.length > 50 ? '...' : '')
+        chat.updatedAt = new Date()
+      }
     }
+
   } catch (error) {
     console.error('发送消息失败:', error)
+
+    // 移除失败的AI消息
+    const index = messages.value.findIndex(m => m.role === 'assistant' && m.isStreaming)
+    if (index !== -1) {
+      messages.value.splice(index, 1)
+    }
+
     ElMessage.error('发送失败，请重试')
   } finally {
     sendingMessage.value = false
     loadingMessages.value = false
-    scrollToBottom()
   }
 }
 
@@ -523,11 +712,139 @@ const toggleRecording = () => {
   }
 }
 
+// 标签管理方法
+const createTag = async () => {
+  if (!newTagName.value.trim()) {
+    ElMessage.warning('请输入标签名称')
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/tag`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name: newTagName.value.trim(),
+        color: newTagColor.value
+      })
+    })
+
+    if (response.ok) {
+      ElMessage.success('标签创建成功')
+      newTagName.value = ''
+      await loadTags()
+    } else {
+      throw new Error('创建失败')
+    }
+  } catch (error) {
+    ElMessage.error('创建失败')
+  }
+}
+
+const deleteTag = async (tagId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个标签吗？', '删除标签', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/tag/${tagId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      ElMessage.success('标签删除成功')
+      await loadTags()
+    } else {
+      throw new Error('删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 返回上一页
+const goBack = () => {
+  // 检查是否有历史记录
+  if (window.history.state && window.history.state.back) {
+    router.back()
+  } else {
+    // 如果没有历史记录，返回首页
+    router.push('/')
+  }
+}
+
+// 导出对话
+const exportChat = () => {
+  if (!currentChatId.value || messages.value.length === 0) {
+    ElMessage.warning('没有可导出的对话内容')
+    return
+  }
+
+  // 导出为文本
+  let content = `对话：${currentChatTitle.value}\n`
+  content += `导出时间：${new Date().toLocaleString()}\n`
+  content += `─`.repeat(50) + '\n\n'
+
+  messages.value.forEach(msg => {
+    const role = msg.role === 'user' ? '用户' : 'AI助手'
+    content += `${role} [${formatTime(msg.timestamp)}]：\n${msg.content}\n\n`
+  })
+
+  // 创建下载
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `对话_${currentChatTitle.value}_${Date.now()}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+
+  ElMessage.success('对话已导出')
+}
+
+// 清空对话
+const clearChat = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要清空当前对话的所有消息吗？此操作不可恢复。',
+      '清空对话',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 清空消息列表
+    messages.value = []
+    ElMessage.success('对话已清空')
+  } catch {
+    // 用户取消
+  }
+}
+
 // 用户菜单命令
 const handleUserCommand = async (command) => {
   switch (command) {
     case 'profile':
       router.push('/profile')
+      break
+    case 'settings':
+      router.push('/profile/privacy')
       break
     case 'logout':
       await userStore.logout()
@@ -550,7 +867,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .chat-index {
   height: 100vh;
@@ -573,9 +890,32 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: $spacing-md;
 
+    .back-button {
+      margin-right: $spacing-xs;
+    }
+
     h2 {
       font-size: $font-size-large;
       margin: 0;
+    }
+  }
+
+  .header-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .current-chat-info {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+
+      .chat-title-display {
+        font-size: $font-size-medium;
+        font-weight: 500;
+        color: $text-primary;
+      }
     }
   }
 
@@ -583,6 +923,13 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: $spacing-md;
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      margin-right: $spacing-md;
+    }
   }
 }
 
@@ -847,6 +1194,42 @@ onBeforeUnmount(() => {
 
   .message-bubble {
     max-width: 85%;
+  }
+}
+</style>
+
+<!-- 标签管理对话框样式 -->
+<style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
+.tag-manager {
+  .tag-create {
+    display: flex;
+    align-items: center;
+    padding: $spacing-md 0;
+    margin-bottom: $spacing-lg;
+    border-bottom: 1px solid $border-light;
+
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      font-size: $font-size-medium;
+      color: $text-secondary;
+    }
+  }
+
+  .tag-list {
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      font-size: $font-size-medium;
+      color: $text-secondary;
+    }
+
+    .tag-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-sm;
+      padding: $spacing-sm 0;
+    }
   }
 }
 </style>

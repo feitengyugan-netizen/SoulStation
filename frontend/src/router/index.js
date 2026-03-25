@@ -29,6 +29,7 @@ const DataStatistics = () => import('@/views/profile/DataStatistics.vue')
 // 咨询师预约
 const CounselorList = () => import('@/views/counselor/CounselorList.vue')
 const CounselorDetail = () => import('@/views/counselor/CounselorDetail.vue')
+const CounselorRegister = () => import('@/views/counselor/CounselorRegister.vue')
 const AppointmentForm = () => import('@/views/counselor/AppointmentForm.vue')
 const AppointmentManage = () => import('@/views/counselor/AppointmentManage.vue')
 const ReviewForm = () => import('@/views/counselor/ReviewForm.vue')
@@ -147,6 +148,12 @@ const routes = [
     name: 'CounselorList',
     component: CounselorList,
     meta: { title: '找咨询师 - 心理咨询平台' }
+  },
+  {
+    path: '/counselor/register',
+    name: 'CounselorRegister',
+    component: CounselorRegister,
+    meta: { title: '咨询师入驻 - 心理咨询平台', requiresAuth: true }
   },
   {
     path: '/counselor/:id',

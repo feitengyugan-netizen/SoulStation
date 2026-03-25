@@ -209,7 +209,10 @@ const handleAvatarChange = (file) => {
   }
 
   avatarFile.value = file.raw
-  previewUrl.value = URL.createObjectURL(file.raw)
+  const newPreviewUrl = URL.createObjectURL(file.raw)
+  previewUrl.value = newPreviewUrl
+  // 同时更新 form.avatar，确保显示新选择的图片
+  form.avatar = newPreviewUrl
   return false
 }
 
@@ -226,7 +229,10 @@ const handleSubmit = async () => {
     // 如果有新头像，先上传
     if (avatarFile.value) {
       const avatarRes = await uploadAvatar(avatarFile.value)
-      form.avatar = avatarRes.data.avatar
+      // 更新预览URL为服务器返回的URL
+      if (avatarRes.data?.avatar) {
+        previewUrl.value = avatarRes.data.avatar
+      }
     }
 
     // 更新用户信息
@@ -240,13 +246,21 @@ const handleSubmit = async () => {
 
     await updateUserProfile(updateData)
 
-    // 更新store中的用户信息
+    // 重新获取用户信息，确保显示最新数据
+    await loadProfile()
+
+    // 更新 store 中的用户信息
     userStore.setUserInfo({
       ...userStore.userInfo,
-      ...updateData
+      ...updateData,
+      avatar: previewUrl.value
     })
 
     ElMessage.success('保存成功')
+
+    // 清空头像文件
+    avatarFile.value = null
+
     goBack()
   } catch (error) {
     console.error('保存失败:', error)
@@ -270,7 +284,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 
 .profile-edit {
   min-height: 100vh;

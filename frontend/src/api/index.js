@@ -53,7 +53,15 @@ request.interceptors.response.use(
 
     // 处理网络错误
     if (error.response) {
+      const errorData = error.response.data
+      // 提取错误信息，支持多种格式
+      const errorMessage = errorData?.detail || errorData?.message || errorData?.error || '请求失败'
+
       switch (error.response.status) {
+        case 400:
+          // 400错误显示后端返回的具体错误信息
+          ElMessage.error(errorMessage)
+          break
         case 401:
           ElMessage.error('未登录或登录已过期')
           localStorage.removeItem('token')
@@ -61,16 +69,20 @@ request.interceptors.response.use(
           window.location.href = '/login'
           break
         case 403:
-          ElMessage.error('没有权限访问')
+          ElMessage.error(errorMessage || '没有权限访问')
           break
         case 404:
           ElMessage.error('请求的资源不存在')
           break
+        case 422:
+          // 422错误通常是参数验证失败
+          ElMessage.error(errorMessage || '请求参数错误')
+          break
         case 500:
-          ElMessage.error('服务器错误')
+          ElMessage.error(errorMessage || '服务器错误')
           break
         default:
-          ElMessage.error(error.response.data.message || '请求失败')
+          ElMessage.error(errorMessage)
       }
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络')

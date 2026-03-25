@@ -119,3 +119,92 @@ export function getCounselorReviews(counselorId, params) {
     params
   })
 }
+
+/**
+ * 提交咨询师注册申请
+ * @param {Object} data - 申请数据
+ * @param {string} data.name - 姓名
+ * @param {string} data.gender - 性别
+ * @param {string} data.title - 职称
+ * @param {Array} data.specialties - 擅长领域
+ * @param {Array} data.consultationTypes - 咨询方式
+ * @param {number} data.experienceYears - 从业年限
+ * @param {string} data.education - 学历
+ * @param {string} data.qualifications - 资质证书
+ * @param {number} data.priceVideo - 视频咨询价格
+ * @param {number} data.priceVoice - 语音咨询价格
+ * @param {number} data.priceOffline - 线下咨询价格
+ * @param {string} data.bio - 个人简介
+ * @param {string} data.approach - 咨询流派
+ * @param {string} data.achievements - 成就荣誉
+ */
+export function submitApplication(data) {
+  // 转换字段名为后端要求的格式
+  const requestData = {
+    name: data.name,
+    gender: data.gender,
+    title: data.title || undefined,
+    specialties: data.specialties,
+    consultation_types: data.consultationTypes,
+    experience_years: data.experienceYears,
+    education: data.education,
+    qualifications: data.qualifications,
+    price_video: data.priceVideo || undefined,
+    price_voice: data.priceVoice || undefined,
+    price_offline: data.priceOffline || undefined,
+    bio: data.bio,
+    approach: data.approach || undefined,
+    achievements: data.achievements || undefined
+  }
+
+  // 移除undefined的字段
+  Object.keys(requestData).forEach(key => {
+    if (requestData[key] === undefined) {
+      delete requestData[key]
+    }
+  })
+
+  return request({
+    url: '/counselor/apply',
+    method: 'post',
+    data: requestData
+  })
+}
+
+/**
+ * 获取咨询师申请状态
+ */
+export function getApplicationStatus() {
+  return request({
+    url: '/counselor/application/status',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取待审核申请列表（管理员）
+ * @param {Object} params
+ * @param {number} params.page - 页码
+ * @param {number} params.pageSize - 每页数量
+ */
+export function getPendingApplications(params) {
+  return request({
+    url: '/counselor/application/pending',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 审核咨询师申请（管理员）
+ * @param {string} counselorId - 咨询师ID
+ * @param {string} action - 审核操作：approve/reject
+ * @param {string} reason - 拒绝原因（拒绝时必填）
+ */
+export function reviewApplication(counselorId, action, reason) {
+  return request({
+    url: `/counselor/application/${counselorId}/review`,
+    method: 'post',
+    params: { action, reason }
+  })
+}

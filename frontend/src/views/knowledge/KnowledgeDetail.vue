@@ -88,7 +88,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .knowledge-detail { min-height: 100vh; background: $bg-color; }
 .container { max-width: 900px; margin: 0 auto; padding: $spacing-lg; }
 .knowledge-detail h1 { font-size: 32px; margin-bottom: $spacing-md; }

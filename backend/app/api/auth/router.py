@@ -15,6 +15,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import Token, UserResponse
 from app.services.auth_service import AuthService
+from app.core.security import create_access_token
 from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["认证"])
@@ -45,7 +46,8 @@ async def login(
         "message": "登录成功",
         "data": {
             "token": result["access_token"],
-            "userInfo": result["user"].model_dump()
+            "userInfo": result["user"].model_dump(),
+            "redirect": result.get("redirect", "/")
         }
     }
 
@@ -62,16 +64,43 @@ async def register(
     - **code**: 邮箱验证码
     - **password**: 密码
     """
-    user = AuthService.register(db, register_data, register_data.code)
-    if not user:
+    # 先检查邮箱是否已注册
+    existing_user = AuthService.get_user_by_email(db, register_data.email)
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="验证码错误或该邮箱已被注册"
+            detail="该邮箱已被注册，请直接登录"
         )
+
+    # 验证验证码
+    if not AuthService.verify_code(register_data.email, register_data.code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="验证码错误或已过期，请重新获取"
+        )
+
+    # 创建用户
+    try:
+        user = AuthService.create_user(db, register_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"注册失败: {str(e)}"
+        )
+
+    # 注册成功后自动登录，创建访问令牌
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email}
+    )
+
+    # 返回符合前端期望的格式，包含token和用户信息
     return {
         "code": 200,
         "message": "注册成功",
-        "data": {"user_id": user.id}
+        "data": {
+            "token": access_token,
+            "userInfo": UserResponse.model_validate(user).model_dump()
+        }
     }
 
 

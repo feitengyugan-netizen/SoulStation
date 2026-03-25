@@ -217,7 +217,7 @@ onMounted(() => loadCounselors())
 </script>
 
 <style scoped>
-@import '@/styles/variables.scss';
+@use '@/styles/variables.scss' as *;
 .counselor-review { padding: $spacing-lg; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: $spacing-lg; }
 .page-header h2 { margin: 0; }
