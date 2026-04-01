@@ -114,6 +114,8 @@ const audioUrl = computed(() => {
 // 开始录音
 const startRecording = async () => {
   try {
+    console.log('🎤 开始请求麦克风权限...')
+
     // 请求麦克风权限
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -125,23 +127,52 @@ const startRecording = async () => {
       }
     })
 
+    console.log('✅ 麦克风权限获取成功', {
+      tracks: stream.getAudioTracks().length,
+      enabled: stream.getAudioTracks()[0]?.enabled,
+      muted: stream.getAudioTracks()[0]?.muted,
+      label: stream.getAudioTracks()[0]?.label
+    })
+
     // 创建 AudioContext 用于音量分析
     audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    console.log('🎵 AudioContext 创建成功', {
+      state: audioContext.state,
+      sampleRate: audioContext.sampleRate
+    })
+
     if (audioContext.state === 'suspended') {
       await audioContext.resume()
+      console.log('🎵 AudioContext 已恢复')
     }
 
     analyser = audioContext.createAnalyser()
     analyser.fftSize = 256
     microphone = audioContext.createMediaStreamSource(stream)
     microphone.connect(analyser)
+    console.log('🎤 音频分析器已连接')
 
-    // 开始监测音量
+    // 开始监测音量 - 添加详细日志
     const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    let checkCount = 0
+
     const checkVolume = () => {
       analyser.getByteFrequencyData(dataArray)
       const average = dataArray.reduce((a, b) => a + b) / dataArray.length
+      const max = Math.max(...dataArray)
       volumeLevel.value = Math.min(average / 50, 1)
+
+      // 每秒输出一次调试信息
+      checkCount++
+      if (checkCount % 60 === 0) {
+        console.log('🔊 音量检测:', {
+          average: average.toFixed(2),
+          max: max,
+          volumeLevel: volumeLevel.value.toFixed(2),
+          hasSound: average > 0
+        })
+      }
+
       animationFrame = requestAnimationFrame(checkVolume)
     }
     checkVolume()
@@ -166,10 +197,20 @@ const startRecording = async () => {
     }
 
     mediaRecorder = new MediaRecorder(stream, options)
+    console.log('📼 MediaRecorder 创建成功', {
+      mimeType: mediaRecorder.mimeType,
+      state: mediaRecorder.state
+    })
+
     audioChunks = []
 
     // 收集音频数据
     mediaRecorder.ondataavailable = (event) => {
+      console.log('📦 收集音频数据:', {
+        size: event.data.size,
+        type: event.data.type,
+        totalChunks: audioChunks.length + 1
+      })
       if (event.data.size > 0) {
         audioChunks.push(event.data)
       }
@@ -177,7 +218,19 @@ const startRecording = async () => {
 
     // 录音结束
     mediaRecorder.onstop = () => {
+      const totalSize = audioChunks.reduce((sum, chunk) => sum + chunk.size, 0)
+      console.log('⏹️ 录音停止', {
+        chunks: audioChunks.length,
+        totalSize: totalSize,
+        duration: recordingDuration.value
+      })
+
       const blob = new Blob(audioChunks, { type: selectedMimeType })
+      console.log('📄 音频 Blob 创建成功', {
+        size: blob.size,
+        type: blob.type
+      })
+
       audioBlob.value = blob
       previewVisible.value = true
 
@@ -214,9 +267,22 @@ const startRecording = async () => {
 
     ElMessage.success('开始录音...')
 
+    // 延迟测试麦克风是否工作
+    setTimeout(() => {
+      if (volumeLevel.value > 0) {
+        console.log('✅ 麦克风工作正常，音量级别:', volumeLevel.value.toFixed(2))
+      } else {
+        console.warn('⚠️ 检测不到声音！请检查:')
+        console.warn('  1. 系统音量设置')
+        console.warn('  2. 麦克风设备是否被其他应用占用')
+        console.warn('  3. 浏览器是否有麦克风权限')
+        ElMessage.warning('检测不到麦克风声音，请检查设备设置')
+      }
+    }, 2000)
+
   } catch (error) {
-    console.error('录音失败:', error)
-    ElMessage.error('无法访问麦克风，请检查权限设置')
+    console.error('❌ 录音失败:', error)
+    ElMessage.error(`无法访问麦克风: ${error.message}`)
   }
 }
 
