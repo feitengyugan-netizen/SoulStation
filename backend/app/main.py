@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -14,10 +17,12 @@ app = FastAPI(
     description="心理咨询服务平台 API"
 )
 
+
+
 # CORS 中间件配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=["*"],  # 开发环境允许所有来源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,6 +35,50 @@ async def root():
         "message": "Welcome to SoulStation API",
         "version": settings.APP_VERSION
     }
+
+
+@app.get("/test/redis")
+async def test_redis():
+    """测试 Redis 连接状态"""
+    from app.services.verification_redis_service import RedisVerificationCodeService
+    import redis
+
+    result = {
+        "redis_enabled": settings.REDIS_ENABLED,
+        "redis_host": settings.REDIS_HOST,
+        "redis_port": settings.REDIS_PORT,
+        "redis_db": settings.REDIS_DB,
+        "redis_password_set": bool(settings.REDIS_PASSWORD)
+    }
+
+    if settings.REDIS_ENABLED:
+        try:
+            client = RedisVerificationCodeService._get_redis_client()
+
+            if isinstance(client, redis.Redis):
+                # 测试连接
+                client.ping()
+
+                # 测试读写
+                test_key = "test:api_connection"
+                client.set(test_key, "ok", ex=10)
+                test_value = client.get(test_key)
+                client.delete(test_key)
+
+                result["status"] = "connected"
+                result["read_write_test"] = "success" if test_value == "ok" else "failed"
+                result["message"] = "Redis 连接正常"
+            else:
+                result["status"] = "fallback"
+                result["message"] = "Redis 连接失败，使用内存存储"
+        except Exception as e:
+            result["status"] = "error"
+            result["message"] = f"Redis 错误: {str(e)}"
+    else:
+        result["status"] = "disabled"
+        result["message"] = "Redis 未启用"
+
+    return result
 
 # 认证路由
 from app.api.auth import router as auth_router

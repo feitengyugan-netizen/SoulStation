@@ -12,7 +12,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0', // 允许通过IP地址访问
-    port: 5173,
+    port: 3000,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

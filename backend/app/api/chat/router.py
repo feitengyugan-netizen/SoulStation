@@ -1,7 +1,7 @@
 """
 聊天路由 - 智能心理问答
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -165,25 +165,41 @@ async def delete_tag(
 
 @router.post("/voice-to-text", summary="语音转文字")
 async def voice_to_text(
-    audio_url: str,
+    audio_file: UploadFile = File(...),
+    language: str = "zh-CN",
     user_id: int = Depends(get_current_user_id)
 ):
     """
-    将语音转换为文字（需要集成第三方语音识别服务）
+    将语音转换为文字（使用豆包大模型录音文件识别）
 
-    - **audio_url**: 音频文件URL
+    - **audio_file**: 音频文件（支持 mp3, wav, m4a, ogg, webm）
+    - **language**: 语言代码（默认 zh-CN）
 
-    注意：此功能需要集成语音识别API，如阿里云、腾讯云等
-    目前返回默认提示信息
+    支持的语言：
+    - zh-CN: 中文普通话
+    - en-US: 英语
+    - ja-JP: 日语
+    - yue-CN: 粤语
+    - 等等...
     """
-    # TODO: 集成语音识别服务
-    return {
-        "code": 200,
-        "message": "功能待实现",
-        "data": {
-            "text": "语音转文字功能待实现"
+    from app.services.speech_service import speech_service
+
+    try:
+        text = await speech_service.transcribe_audio(audio_file, language)
+        return {
+            "code": 200,
+            "message": "识别成功",
+            "data": {
+                "text": text
+            }
         }
-    }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"语音识别失败: {str(e)}"
+        )
 
 
 # ========== 动态路由（必须放在最后）==========

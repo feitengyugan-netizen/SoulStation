@@ -38,9 +38,6 @@
           <div class="score-section">
             <!-- 结果等级 -->
             <div class="result-level-large" :class="resultData.levelClass">
-              <el-icon :size="64">
-                <component :is="resultData.levelIcon" />
-              </el-icon>
               <div class="level-content">
                 <div class="level-label">测试结果</div>
                 <div class="level-name">{{ resultData.level }}</div>
@@ -55,7 +52,6 @@
               <template #header>
                 <div class="card-header">
                   <div class="header-left">
-                    <el-icon :size="20" color="#67C23A"><ChatDotRound /></el-icon>
                     <span class="card-title">AI智能建议</span>
                     <el-tag type="success" size="small">由AI生成</el-tag>
                   </div>
@@ -70,7 +66,6 @@
                 <div class="card-footer">
                   <el-button
                     type="primary"
-                    :icon="ChatLineRound"
                     @click="startAIChat"
                   >
                     与AI咨询师深入交流
@@ -78,7 +73,6 @@
                   <el-alert
                     type="info"
                     :closable="false"
-                    show-icon
                   >
                     AI建议仅供参考，不能替代专业心理咨询或医疗诊断
                   </el-alert>
@@ -89,10 +83,7 @@
 
           <!-- 结果描述 -->
           <div v-if="resultData.description" class="description-section">
-            <h3>
-              <el-icon><InfoFilled /></el-icon>
-              结果说明
-            </h3>
+            <h3>结果说明</h3>
             <p class="description-text">{{ resultData.description }}</p>
           </div>
 
@@ -119,10 +110,7 @@
 
           <!-- 建议 -->
           <div v-if="resultData.suggestions && resultData.suggestions.length > 0" class="suggestions-section">
-            <h3>
-              <el-icon><CircleCheck /></el-icon>
-              建议
-            </h3>
+            <h3>建议</h3>
             <div class="suggestions-list">
               <div
                 v-for="(suggestion, index) in resultData.suggestions"
@@ -193,12 +181,7 @@ import {
   Star,
   StarFilled,
   RefreshRight,
-  ArrowRight,
-  CircleCheck,
-  WarningFilled,
-  InfoFilled,
-  ChatDotRound,
-  ChatLineRound
+  ArrowRight
 } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { getTestResult, favoriteResult, unfavoriteResult } from '@/api/test'
@@ -219,7 +202,6 @@ const resultData = ref({
   maxScore: 0,
   level: '',
   levelClass: '',
-  levelIcon: '',
   levelDescription: '',  // 新增：等级描述
   description: '',
   aiSuggestion: '',  // AI建议
@@ -230,7 +212,7 @@ const resultData = ref({
 
 // 等级描述映射
 const levelDescriptions = {
-  '无': '您的心理状态良好，没有明显异常。请继续保持积极的生活方式和健康习惯。',
+  '正常': '您的心理状态良好，没有明显异常。请继续保持积极的生活方式和健康习惯。',
   '轻度': '检测到一些轻微的心理困扰，这在生活中很常见。建议通过运动、休息、社交等方式自我调节，一般能够自行缓解。',
   '中度': '您的心理状态需要关注。建议尝试放松技巧、规律作息，必要时可寻求专业心理咨询师的帮助。',
   '重度': '您的心理状态需要重视。建议尽快寻求专业心理咨询师或精神科医生的帮助，进行系统的评估和诊断。'
@@ -241,10 +223,10 @@ const recommendations = ref([])
 
 // 计算等级样式
 const levelConfig = {
-  '无': { class: 'level-none', icon: InfoFilled },
-  '轻度': { class: 'level-mild', icon: WarningFilled },
-  '中度': { class: 'level-moderate', icon: WarningFilled },
-  '重度': { class: 'level-severe', icon: WarningFilled }
+  '正常': { class: 'level-none' },
+  '轻度': { class: 'level-mild' },
+  '中度': { class: 'level-moderate' },
+  '重度': { class: 'level-severe' }
 }
 
 // 获取维度百分比
@@ -270,13 +252,13 @@ const loadResult = async () => {
 
     // 处理等级配置 - 映射后端返回的等级到前端配置
     const levelMapping = {
-      'none': '无',
+      'none': '正常',
       'mild': '轻度',
       'moderate': '中度',
       'severe': '重度'
     }
-    const levelText = levelMapping[data.result_level] || '无'
-    const levelData = levelConfig[levelText] || levelConfig['无']
+    const levelText = levelMapping[data.result_level] || '正常'
+    const levelData = levelConfig[levelText] || levelConfig['正常']
     const levelDesc = levelDescriptions[levelText] || ''
 
     // 处理建议文本 - 转换为数组
@@ -306,7 +288,6 @@ const loadResult = async () => {
       maxScore: 100,  // 保留但不显示
       level: levelText,
       levelClass: levelData.class,
-      levelIcon: levelData.icon,
       levelDescription: levelDesc,  // ✅ 新增等级描述
       description: data.result_description || '',
       aiSuggestion: data.ai_suggestion || '',

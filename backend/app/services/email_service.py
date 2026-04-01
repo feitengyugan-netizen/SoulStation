@@ -165,7 +165,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>邮箱验证码</h2>
@@ -256,7 +256,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation</div>
+                    <div class="logo">SoulStation</div>
                 </div>
                 <div class="content">
                     <h2>欢迎加入！</h2>
@@ -265,7 +265,7 @@ class EmailService:
                     <p>我们致力于为您提供专业的心理咨询服务，帮助您解决心理困扰，提升心理健康水平。</p>
                     <p>在平台上，您可以：</p>
                     <ul>
-                        <li>🧠 进行专业心理测试</li>
+                        <li>进行专业心理测试</li>
                         <li>💬 与智能AI助手对话</li>
                         <li>👨‍⚕️ 预约专业咨询师</li>
                         <li>📚 阅读心理知识文章</li>
@@ -391,7 +391,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>🎉 预约成功</h2>
@@ -546,7 +546,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>📋 新的预约</h2>
@@ -697,7 +697,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>⏰ 温馨提醒</h2>
@@ -810,7 +810,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>❌ 预约已取消</h2>
@@ -927,7 +927,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <div class="success-box">
@@ -1042,7 +1042,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">🧠 SoulStation 心理咨询平台</div>
+                    <div class="logo">SoulStation 心理咨询平台</div>
                 </div>
                 <div class="content">
                     <h2>❌ 申请未通过审核</h2>

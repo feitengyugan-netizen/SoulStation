@@ -38,6 +38,9 @@ class Settings(BaseSettings):
 
     # 豆包 API 配置
     DOUBAO_API_KEY: str = "4edcc3f5-e874-401f-b25b-ffcaff140645"
+    DOUBAO_APP_ID: str = ""  # 旧版控制台 App ID
+    DOUBAO_ACCESS_TOKEN: str = ""  # 旧版控制台 Access Token
+    DOUBAO_SECRET_KEY: str = ""  # 旧版控制台 Secret Key
     DOUBAO_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
     DOUBAO_MODEL: str = "doubao-1-5-pro-32k-250115"
 
@@ -54,7 +57,10 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB
 
     # 前端 URL
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # 公网访问URL（用于语音识别等需要公网访问的场景）
+    PUBLIC_URL: str = "http://localhost:8000"
 
     class Config:
         env_file = ".env"

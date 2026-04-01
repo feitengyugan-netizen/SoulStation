@@ -8,7 +8,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.services.email_service import EmailService
-from app.services.verification_service import VerificationCodeService
+from app.services.verification_redis_service import VerificationCodeService
 import random
 import string
 import logging
@@ -63,7 +63,18 @@ class AuthService:
             except Exception as e:
                 logger.error(f"发送邮件失败: {e}")
                 # 邮件发送失败，删除已保存的验证码
-                VerificationCodeService._codes.pop(email, None)
+                try:
+                    # 尝试删除 Redis 中的验证码
+                    if hasattr(VerificationCodeService, '_make_key'):
+                        client = VerificationCodeService._get_redis_client()
+                        if isinstance(client, __import__('redis').Redis):
+                            key = VerificationCodeService._make_key(email)
+                            client.delete(key)
+                    else:
+                        # 回退到内存存储
+                        VerificationCodeService._codes.pop(email, None)
+                except:
+                    pass
                 return False, "邮件发送失败，请稍后重试", 0
 
         except Exception as e:
@@ -129,8 +140,23 @@ class AuthService:
         user.password_hash = get_password_hash(new_password)
         db.commit()
 
-        # 删除验证码
-        VerificationCodeService._codes.pop(email, None)
+        # 删除验证码（清理 Redis 或内存中的数据）
+        try:
+            # 尝试删除 Redis 中的验证码
+            if hasattr(VerificationCodeService, '_make_key'):
+                import redis
+                client = VerificationCodeService._get_redis_client()
+                if isinstance(client, redis.Redis):
+                    key = VerificationCodeService._make_key(email)
+                    client.delete(key)
+                    # 同时删除已验证标记
+                    verified_key = f"verified_email:{email}"
+                    client.delete(verified_key)
+            else:
+                # 回退到内存存储
+                VerificationCodeService._codes.pop(email, None)
+        except:
+            pass
 
         return True
 

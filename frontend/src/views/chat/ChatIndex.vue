@@ -113,36 +113,47 @@
         <!-- 对话列表 -->
         <div class="chat-list">
           <el-skeleton v-if="loadingChats" :rows="5" animated />
-          <div
-            v-for="chat in filteredChats"
-            :key="chat.id"
-            class="chat-item"
-            :class="{ active: currentChatId === chat.id }"
-            @click="selectChat(chat.id)"
-          >
-            <div class="chat-item-content">
-              <h4 class="chat-title">{{ chat.title }}</h4>
-              <p class="chat-preview">{{ chat.lastMessage }}</p>
-              <span class="chat-time">{{ formatTime(chat.updatedAt) }}</span>
-            </div>
-            <el-dropdown
-              trigger="click"
-              @command="(cmd) => handleChatCommand(cmd, chat.id)"
+          <div v-else>
+            <div
+              v-for="(group, groupIndex) in groupedChats"
+              :key="groupIndex"
+              class="chat-group"
             >
-              <el-icon class="more-icon"><MoreFilled /></el-icon>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="edit">
-                    <el-icon><Edit /></el-icon>
-                    编辑标题
-                  </el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>
-                    <el-icon><Delete /></el-icon>
-                    删除对话
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+              <div class="time-group-header">{{ group.label }}</div>
+              <div
+                v-for="chat in group.chats"
+                :key="chat.id"
+                class="chat-item"
+                :class="{ active: currentChatId === chat.id }"
+                @click="selectChat(chat.id)"
+              >
+                <div class="chat-item-content">
+                  <div class="chat-title-row">
+                    <h4 class="chat-title">{{ chat.title }}</h4>
+                    <el-dropdown
+                      trigger="click"
+                      @command="(cmd) => handleChatCommand(cmd, chat.id)"
+                      @click.stop
+                    >
+                      <el-icon class="more-icon"><MoreFilled /></el-icon>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="edit">
+                            <el-icon><Edit /></el-icon>
+                            编辑标题
+                          </el-dropdown-item>
+                          <el-dropdown-item command="delete" divided>
+                            <el-icon><Delete /></el-icon>
+                            删除对话
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                  <p class="chat-preview">{{ chat.lastMessage }}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -176,14 +187,8 @@
             >
               <!-- AI消息 -->
               <div v-if="message.role === 'assistant'" class="message-assistant">
-                <div class="message-avatar">
-                  <el-icon :size="24" color="#409EFF">
-                    <ChatDotSquare />
-                  </el-icon>
-                </div>
                 <div class="message-bubble">
                   <div class="message-text" v-html="renderMarkdown(message.content)"></div>
-                  <span class="message-time">{{ formatTime(message.timestamp) }}</span>
                 </div>
               </div>
 
@@ -191,23 +196,12 @@
               <div v-else class="message-user">
                 <div class="message-bubble">
                   <div class="message-text">{{ message.content }}</div>
-                  <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-                </div>
-                <div class="message-avatar">
-                  <el-avatar :size="32" :src="userInfo?.avatar">
-                    <el-icon><User /></el-icon>
-                  </el-avatar>
                 </div>
               </div>
             </div>
 
             <!-- 加载中 -->
             <div v-if="loadingMessages" class="message-item assistant">
-              <div class="message-avatar">
-                <el-icon :size="24" color="#409EFF">
-                  <ChatDotSquare />
-                </el-icon>
-              </div>
               <div class="message-bubble">
                 <div class="typing-indicator">
                   <span></span>
@@ -230,12 +224,7 @@
               >
                 <el-button circle :icon="Paperclip" />
               </el-upload>
-              <el-button
-                circle
-                :icon="Microphone"
-                :type="isRecording ? 'danger' : 'default'"
-                @click="toggleRecording"
-              />
+              <VoiceRecorder @transcription-result="handleTranscriptionResult" />
             </div>
 
             <!-- 输入框 -->
@@ -343,6 +332,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail } from '@/api/chat'
 import { getTags } from '@/api/chat'
+import VoiceRecorder from '@/components/VoiceRecorder.vue'
 import { formatRelativeTime } from '@/utils/format'
 
 const router = useRouter()
@@ -371,8 +361,6 @@ const messageListRef = ref(null)
 // 输入相关
 const inputMessage = ref('')
 const selectedFile = ref(null)
-const isRecording = ref(false)
-
 // 标签列表
 const tags = ref([])
 const showTagManager = ref(false)
@@ -405,6 +393,43 @@ const filteredChats = computed(() => {
 
   // 按更新时间排序
   return result.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+})
+
+// 按时间分组的对话列表
+const groupedChats = computed(() => {
+  const chats = filteredChats.value
+  if (chats.length === 0) return []
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const weekAgo = new Date(today)
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const monthAgo = new Date(today)
+  monthAgo.setDate(monthAgo.getDate() - 30)
+
+  const groups = [
+    { label: '今天内', chats: [] },
+    { label: '7天内', chats: [] },
+    { label: '30天内', chats: [] },
+    { label: '更早', chats: [] }
+  ]
+
+  chats.forEach(chat => {
+    const chatDate = new Date(chat.updatedAt)
+
+    if (chatDate >= today) {
+      groups[0].chats.push(chat)
+    } else if (chatDate >= weekAgo) {
+      groups[1].chats.push(chat)
+    } else if (chatDate >= monthAgo) {
+      groups[2].chats.push(chat)
+    } else {
+      groups[3].chats.push(chat)
+    }
+  })
+
+  // 只返回有对话的分组
+  return groups.filter(group => group.chats.length > 0)
 })
 
 // 格式化时间
@@ -699,17 +724,11 @@ const removeFile = () => {
   selectedFile.value = null
 }
 
-// 录音切换（模拟）
-const toggleRecording = () => {
-  isRecording.value = !isRecording.value
-  if (isRecording.value) {
-    ElMessage.info('开始录音...')
-    // 实际项目这里应该调用录音API
-    setTimeout(() => {
-      isRecording.value = false
-      inputMessage.value = '这是语音转文字的内容（模拟）'
-    }, 2000)
-  }
+// 处理语音识别结果
+const handleTranscriptionResult = (text) => {
+  // 将识别结果填充到输入框
+  inputMessage.value += (inputMessage.value ? ' ' : '') + text
+  ElMessage.success('语音识别成功')
 }
 
 // 标签管理方法
@@ -860,9 +879,7 @@ onMounted(() => {
 
 // 组件卸载前
 onBeforeUnmount(() => {
-  if (isRecording.value) {
-    isRecording.value = false
-  }
+  // 清理工作
 })
 </script>
 
@@ -967,12 +984,27 @@ onBeforeUnmount(() => {
     padding: $spacing-sm;
   }
 
+  .time-group-header {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-small;
+    font-weight: 500;
+    color: $text-secondary;
+    background: $bg-color;
+    border-radius: $border-radius-sm;
+    margin: $spacing-xs 0;
+  }
+
+  .chat-group {
+    &:not(:first-child) {
+      margin-top: $spacing-sm;
+    }
+  }
+
   .chat-item {
     padding: $spacing-md;
     border-radius: $border-radius-md;
     cursor: pointer;
     transition: $transition-base;
-    position: relative;
 
     &:hover {
       background: $bg-color;
@@ -989,13 +1021,21 @@ onBeforeUnmount(() => {
     }
 
     .chat-item-content {
+      .chat-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-xs;
+      }
+
       .chat-title {
         font-size: $font-size-base;
         font-weight: 500;
-        margin-bottom: $spacing-xs;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 1;
+        margin: 0;
       }
 
       .chat-preview {
@@ -1005,22 +1045,20 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-
-      .chat-time {
-        font-size: $font-size-extra-small;
-        color: $text-placeholder;
-      }
     }
 
     .more-icon {
-      position: absolute;
-      top: $spacing-sm;
-      right: $spacing-sm;
+      flex-shrink: 0;
+      margin-left: $spacing-xs;
       opacity: 0;
       transition: $transition-base;
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 18px;
 
       &:hover {
         color: $primary-color;
+        background: rgba(0, 0, 0, 0.05);
       }
     }
 
@@ -1063,56 +1101,38 @@ onBeforeUnmount(() => {
 .message-item {
   margin-bottom: $spacing-lg;
 
-  &.assistant .message-assistant {
+  &.assistant {
     display: flex;
-    gap: $spacing-md;
+    justify-content: flex-start;
+
+    .message-bubble {
+      background: $bg-white;
+      color: $text-primary;
+      border-radius: $border-radius-md;
+      padding: $spacing-md $spacing-lg;
+      max-width: 70%;
+      box-shadow: $box-shadow-base;
+    }
   }
 
-  &.user .message-user {
+  &.user {
     display: flex;
-    gap: $spacing-md;
-    flex-direction: row-reverse;
+    justify-content: flex-end;
+
+    .message-bubble {
+      background: $primary-color;
+      color: white;
+      border-radius: $border-radius-md;
+      padding: $spacing-md $spacing-lg;
+      max-width: 70%;
+    }
   }
-}
-
-.message-avatar {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: $bg-white;
-}
-
-.message-bubble {
-  max-width: 70%;
 }
 
 .message-text {
-  padding: $spacing-md;
-  border-radius: $border-radius-md;
   line-height: 1.6;
   word-break: break-word;
-}
-
-.message-assistant .message-text {
-  background: $bg-white;
-  color: $text-primary;
-  box-shadow: $box-shadow-base;
-}
-
-.message-user .message-text {
-  background: $primary-color;
-  color: white;
-}
-
-.message-time {
-  font-size: $font-size-extra-small;
-  color: $text-placeholder;
-  margin-top: $spacing-xs;
-  display: block;
+  white-space: pre-wrap;
 }
 
 // 打字动画

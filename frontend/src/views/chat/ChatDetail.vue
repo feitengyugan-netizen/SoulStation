@@ -82,11 +82,6 @@
           >
             <!-- AI消息 -->
             <div v-if="message.role === 'assistant'" class="message-assistant">
-              <div class="message-avatar">
-                <el-icon :size="28" color="#409EFF">
-                  <ChatDotSquare />
-                </el-icon>
-              </div>
               <div class="message-content">
                 <div class="message-bubble">
                   <div class="message-text" v-html="renderMarkdown(message.content)"></div>
@@ -102,11 +97,6 @@
                   <div class="message-text">{{ message.content }}</div>
                   <span class="message-time">{{ formatDateTime(message.timestamp) }}</span>
                 </div>
-              </div>
-              <div class="message-avatar">
-                <el-avatar :size="36" :src="userInfo?.avatar">
-                  <el-icon><User /></el-icon>
-                </el-avatar>
               </div>
             </div>
           </div>
@@ -420,61 +410,42 @@ onMounted(() => {
 
   .message-item {
     margin-bottom: $spacing-lg;
-    display: flex;
 
     &.assistant {
-      .message-assistant {
+      .message-content {
         display: flex;
-        gap: $spacing-md;
+        justify-content: flex-start;
+      }
+
+      .message-bubble {
+        background: $bg-white;
+        color: $text-primary;
+        border-radius: $border-radius-md;
+        padding: $spacing-md $spacing-lg;
+        max-width: 80%;
+        box-shadow: $box-shadow-base;
       }
     }
 
     &.user {
-      flex-direction: row-reverse;
-
-      .message-user {
+      .message-content {
         display: flex;
-        gap: $spacing-md;
-        flex-direction: row-reverse;
+        justify-content: flex-end;
+      }
+
+      .message-bubble {
+        background: $primary-color;
+        color: white;
+        border-radius: $border-radius-md;
+        padding: $spacing-md $spacing-lg;
+        max-width: 80%;
       }
     }
   }
 
-  .message-avatar {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: $bg-white;
-  }
-
-  .message-content {
-    flex: 1;
-  }
-
-  .message-bubble {
-    max-width: 80%;
-  }
-
   .message-text {
-    padding: $spacing-md;
-    border-radius: $border-radius-md;
     line-height: 1.6;
     word-break: break-word;
-  }
-
-  .message-assistant .message-text {
-    background: $bg-white;
-    color: $text-primary;
-    box-shadow: $box-shadow-base;
-  }
-
-  .message-user .message-text {
-    background: $primary-color;
-    color: white;
   }
 
   .message-time {
@@ -482,6 +453,11 @@ onMounted(() => {
     color: $text-placeholder;
     margin-top: $spacing-xs;
     display: block;
+    opacity: 0.8;
+  }
+
+  .message-user .message-time {
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 
