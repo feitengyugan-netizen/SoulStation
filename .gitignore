@@ -78,3 +78,6 @@ Thumbs.db
 # IDE
 *.sublime-project
 *.sublime-workspace
+
+# Documentation
+docs/
