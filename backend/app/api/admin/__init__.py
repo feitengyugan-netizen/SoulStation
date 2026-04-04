@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.core.security import create_access_token
 from app.models.admin import Admin
 from app.schemas.admin import (
-    AdminResponse, AdminTokenResponse, DashboardStats, ChartResponse,
+    AdminLoginRequest, AdminResponse, AdminTokenResponse, DashboardStats, ChartResponse,
     CounselorReviewResponse, ReviewCounselorRequest,
     ArticleSaveRequest, AdminUserResponse, BanUserRequest,
     AdminOrderResponse
@@ -71,8 +71,7 @@ def get_current_admin(
 
 @router.post("/login", summary="管理员登录")
 async def admin_login(
-    username: str = Query(..., description="用户名"),
-    password: str = Query(..., description="密码"),
+    login_data: AdminLoginRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -81,7 +80,7 @@ async def admin_login(
     返回访问令牌和管理员信息
     """
     try:
-        admin = AdminService.authenticate_admin(db, username, password)
+        admin = AdminService.authenticate_admin(db, login_data.username, login_data.password)
 
         if not admin:
             raise HTTPException(

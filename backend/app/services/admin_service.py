@@ -28,9 +28,10 @@ class AdminService:
 
     @staticmethod
     def authenticate_admin(db: Session, username: str, password: str) -> Optional[Admin]:
-        """验证管理员登录"""
+        """验证管理员登录（支持邮箱或用户名）"""
+        # 先尝试用邮箱查找，再用用户名查找
         admin = db.query(Admin).filter(
-            Admin.username == username,
+            (Admin.email == username) | (Admin.username == username),
             Admin.deleted_at.is_(None)
         ).first()
 

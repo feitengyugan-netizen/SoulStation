@@ -101,15 +101,21 @@ const loginForm = reactive({
   remember: false
 })
 
+// 自定义邮箱验证器（宽松模式）
+const validateEmail = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请输入邮箱'))
+  } else if (!value.includes('@')) {
+    callback(new Error('请输入正确的邮箱格式'))
+  } else {
+    callback()
+  }
+}
+
 // 表单校验规则
 const loginRules = {
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    {
-      type: 'email',
-      message: '请输入正确的邮箱格式',
-      trigger: ['blur', 'change']
-    }
+    { required: true, validator: validateEmail, trigger: ['blur', 'change'] }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },

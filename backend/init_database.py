@@ -70,22 +70,23 @@ def create_test_user():
             print("  测试用户已存在，跳过")
             return True
 
-        # 创建测试用户
+        # 创建测试用户（角色为咨询师）
         test_user = User(
             email="test@example.com",
             password_hash=get_password_hash("123456"),
             nickname="测试用户",
-            role="user",
+            role="counselor",  # 设置为咨询师角色
             is_active=True,
             status="active"
         )
         db.add(test_user)
         db.commit()
 
-        print("✓ 测试用户创建成功")
-        print("\n测试用户登录信息:")
+        print("✓ 测试用户（咨询师）创建成功")
+        print("\n测试咨询师登录信息:")
         print("  邮箱: test@example.com")
         print("  密码: 123456")
+        print("  角色: 咨询师")
         return True
     except Exception as e:
         print(f"✗ 创建测试用户失败: {e}")

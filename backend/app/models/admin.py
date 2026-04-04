@@ -18,11 +18,11 @@ class Admin(Base):
     email = Column(String(100), comment="邮箱")
 
     # 权限
-    role = Column(Enum('super_admin', 'admin', 'editor'), default='admin', comment="角色")
+    role = Column(Enum('super_admin', 'admin', 'moderator'), default='admin', comment="角色")
     permissions = Column(Text, comment="权限列表（JSON格式）")
 
     # 状态
-    is_active = Column(Boolean, default=True, comment="是否激活")
+    status = Column(Enum('active', 'inactive'), default='active', comment="状态")
     last_login_at = Column(DateTime, comment="最后登录时间")
     last_login_ip = Column(String(50), comment="最后登录IP")
 
@@ -38,3 +38,8 @@ class Admin(Base):
     def is_super_admin(self):
         """是否是超级管理员"""
         return self.role == 'super_admin'
+
+    @property
+    def is_active(self):
+        """是否激活（兼容代码）"""
+        return self.status == 'active'

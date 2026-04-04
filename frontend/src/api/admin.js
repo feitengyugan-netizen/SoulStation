@@ -2,20 +2,6 @@
 import request from './index'
 
 /**
- * 管理员登录
- * @param {Object} data
- * @param {string} data.username - 用户名
- * @param {string} data.password - 密码
- */
-export function adminLogin(data) {
-  return request({
-    url: '/admin/login',
-    method: 'post',
-    data
-  })
-}
-
-/**
  * 获取仪表盘统计数据
  */
 export function getDashboardStats() {
