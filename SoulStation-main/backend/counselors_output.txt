@@ -1,0 +1,31 @@
+================================================================================
+                                    数据库中的咨询师                                    
+================================================================================
+2026-04-02 02:08:01,854 INFO sqlalchemy.engine.Engine SELECT DATABASE()
+2026-04-02 02:08:01,854 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-04-02 02:08:01,855 INFO sqlalchemy.engine.Engine SELECT @@sql_mode
+2026-04-02 02:08:01,855 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-04-02 02:08:01,856 INFO sqlalchemy.engine.Engine SELECT @@lower_case_table_names
+2026-04-02 02:08:01,856 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-04-02 02:08:01,856 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-02 02:08:01,860 INFO sqlalchemy.engine.Engine SELECT counselors.id AS counselors_id, counselors.user_id AS counselors_user_id, counselors.name AS counselors_name, counselors.avatar AS counselors_avatar, counselors.gender AS counselors_gender, counselors.title AS counselors_title, counselors.specialties AS counselors_specialties, counselors.consultation_types AS counselors_consultation_types, counselors.experience_years AS counselors_experience_years, counselors.education AS counselors_education, counselors.qualifications AS counselors_qualifications, counselors.price_video AS counselors_price_video, counselors.price_voice AS counselors_price_voice, counselors.price_offline AS counselors_price_offline, counselors.rating AS counselors_rating, counselors.review_count AS counselors_review_count, counselors.consultation_count AS counselors_consultation_count, counselors.bio AS counselors_bio, counselors.approach AS counselors_approach, counselors.achievements AS counselors_achievements, counselors.status AS counselors_status, counselors.is_verified AS counselors_is_verified, counselors.is_deleted AS counselors_is_deleted, counselors.application_status AS counselors_application_status, counselors.rejection_reason AS counselors_rejection_reason, counselors.reviewed_at AS counselors_reviewed_at, counselors.reviewed_by AS counselors_reviewed_by, counselors.created_at AS counselors_created_at, counselors.updated_at AS counselors_updated_at, counselors.deleted_at AS counselors_deleted_at 
+FROM counselors 
+WHERE counselors.is_deleted = false AND counselors.status = %(status_1)s ORDER BY counselors.id
+2026-04-02 02:08:01,860 INFO sqlalchemy.engine.Engine [generated in 0.00012s] {'status_1': 'active'}
+ID=1: 张医生        - 资深心理咨询师
+ID=2: 王芳         - 资深心理咨询师
+ID=3: 李明         - 心理治疗师
+ID=4: 张静         - 婚姻家庭咨询师
+ID=5: 刘强         - EAP企业咨询师
+ID=6: 陈雪         - 儿童心理专家
+
+================================================================================
+                                   API返回的咨询师                                    
+================================================================================
+ID=1: 张医生        - 资深心理咨询师
+ID=2: 王芳         - 资深心理咨询师
+ID=3: 李明         - 心理治疗师
+ID=4: 张静         - 婚姻家庭咨询师
+ID=5: 刘强         - EAP企业咨询师
+ID=6: 陈雪         - 儿童心理专家
+2026-04-02 02:08:03,906 INFO sqlalchemy.engine.Engine ROLLBACK
