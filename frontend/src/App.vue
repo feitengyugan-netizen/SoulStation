@@ -1,27 +1,10 @@
 <template>
   <div id="app">
-    <!-- 登录/注册页面使用简单布局 -->
-    <router-view v-if="isAuthPage" />
-
-    <!-- 其他页面使用主布局 -->
-    <MainLayout v-else>
-      <router-view />
-    </MainLayout>
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import MainLayout from '@/components/MainLayout.vue'
-
-const route = useRoute()
-
-// 判断是否是认证相关页面
-const isAuthPage = computed(() => {
-  const authPaths = ['/login', '/register', '/forgot-password', '/admin/login']
-  return authPaths.some(path => route.path.startsWith(path))
-})
 </script>
 
 <style>

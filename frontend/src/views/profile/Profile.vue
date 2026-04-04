@@ -139,6 +139,20 @@
             </div>
             <span>注销账户</span>
           </div>
+
+          <div class="access-item" @click="goToCounselorApply" v-if="!isCounselor">
+            <div class="access-icon">
+              <el-icon :size="32" color="#67C23A"><Briefcase /></el-icon>
+            </div>
+            <span>加入我们</span>
+          </div>
+
+          <div class="access-item" @click="goToCounselorDashboard" v-else>
+            <div class="access-icon">
+              <el-icon :size="32" color="#E6A23C"><Briefcase /></el-icon>
+            </div>
+            <span>咨询师中心</span>
+          </div>
         </div>
       </el-card>
     </div>
@@ -188,7 +202,8 @@ import {
   DataAnalysis,
   SwitchButton,
   Plus,
-  Delete
+  Delete,
+  Briefcase
 } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
@@ -213,6 +228,11 @@ const userRoleText = computed(() => {
   if (role === 'admin') return '管理员'
   if (role === 'counselor') return '咨询师'
   return '普通用户'
+})
+
+// 是否是咨询师
+const isCounselor = computed(() => {
+  return userInfo.value?.role === 'counselor'
 })
 
 // 统计数据
@@ -331,6 +351,16 @@ const goToPrivacy = () => {
 // 跳转到数据统计
 const goToStatistics = () => {
   router.push('/profile/statistics')
+}
+
+// 跳转到咨询师申请
+const goToCounselorApply = () => {
+  router.push('/counselor/apply')
+}
+
+// 跳转到咨询师中心
+const goToCounselorDashboard = () => {
+  router.push('/counselor/dashboard')
 }
 
 // 退出登录

@@ -140,10 +140,18 @@ const handleLogin = async () => {
     // 登录成功提示
     ElMessage.success('登录成功！')
 
-    // 跳转到首页
+    // 根据用户角色跳转到不同页面
     setTimeout(() => {
-      console.log('准备跳转到首页')
-      router.push('/')
+      const userRole = localStorage.getItem('userRole')
+      console.log('用户角色:', userRole)
+
+      if (userRole === 'admin') {
+        console.log('跳转到管理后台')
+        router.push('/admin/dashboard')
+      } else {
+        console.log('跳转到首页')
+        router.push('/')
+      }
     }, 500)
   } catch (error) {
     console.error('登录失败:', error)
