@@ -17,10 +17,12 @@ app = FastAPI(
     description="心理咨询服务平台 API"
 )
 
+
+
 # CORS 中间件配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=["*"],  # 开发环境允许所有来源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,6 +35,7 @@ async def root():
         "message": "Welcome to SoulStation API",
         "version": settings.APP_VERSION
     }
+
 
 @app.get("/test/redis")
 async def test_redis():
@@ -114,6 +117,17 @@ app.include_router(admin_router, prefix="/api")
 uploads_dir = Path("uploads")
 uploads_dir.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# 启动事件
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时执行"""
+    # 启动预约提醒定时任务
+    try:
+        from app.tasks.appointment_reminder import start_scheduler
+        start_scheduler()
+    except Exception as e:
+        logger.warning(f"预约提醒定时任务启动失败: {e}")
 
 # 开发人员 A 的路由
 # from app.api.member_a.chat import router as chat_router
