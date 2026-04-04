@@ -140,10 +140,11 @@ const handleLogin = async () => {
     // 登录成功提示
     ElMessage.success('登录成功！')
 
-    // 跳转到首页
+    // 使用后端返回的 redirect 路径跳转
     setTimeout(() => {
-      console.log('准备跳转到首页')
-      router.push('/')
+      const redirectPath = res.redirect || '/'
+      console.log('准备跳转到:', redirectPath)
+      router.push(redirectPath)
     }, 500)
   } catch (error) {
     console.error('登录失败:', error)

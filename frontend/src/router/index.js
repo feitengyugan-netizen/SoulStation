@@ -30,6 +30,8 @@ const DataStatistics = () => import('@/views/profile/DataStatistics.vue')
 const CounselorList = () => import('@/views/counselor/CounselorList.vue')
 const CounselorDetail = () => import('@/views/counselor/CounselorDetail.vue')
 const CounselorRegister = () => import('@/views/counselor/CounselorRegister.vue')
+const CounselorApply = () => import('@/views/counselor/CounselorApply.vue')
+const CounselorDashboard = () => import('@/views/counselor/CounselorDashboard.vue')
 const AppointmentForm = () => import('@/views/counselor/AppointmentForm.vue')
 const AppointmentManage = () => import('@/views/counselor/AppointmentManage.vue')
 const ReviewForm = () => import('@/views/counselor/ReviewForm.vue')
@@ -44,13 +46,16 @@ const KnowledgeList = () => import('@/views/knowledge/KnowledgeList.vue')
 const KnowledgeDetail = () => import('@/views/knowledge/KnowledgeDetail.vue')
 
 // 后台管理
-const AdminLogin = () => import('@/views/admin/AdminLogin.vue')
-const AdminDashboard = () => import('@/views/admin/AdminDashboard.vue')
+const AdminLayout = () => import('@/layouts/AdminLayout.vue')
+const Dashboard = () => import('@/views/admin/Dashboard.vue')
 const CounselorReview = () => import('@/views/admin/CounselorReview.vue')
 const KnowledgeManage = () => import('@/views/admin/KnowledgeManage.vue')
 const ArticleEditor = () => import('@/views/admin/ArticleEditor.vue')
 const UserManage = () => import('@/views/admin/UserManage.vue')
 const OrderManage = () => import('@/views/admin/OrderManage.vue')
+const TestManage = () => import('@/views/admin/TestManage.vue')
+const DialogueManage = () => import('@/views/admin/DialogueManage.vue')
+const SystemManage = () => import('@/views/admin/SystemManage.vue')
 
 const routes = [
   {
@@ -156,6 +161,18 @@ const routes = [
     meta: { title: '咨询师入驻 - 心理咨询平台', requiresAuth: true }
   },
   {
+    path: '/counselor/apply',
+    name: 'CounselorApply',
+    component: CounselorApply,
+    meta: { title: '加入我们 - 心理咨询平台', requiresAuth: true }
+  },
+  {
+    path: '/counselor/dashboard',
+    name: 'CounselorDashboard',
+    component: CounselorDashboard,
+    meta: { title: '咨询师中心 - 心理咨询平台', requiresAuth: true, requiresCounselor: true }
+  },
+  {
     path: '/counselor/:id',
     name: 'CounselorDetail',
     component: CounselorDetail,
@@ -210,50 +227,69 @@ const routes = [
     meta: { title: '知识详情 - 心理咨询平台' }
   },
   {
-    path: '/admin/login',
-    name: 'AdminLogin',
-    component: AdminLogin,
-    meta: { title: '管理员登录 - 心理咨询平台' }
-  },
-  {
     path: '/admin',
-    redirect: '/admin/dashboard'
-  },
-  {
-    path: '/admin/dashboard',
-    name: 'AdminDashboard',
-    component: AdminDashboard,
-    meta: { title: '后台管理 - 心理咨询平台', requiresAdmin: true }
-  },
-  {
-    path: '/admin/counselor-review',
-    name: 'CounselorReview',
-    component: CounselorReview,
-    meta: { title: '咨询师审核 - 心理咨询平台', requiresAdmin: true }
-  },
-  {
-    path: '/admin/knowledge',
-    name: 'KnowledgeManage',
-    component: KnowledgeManage,
-    meta: { title: '知识管理 - 心理咨询平台', requiresAdmin: true }
-  },
-  {
-    path: '/admin/article-editor',
-    name: 'ArticleEditor',
-    component: ArticleEditor,
-    meta: { title: '编辑文章 - 心理咨询平台', requiresAdmin: true }
-  },
-  {
-    path: '/admin/users',
-    name: 'UserManage',
-    component: UserManage,
-    meta: { title: '用户管理 - 心理咨询平台', requiresAdmin: true }
-  },
-  {
-    path: '/admin/orders',
-    name: 'OrderManage',
-    component: OrderManage,
-    meta: { title: '订单管理 - 心理咨询平台', requiresAdmin: true }
+    component: AdminLayout,
+    meta: { requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        redirect: '/admin/dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: Dashboard,
+        meta: { title: '后台管理 - 心理咨询平台' }
+      },
+      {
+        path: 'users',
+        name: 'UserManage',
+        component: UserManage,
+        meta: { title: '用户管理 - 心理咨询平台' }
+      },
+      {
+        path: 'counselor-review',
+        name: 'CounselorReview',
+        component: CounselorReview,
+        meta: { title: '咨询师审核 - 心理咨询平台' }
+      },
+      {
+        path: 'orders',
+        name: 'OrderManage',
+        component: OrderManage,
+        meta: { title: '订单管理 - 心理咨询平台' }
+      },
+      {
+        path: 'knowledge',
+        name: 'KnowledgeManage',
+        component: KnowledgeManage,
+        meta: { title: '知识管理 - 心理咨询平台' }
+      },
+      {
+        path: 'tests',
+        name: 'TestManage',
+        component: TestManage,
+        meta: { title: '测试管理 - 心理咨询平台' }
+      },
+      {
+        path: 'dialogues',
+        name: 'DialogueManage',
+        component: DialogueManage,
+        meta: { title: '对话管理 - 心理咨询平台' }
+      },
+      {
+        path: 'article-editor',
+        name: 'ArticleEditor',
+        component: ArticleEditor,
+        meta: { title: '文章编辑 - 心理咨询平台' }
+      },
+      {
+        path: 'system',
+        name: 'SystemManage',
+        component: SystemManage,
+        meta: { title: '系统设置 - 心理咨询平台' }
+      }
+    ]
   },
   {
     path: '/:pathMatch(.*)*',
@@ -290,7 +326,7 @@ router.beforeEach((to, from, next) => {
 
   // 需要管理员角色的页面
   if (to.meta.requiresAdmin && userRole !== 'admin') {
-    next('/admin/login')
+    next('/login')
     return
   }
 

@@ -221,12 +221,57 @@ class AuthService:
 
     @staticmethod
     def login(db: Session, login_data: UserLogin) -> Optional[dict]:
-        """用户登录"""
-        # 验证用户
+        """用户登录（支持普通用户和管理员）"""
+        # 先尝试作为普通用户登录
         user = AuthService.authenticate_user(db, login_data.email, login_data.password)
+
+        # 如果普通用户登录失败，尝试管理员登录
         if not user:
+            from app.models.admin import Admin
+            admin = db.query(Admin).filter(
+                (Admin.email == login_data.email) | (Admin.username == login_data.email)
+            ).first()
+
+            if admin:
+                # 验证管理员密码
+                if verify_password(login_data.password, admin.password_hash):
+                    if not admin.is_active:
+                        logger.warning(f"管理员未激活: {login_data.email}")
+                        return None
+
+                    # 更新最后登录时间
+                    admin.last_login_at = datetime.utcnow()
+                    db.commit()
+                    db.refresh(admin)
+
+                    # 创建访问令牌
+                    access_token = create_access_token(
+                        data={
+                            "sub": str(admin.id),
+                            "email": admin.email or admin.username,
+                            "role": "admin",
+                            "type": "admin"  # 标识这是管理员token
+                        }
+                    )
+
+                    # 返回管理员信息和令牌
+                    return {
+                        "access_token": access_token,
+                        "token_type": "bearer",
+                        "user": {
+                            "id": admin.id,
+                            "email": admin.email or f"{admin.username}@admin.local",
+                            "nickname": admin.real_name or admin.username,
+                            "role": "admin",
+                            "avatar": None,
+                            "is_active": admin.is_active
+                        },
+                        "redirect": "/admin/dashboard"
+                    }
+
             return None
 
+        # 普通用户登录成功
         # 更新最后登录时间
         AuthService.update_last_login(db, user)
 

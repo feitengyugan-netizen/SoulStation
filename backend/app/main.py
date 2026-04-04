@@ -17,10 +17,12 @@ app = FastAPI(
     description="心理咨询服务平台 API"
 )
 
+
+
 # CORS 中间件配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=["*"],  # 开发环境允许所有来源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
