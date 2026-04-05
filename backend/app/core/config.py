@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-3.5-turbo"
 
     # 豆包 API 配置
-    DOUBAO_API_KEY: str = "4edcc3f5-e874-401f-b25b-ffcaff140645"
+    DOUBAO_API_KEY: str = ""
     DOUBAO_APP_ID: str = ""  # 旧版控制台 App ID
     DOUBAO_ACCESS_TOKEN: str = ""  # 旧版控制台 Access Token
     DOUBAO_SECRET_KEY: str = ""  # 旧版控制台 Secret Key
@@ -61,6 +61,12 @@ class Settings(BaseSettings):
 
     # 公网访问URL（用于语音识别等需要公网访问的场景）
     PUBLIC_URL: str = "http://localhost:8000"
+
+    # ChromaDB 配置
+    CHROMA_DB_PATH: str = "./chroma_db"
+    CHROMA_COLLECTION_NAME: str = "psychology_kb"
+    RAG_TOP_K: int = 3  # 检索返回的相似案例数量
+    RAG_DISTANCE_THRESHOLD: float = 3.0  # 距离阈值，超过此值视为相关性不足
 
     class Config:
         env_file = ".env"

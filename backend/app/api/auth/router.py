@@ -41,12 +41,15 @@ async def login(
         )
 
     # 返回符合前端期望的格式
+    # result["user"] 可能是 Pydantic 模型（users 表）或 dict（admins 表），均处理
+    user_data = result["user"]
+    user_info = user_data.model_dump() if hasattr(user_data, 'model_dump') else user_data
     return {
         "code": 200,
         "message": "登录成功",
         "data": {
             "token": result["access_token"],
-            "userInfo": result["user"].model_dump(),
+            "userInfo": user_info,
             "redirect": result.get("redirect", "/")
         }
     }

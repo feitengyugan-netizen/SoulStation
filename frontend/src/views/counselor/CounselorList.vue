@@ -151,6 +151,7 @@ import { ElMessage } from 'element-plus'
 import { Search, User } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { getCounselorList } from '@/api/counselor'
+import { getToken } from '@/utils/storage'
 
 const router = useRouter()
 
@@ -210,7 +211,7 @@ const viewDetail = (id) => {
 }
 
 const goToAppointment = (id) => {
-  const token = localStorage.getItem('token')
+  const token = getToken()
   if (!token) {
     ElMessage.warning('请先登录')
     router.push('/login')

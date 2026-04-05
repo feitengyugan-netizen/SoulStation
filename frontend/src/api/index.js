@@ -14,8 +14,8 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    // 从localStorage获取token
-    const token = localStorage.getItem('token')
+    // 仅从 sessionStorage 获取 token（标签页隔离）
+    const token = sessionStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,8 +38,8 @@ request.interceptors.response.use(
 
       // 401: 未登录或token过期
       if (res.code === 401) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('userInfo')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('userInfo')
         window.location.href = '/login'
       }
 
@@ -64,8 +64,8 @@ request.interceptors.response.use(
           break
         case 401:
           ElMessage.error('未登录或登录已过期')
-          localStorage.removeItem('token')
-          localStorage.removeItem('userInfo')
+          sessionStorage.removeItem('token')
+          sessionStorage.removeItem('userInfo')
           window.location.href = '/login'
           break
         case 403:

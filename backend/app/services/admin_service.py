@@ -192,18 +192,33 @@ class AdminService:
     def get_pending_counselors(
         db: Session,
         page: int = 1,
-        page_size: int = 10
+        page_size: int = 10,
+        status_filter: Optional[str] = None,
+        keyword: Optional[str] = None
     ) -> Dict[str, Any]:
-        """获取待审核咨询师列表"""
-        q = db.query(Counselor).filter(
-            Counselor.is_deleted == False,
-            Counselor.is_verified == False
-        ).order_by(Counselor.created_at.desc())
+        """获取咨询师申请列表（支持状态过滤和关键词搜索）"""
+        base_q = db.query(Counselor).filter(Counselor.is_deleted == False)
 
-        # 总数
+        # 各状态计数
+        counts = {
+            "pending": base_q.filter(Counselor.application_status == 'pending').count(),
+            "approved": base_q.filter(Counselor.application_status == 'approved').count(),
+            "rejected": base_q.filter(Counselor.application_status == 'rejected').count(),
+        }
+
+        # 过滤状态
+        if status_filter and status_filter in ('pending', 'approved', 'rejected'):
+            q = base_q.filter(Counselor.application_status == status_filter)
+        else:
+            q = base_q.filter(Counselor.application_status == 'pending')
+
+        # 关键词搜索（姓名）
+        if keyword:
+            q = q.filter(Counselor.name.contains(keyword))
+
+        q = q.order_by(Counselor.created_at.asc())
+
         total = q.count()
-
-        # 分页
         offset = (page - 1) * page_size
         counselors = q.offset(offset).limit(page_size).all()
 
@@ -211,7 +226,8 @@ class AdminService:
 
         return {
             "total": total,
-            "items": items,
+            "list": items,
+            "counts": counts,
             "page": page,
             "page_size": page_size
         }
@@ -330,7 +346,9 @@ class AdminService:
         page: int = 1,
         page_size: int = 10
     ) -> Dict[str, Any]:
-        """获取用户列表"""
+        """获取用户列表（返回前端 camelCase 格式）"""
+        from app.models.knowledge import KnowledgeFavorite
+
         q = db.query(User).filter(User.is_deleted == False)
 
         # 关键词搜索
@@ -351,31 +369,58 @@ class AdminService:
         offset = (page - 1) * page_size
         users = q.offset(offset).limit(page_size).all()
 
-        # 转换为响应格式并添加统计信息
+        def fmt_dt(dt):
+            return dt.strftime('%Y-%m-%d %H:%M:%S') if dt else None
+
+        def fmt_date(d):
+            return d.strftime('%Y-%m-%d') if d else None
+
+        # 转换为前端期望的 camelCase 格式
         items = []
         for user in users:
-            user_data = AdminUserResponse.model_validate(user)
-
-            # 添加统计信息
-            user_data.test_count = db.query(TestResult).filter(
+            test_count = db.query(TestResult).filter(
                 TestResult.user_id == user.id
             ).count()
 
-            user_data.chat_count = db.query(ChatDialogue).filter(
+            chat_count = db.query(ChatDialogue).filter(
                 ChatDialogue.user_id == user.id
             ).count()
 
-            user_data.order_count = db.query(Appointment).filter(
+            order_count = db.query(Appointment).filter(
                 Appointment.user_id == user.id
             ).count()
 
-            items.append(user_data)
+            favorite_count = db.query(KnowledgeFavorite).filter(
+                KnowledgeFavorite.user_id == user.id
+            ).count()
+
+            items.append({
+                "id": user.id,
+                "email": user.email,
+                "username": user.email,          # 用邮箱充当用户名
+                "nickname": user.nickname,
+                "avatar": user.avatar,
+                "phone": user.phone,
+                "role": user.role or "user",
+                "gender": user.gender,
+                "birthDate": fmt_date(user.birth_date),
+                "bio": None,
+                "banned": user.status == "banned",
+                "status": user.status or "active",
+                "is_verified": user.is_verified,
+                "lastLoginTime": fmt_dt(user.last_login_at),
+                "createdAt": fmt_dt(user.created_at),
+                "testCount": test_count,
+                "chatCount": chat_count,
+                "appointmentCount": order_count,
+                "favoriteCount": favorite_count,
+            })
 
         return {
+            "list": items,
             "total": total,
-            "items": items,
             "page": page,
-            "page_size": page_size
+            "pageSize": page_size
         }
 
     @staticmethod

@@ -1,14 +1,17 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
 
 import App from './App.vue'
 import router from './router'
 
 // 导入全局样式
 import '@/styles/common.scss'
+['token', 'userInfo', 'userRole', 'adminToken', 'adminInfo'].forEach(key => {
+  localStorage.removeItem(key)
+})
 
 const app = createApp(App)
 

@@ -34,25 +34,39 @@ def get_current_admin(
     token = credentials.credentials
     payload = decode_access_token(token)
 
-    if not payload or payload.get("type") != "admin":
+    # 必须有 type=="admin" 或 role=="admin"
+    if not payload or (payload.get("type") != "admin" and payload.get("role") != "admin"):
+        logger.warning(f"[get_current_admin] token 检查失败: type={payload.get('type') if payload else 'None'}, role={payload.get('role') if payload else 'None'}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的管理员令牌"
         )
 
     admin_id = payload.get("sub")
+    email = payload.get("email")
+
     if not admin_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的管理员令牌"
         )
 
+    # 先按 ID 查（主路径：通过 /admin/login 或已对齐的 /auth/login）
     admin = db.query(Admin).filter(
         Admin.id == int(admin_id),
         Admin.deleted_at.is_(None)
     ).first()
 
+    # 如果 ID 未命中（users 表 ID 与 admins 表 ID 不同），按邮箱备用查
+    if not admin and email:
+        logger.info(f"[get_current_admin] ID={admin_id} 未在 admins 表找到，尝试按 email={email} 查找")
+        admin = db.query(Admin).filter(
+            Admin.email == email,
+            Admin.deleted_at.is_(None)
+        ).first()
+
     if not admin:
+        logger.warning(f"[get_current_admin] 管理员未找到: id={admin_id}, email={email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="管理员不存在"
@@ -190,30 +204,31 @@ async def get_chart_data(
 
 # ==================== 咨询师审核接口 ====================
 
-@router.get("/counselors/pending", summary="获取待审核咨询师列表")
+@router.get("/counselors/pending", summary="获取咨询师申请列表")
 async def get_pending_counselors(
+    status: Optional[str] = Query(None, description="状态过滤: pending/approved/rejected"),
+    keyword: Optional[str] = Query(None, description="搜索关键词（姓名）"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=100, description="每页数量"),
     current_admin: Admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
-    获取待审核的咨询师列表
-
-    返回未认证的咨询师，按申请时间倒序排列
+    获取咨询师申请列表，支持 pending/approved/rejected 状态过滤和关键词搜索。
+    响应中额外返回 counts 字段包含各状态数量。
     """
     try:
-        result = AdminService.get_pending_counselors(db, page, page_size)
+        result = AdminService.get_pending_counselors(db, page, page_size, status, keyword)
         return {
             "code": 200,
             "message": "获取成功",
             "data": result
         }
     except Exception as e:
-        logger.error(f"获取待审核咨询师失败: {str(e)}")
+        logger.error(f"获取咨询师申请列表失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取待审核咨询师失败: {str(e)}"
+            detail=f"获取咨询师申请列表失败: {str(e)}"
         )
 
 
@@ -230,10 +245,15 @@ async def review_counselor(
     - **action**: approve（通过）/ reject（拒绝）
     - **reason**: 拒绝理由（拒绝时建议提供）
 
-    通过后咨询师状态变为active，拒绝后标记为删除
+    通过后咨询师状态变为active；拒绝后保留记录，标记为rejected并记录拒绝原因。
     """
     try:
-        AdminService.review_counselor(db, counselor_id, review_data)
+        from app.services.counselor_service import CounselorService
+        CounselorService.review_counselor_application(
+            db, counselor_id, review_data.action,
+            reviewer_id=current_admin.id,
+            reason=review_data.reason
+        )
         return {
             "code": 200,
             "message": "审核完成",

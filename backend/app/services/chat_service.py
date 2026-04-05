@@ -12,6 +12,7 @@ from app.schemas.chat import (
     DialogueCreate, DialogueUpdate, TagCreate, MessageCreate
 )
 from app.services.ai_service import ai_service
+from app.services.rag_service import rag_service
 
 
 class ChatService:
@@ -278,9 +279,23 @@ class ChatService:
             )
         ).order_by(desc(ChatMessage.created_at)).limit(10).all()
 
+        # RAG：从心理知识库检索相似案例
+        similar_cases = rag_service.search_similar(message_data.content)
+        kb_context = ""
+        if similar_cases:
+            parts = []
+            for case in similar_cases:
+                parts.append(
+                    f"相似问题：{case['input']}\n参考回答：{case['output']}"
+                )
+            kb_context = (
+                "以下是从心理咨询知识库中检索到的相似案例，仅供参考，请结合用户实际情况灵活运用：\n\n"
+                + "\n\n---\n\n".join(parts)
+            )
+
         # 构建消息列表（按时间正序）
         messages_list = [
-            {"role": "system", "content": ai_service.generate_system_prompt()}
+            {"role": "system", "content": ai_service.generate_system_prompt(kb_context)}
         ]
         for msg in reversed(history_messages):
             messages_list.append({

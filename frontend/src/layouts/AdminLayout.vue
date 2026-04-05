@@ -161,12 +161,11 @@ const handleLogout = async () => {
       type: 'warning'
     })
 
-    // 清除所有用户数据
-    localStorage.removeItem('token')
-    localStorage.removeItem('adminToken')
-    localStorage.removeItem('userInfo')
-    localStorage.removeItem('adminInfo')
-    localStorage.removeItem('userRole')
+    // 清除所有用户数据（同时清除 sessionStorage 和 localStorage）
+    ;['token', 'adminToken', 'userInfo', 'adminInfo', 'userRole'].forEach(key => {
+      sessionStorage.removeItem(key)
+      localStorage.removeItem(key)
+    })
 
     ElMessage.success('已退出登录')
     router.push('/login')
@@ -176,7 +175,8 @@ const handleLogout = async () => {
 }
 
 onMounted(() => {
-  const savedUserInfo = localStorage.getItem('userInfo')
+  // 优先从 sessionStorage 读取，其次从 localStorage 读取
+  const savedUserInfo = sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo')
   if (savedUserInfo) {
     userInfo.value = JSON.parse(savedUserInfo)
   }

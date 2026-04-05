@@ -23,11 +23,12 @@ pydantic-settings==2.1.0
 # 邮件
 fastapi-mail==1.4.1
 
-# RAG 相关（后续使用）
+# RAG 相关
 langchain==0.1.0
 langchain-community==0.0.10
 openai==1.10.0
 chromadb==0.4.22
+sentence-transformers==2.6.1
 
 # 工具
 python-docx==1.1.0

@@ -73,10 +73,19 @@ class CounselorReviewResponse(BaseModel):
     gender: Optional[str] = None
     title: Optional[str] = None
     specialties: Optional[str] = None
+    consultation_types: Optional[str] = None
     experience_years: Optional[int] = None
     education: Optional[str] = None
     qualifications: Optional[str] = None
+    price_video: Optional[float] = None
+    price_voice: Optional[float] = None
+    price_offline: Optional[float] = None
     bio: Optional[str] = None
+    approach: Optional[str] = None
+    achievements: Optional[str] = None
+    application_status: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -108,22 +117,30 @@ class ArticleSaveRequest(BaseModel):
 # ==================== 用户管理相关 ====================
 
 class AdminUserResponse(BaseModel):
-    """后台用户响应"""
+    """后台用户响应（返回给前端的格式）"""
     id: int
     email: str
+    username: Optional[str] = None    # 用 email 填充
     nickname: Optional[str] = None
+    avatar: Optional[str] = None
     phone: Optional[str] = None
-    status: str
-    is_verified: bool
-    created_at: datetime
-    last_login_at: Optional[datetime] = None
+    role: Optional[str] = "user"
+    gender: Optional[str] = None
+    birthDate: Optional[str] = None   # birth_date 格式化后
+    bio: Optional[str] = None
+    banned: bool = False              # status == 'banned'
+    status: str = "active"
+    is_verified: bool = False
+    lastLoginTime: Optional[str] = None  # last_login_at 格式化后
+    createdAt: Optional[str] = None      # created_at 格式化后
 
-    # 统计信息
-    test_count: int = 0
-    chat_count: int = 0
-    order_count: int = 0
+    # 统计信息（camelCase，与前端一致）
+    testCount: int = 0
+    chatCount: int = 0
+    appointmentCount: int = 0
+    favoriteCount: int = 0
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=False)
 
 
 class BanUserRequest(BaseModel):

@@ -308,9 +308,9 @@ router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title || '心理咨询平台'
 
-  // 获取token
-  const token = localStorage.getItem('token')
-  const userRole = localStorage.getItem('userRole')
+  // 获取token（仅从 sessionStorage 读取，保证标签页隔离）
+  const token = sessionStorage.getItem('token')
+  const userRole = sessionStorage.getItem('userRole')
 
   // 需要登录的页面
   if (to.meta.requiresAuth && !token) {

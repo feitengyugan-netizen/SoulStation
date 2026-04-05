@@ -111,7 +111,7 @@ class AIService:
    - 每次回复包含1-2个要点即可"""
 
         if context:
-            return f"{base_prompt}\n\n**当前对话上下文**：\n{context}"
+            return f"{base_prompt}\n\n**【知识库参考案例】**\n{context}"
         return base_prompt
 
 

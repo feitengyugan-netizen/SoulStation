@@ -18,7 +18,6 @@ class User(Base):
     gender = Column(Enum('male', 'female', 'secret'), default='secret', comment="性别")
     birth_date = Column(Date, comment="出生日期")
     phone = Column(String(20), comment="手机号")
-    bio = Column(Text, comment="个人简介")
     status = Column(Enum('active', 'inactive', 'banned'), default='active', comment="状态")
     is_verified = Column(Boolean, default=False, comment="邮箱是否验证")
     is_deleted = Column(Boolean, default=False, comment="是否已删除")
@@ -68,11 +67,6 @@ class User(Base):
     def is_banned(self):
         """兼容前端需要的is_banned字段"""
         return self.status == "banned"
-
-    @property
-    def bio(self):
-        """兼容前端需要的bio字段"""
-        return None
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, status={self.status})>"

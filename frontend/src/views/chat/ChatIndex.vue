@@ -332,6 +332,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail } from '@/api/chat'
 import { getTags } from '@/api/chat'
+import { getToken } from '@/utils/storage'
 import VoiceRecorder from '@/components/VoiceRecorder.vue'
 import { formatRelativeTime } from '@/utils/format'
 
@@ -594,7 +595,7 @@ const sendMessage = async () => {
     scrollToBottom()
 
     // 使用流式API接收AI回复
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/${currentChatId.value}/message/stream`, {
       method: 'POST',
       headers: {
@@ -739,7 +740,7 @@ const createTag = async () => {
   }
 
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/tag`, {
       method: 'POST',
       headers: {
@@ -772,7 +773,7 @@ const deleteTag = async (tagId) => {
       type: 'warning'
     })
 
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'}/chat/tag/${tagId}`, {
       method: 'DELETE',
       headers: {

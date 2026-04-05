@@ -82,6 +82,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Microphone, Loading, InfoFilled } from '@element-plus/icons-vue'
+import { getToken } from '@/utils/storage'
 
 // Props
 const props = defineProps({
@@ -452,7 +453,7 @@ const transcribeAudio = async () => {
     console.log(`Uploading audio: format=${selectedMimeType}, size=${audioBlob.value.size} bytes, duration=${recordingDuration.value}ms`)
 
     // 获取 token
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (!token) {
       throw new Error('未登录')
     }

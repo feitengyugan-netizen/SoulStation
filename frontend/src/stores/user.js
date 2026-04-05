@@ -1,12 +1,37 @@
 // 用户状态管理
+import { getUserInfo, login, logout, register } from '@/api/auth'
 import { defineStore } from 'pinia'
-import { login, register, logout, getUserInfo } from '@/api/auth'
+
+// 仅使用 sessionStorage，实现标签页完全隔离
+const getStorage = (key, defaultValue = '') => {
+  try {
+    return sessionStorage.getItem(key) ?? defaultValue
+  } catch {
+    return defaultValue
+  }
+}
+
+const setStorage = (key, value) => {
+  try {
+    sessionStorage.setItem(key, value)
+  } catch (e) {
+    console.error('Storage error:', e)
+  }
+}
+
+const removeStorage = (key) => {
+  try {
+    sessionStorage.removeItem(key)
+  } catch (e) {
+    console.error('Storage error:', e)
+  }
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    token: localStorage.getItem('token') || '',
-    userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null'),
-    isLoggedIn: !!localStorage.getItem('token')
+    token: getStorage('token'),
+    userInfo: JSON.parse(getStorage('userInfo', 'null')),
+    isLoggedIn: !!getStorage('token')
   }),
 
   getters: {
@@ -32,9 +57,9 @@ export const useUserStore = defineStore('user', {
       this.token = token
       this.isLoggedIn = !!token
       if (token) {
-        localStorage.setItem('token', token)
+        setStorage('token', token)
       } else {
-        localStorage.removeItem('token')
+        removeStorage('token')
       }
     },
 
@@ -42,11 +67,11 @@ export const useUserStore = defineStore('user', {
     setUserInfo(userInfo) {
       this.userInfo = userInfo
       if (userInfo) {
-        localStorage.setItem('userInfo', JSON.stringify(userInfo))
-        localStorage.setItem('userRole', userInfo.role || 'user')
+        setStorage('userInfo', JSON.stringify(userInfo))
+        setStorage('userRole', userInfo.role || 'user')
       } else {
-        localStorage.removeItem('userInfo')
-        localStorage.removeItem('userRole')
+        removeStorage('userInfo')
+        removeStorage('userRole')
       }
     },
 

@@ -1,5 +1,6 @@
 // 智能问答相关API
 import request from './index'
+import { getToken } from '@/utils/storage'
 
 // 获取API基础URL
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
@@ -69,7 +70,7 @@ export function sendMessage(chatId, data) {
  * @param {Function} onError - 错误时的回调
  */
 export function sendMessageStream(chatId, data, onMessage, onComplete, onError) {
-  const token = localStorage.getItem('token')
+  const token = getToken()
 
   return fetch(`${BASE_URL}/chat/${chatId}/message/stream`, {
     method: 'POST',

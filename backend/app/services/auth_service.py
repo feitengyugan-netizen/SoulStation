@@ -276,9 +276,18 @@ class AuthService:
         AuthService.update_last_login(db, user)
 
         # 创建访问令牌
-        access_token = create_access_token(
-            data={"sub": str(user.id), "email": user.email, "role": user.role}
-        )
+        token_data = {"sub": str(user.id), "email": user.email, "role": user.role}
+        if user.role == "admin":
+            token_data["type"] = "admin"
+            # 优先使用 admins 表中的 ID 作为 sub，确保 get_current_admin 能通过 ID 直接匹配到记录
+            from app.models.admin import Admin as AdminModel
+            admin_record = db.query(AdminModel).filter(
+                AdminModel.email == user.email,
+                AdminModel.deleted_at.is_(None)
+            ).first()
+            if admin_record:
+                token_data["sub"] = str(admin_record.id)
+        access_token = create_access_token(data=token_data)
 
         # 根据角色确定跳转路径
         redirect_path = "/"
