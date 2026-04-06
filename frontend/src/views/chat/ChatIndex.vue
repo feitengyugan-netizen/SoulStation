@@ -1,6 +1,6 @@
 <template>
   <div class="chat-index">
-    <!-- 顶部导航栏 -->
+    <!-- 顶部导航栏?-->
     <div class="chat-header">
       <div class="header-left">
         <!-- 返回按钮 -->
@@ -11,7 +11,7 @@
           @click="goBack"
           class="back-button"
         />
-        <el-icon :size="24" color="#409EFF">
+        <el-icon :size="24" color="#e8845a">
           <ChatDotSquare />
         </el-icon>
         <h2>智能心理问答</h2>
@@ -29,7 +29,7 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- 功能按钮组 -->
+        <!-- 功能按钮区?-->
         <div class="header-actions">
           <el-tooltip content="标签管理" placement="bottom">
             <el-button circle :icon="PriceTag" @click="showTagManager = true" />
@@ -61,7 +61,7 @@
               </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
                 <el-icon><SwitchButton /></el-icon>
-                退出登录
+                退出登
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -80,7 +80,7 @@
           </el-button>
         </div>
 
-        <!-- 搜索框 -->
+        <!-- 搜索框?-->
         <div class="search-box">
           <el-input
             v-model="searchKeyword"
@@ -91,7 +91,7 @@
           />
         </div>
 
-        <!-- 标签筛选 -->
+        <!-- 标签筛选?-->
         <div class="tag-filter">
           <el-select
             v-model="selectedTag"
@@ -200,7 +200,7 @@
               </div>
             </div>
 
-            <!-- 加载中 -->
+            <!-- 加载中?-->
             <div v-if="loadingMessages" class="message-item assistant">
               <div class="message-bubble">
                 <div class="typing-indicator">
@@ -214,7 +214,7 @@
 
           <!-- 输入区域 -->
           <div class="chat-input-area">
-            <!-- 工具栏 -->
+            <!-- 工具栏?-->
             <div class="input-toolbar">
               <el-upload
                 :auto-upload="false"
@@ -227,7 +227,7 @@
               <VoiceRecorder @transcription-result="handleTranscriptionResult" />
             </div>
 
-            <!-- 输入框 -->
+            <!-- 输入框?-->
             <div class="input-box">
               <el-input
                 v-model="inputMessage"
@@ -260,7 +260,7 @@
       </div>
     </div>
 
-    <!-- 标签管理对话框 -->
+    <!-- 标签管理对话框?-->
     <el-dialog
       v-model="showTagManager"
       title="标签管理"
@@ -342,12 +342,12 @@ const userStore = useUserStore()
 // 用户信息
 const userInfo = computed(() => userStore.userInfo)
 
-// 加载状态
+// 加载状态?
 const loadingChats = ref(true)
 const loadingMessages = ref(false)
 const sendingMessage = ref(false)
 
-// 搜索和筛选
+// 搜索和筛选?
 const searchKeyword = ref('')
 const selectedTag = ref('')
 
@@ -366,7 +366,7 @@ const selectedFile = ref(null)
 const tags = ref([])
 const showTagManager = ref(false)
 const newTagName = ref('')
-const newTagColor = ref('#409EFF')
+const newTagColor = ref('#e8845a')
 
 // 当前对话标题
 const currentChatTitle = computed(() => {
@@ -409,7 +409,7 @@ const groupedChats = computed(() => {
   monthAgo.setDate(monthAgo.getDate() - 30)
 
   const groups = [
-    { label: '今天内', chats: [] },
+    { label: '今天', chats: [] },
     { label: '7天内', chats: [] },
     { label: '30天内', chats: [] },
     { label: '更早', chats: [] }
@@ -603,7 +603,7 @@ const sendMessage = async () => {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ content, type: 'text' }),
-      // 重要：确保流式传输不被缓冲
+      // 重要：确保流式传输不被缓存
       cache: 'no-store',
       // 某些浏览器可能需要这个
       priority: 'high'
@@ -813,7 +813,7 @@ const exportChat = () => {
   }
 
   // 导出为文本
-  let content = `对话：${currentChatTitle.value}\n`
+  let content = `对话标题：${currentChatTitle.value}\n`
   content += `导出时间：${new Date().toLocaleString()}\n`
   content += `─`.repeat(50) + '\n\n'
 
@@ -840,7 +840,7 @@ const exportChat = () => {
 const clearChat = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要清空当前对话的所有消息吗？此操作不可恢复。',
+      '确定要清空当前对话的所有消息吗？此操作不可恢复！',
       '清空对话',
       {
         confirmButtonText: '确定',
@@ -878,7 +878,7 @@ onMounted(() => {
   loadTags()
 })
 
-// 组件卸载前
+// 组件卸载时
 onBeforeUnmount(() => {
   // 清理工作
 })
@@ -891,17 +891,20 @@ onBeforeUnmount(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: $bg-color;
+  background: $bg-page;
 }
 
 .chat-header {
-  height: 60px;
-  background: $bg-white;
-  border-bottom: 1px solid $border-light;
+  height: 64px;
+  background: rgba(255, 252, 248, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid $border-lighter;
+  box-shadow: 0 2px 12px rgba(107, 82, 68, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 $spacing-lg;
+  flex-shrink: 0;
 
   .header-left {
     display: flex;
@@ -913,7 +916,9 @@ onBeforeUnmount(() => {
     }
 
     h2 {
-      font-size: $font-size-large;
+      font-size: 17px;
+      font-weight: 700;
+      color: $text-primary;
       margin: 0;
     }
   }
@@ -930,8 +935,8 @@ onBeforeUnmount(() => {
       gap: $spacing-sm;
 
       .chat-title-display {
-        font-size: $font-size-medium;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 600;
         color: $text-primary;
       }
     }
@@ -940,13 +945,23 @@ onBeforeUnmount(() => {
   .header-right {
     display: flex;
     align-items: center;
-    gap: $spacing-md;
+    gap: $spacing-sm;
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: $spacing-xs;
-      margin-right: $spacing-md;
+      gap: 4px;
+
+      .el-button.is-circle {
+        border-color: $border-base !important;
+        color: $text-regular !important;
+
+        &:hover {
+          border-color: $primary-color !important;
+          color: $primary-color !important;
+          background: $bg-subtle !important;
+        }
+      }
     }
   }
 }
@@ -957,68 +972,73 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-// 左侧边栏
+// ---- 左侧边栏 ----
 .chat-sidebar {
-  width: 280px;
+  width: 268px;
   background: $bg-white;
-  border-right: 1px solid $border-light;
+  border-right: 1px solid $border-lighter;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 
   .new-chat-btn {
-    padding: $spacing-md;
+    padding: 14px;
     border-bottom: 1px solid $border-lighter;
 
     .el-button {
       width: 100%;
+      border-radius: 12px !important;
+      background: $primary-gradient !important;
+      border: none !important;
+      color: white !important;
+      font-weight: 600;
+      height: 40px;
+      box-shadow: 0 4px 12px rgba(232, 132, 90, 0.25) !important;
     }
   }
 
-  .search-box,
-  .tag-filter {
-    padding: $spacing-sm $spacing-md;
+  .search-box, .tag-filter {
+    padding: 8px 14px;
   }
 
   .chat-list {
     flex: 1;
     overflow-y: auto;
-    padding: $spacing-sm;
+    padding: 8px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb { background: $border-base; border-radius: 4px; }
   }
 
   .time-group-header {
-    padding: $spacing-sm $spacing-md;
-    font-size: $font-size-small;
-    font-weight: 500;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
     color: $text-secondary;
-    background: $bg-color;
-    border-radius: $border-radius-sm;
-    margin: $spacing-xs 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 8px 0 4px;
   }
 
-  .chat-group {
-    &:not(:first-child) {
-      margin-top: $spacing-sm;
-    }
-  }
+  .chat-group { margin-bottom: 4px; }
 
   .chat-item {
-    padding: $spacing-md;
-    border-radius: $border-radius-md;
+    padding: 10px 12px;
+    border-radius: 12px;
     cursor: pointer;
     transition: $transition-base;
+    margin-bottom: 2px;
 
     &:hover {
-      background: $bg-color;
+      background: $bg-subtle;
     }
 
     &.active {
-      background: $primary-color;
-      color: white;
+      background: rgba(232, 132, 90, 0.1);
+      border: 1px solid rgba(232, 132, 90, 0.2);
 
-      .chat-preview,
-      .chat-time {
-        color: rgba(255, 255, 255, 0.7);
-      }
+      .chat-title { color: $primary-dark; }
+      .chat-preview { color: $primary-color; }
     }
 
     .chat-item-content {
@@ -1026,12 +1046,13 @@ onBeforeUnmount(() => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: $spacing-xs;
+        margin-bottom: 4px;
       }
 
       .chat-title {
-        font-size: $font-size-base;
-        font-weight: 500;
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-primary;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1040,7 +1061,7 @@ onBeforeUnmount(() => {
       }
 
       .chat-preview {
-        font-size: $font-size-small;
+        font-size: 12px;
         color: $text-secondary;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -1050,38 +1071,45 @@ onBeforeUnmount(() => {
 
     .more-icon {
       flex-shrink: 0;
-      margin-left: $spacing-xs;
+      margin-left: 4px;
       opacity: 0;
       transition: $transition-base;
       padding: 4px;
-      border-radius: 4px;
-      font-size: 18px;
+      border-radius: 6px;
+      font-size: 16px;
+      color: $text-secondary;
 
       &:hover {
         color: $primary-color;
-        background: rgba(0, 0, 0, 0.05);
+        background: rgba(232, 132, 90, 0.1);
       }
     }
 
-    &:hover .more-icon {
-      opacity: 1;
-    }
+    &:hover .more-icon { opacity: 1; }
   }
 }
 
-// 右侧主区域
+// ---- 右侧主区域 ----?----
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: $bg-white;
+  background: $bg-page;
+  overflow: hidden;
 }
 
 .chat-empty {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 16px;
+  color: $text-secondary;
+
+  :deep(.el-result__icon) svg { fill: $primary-lighter; }
+  :deep(.el-result__title p) { color: $text-regular; font-weight: 600; }
+  :deep(.el-result__subtitle p) { color: $text-secondary; }
 }
 
 .chat-content {
@@ -1091,28 +1119,33 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-// 消息列表
+// ---- 消息列表 ----
 .message-list {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-lg;
-  background: $bg-color;
+  padding: 24px;
+  background: $bg-page;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: $border-base; border-radius: 4px; }
 }
 
 .message-item {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 20px;
 
   &.assistant {
     display: flex;
     justify-content: flex-start;
 
     .message-bubble {
-      background: $bg-white;
+      background: white;
       color: $text-primary;
-      border-radius: $border-radius-md;
-      padding: $spacing-md $spacing-lg;
-      max-width: 70%;
-      box-shadow: $box-shadow-base;
+      border-radius: 4px 18px 18px 18px;
+      padding: 14px 18px;
+      max-width: 68%;
+      box-shadow: $box-shadow-card;
+      border: 1px solid $border-lighter;
+      line-height: 1.65;
     }
   }
 
@@ -1121,58 +1154,55 @@ onBeforeUnmount(() => {
     justify-content: flex-end;
 
     .message-bubble {
-      background: $primary-color;
+      background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%);
       color: white;
-      border-radius: $border-radius-md;
-      padding: $spacing-md $spacing-lg;
-      max-width: 70%;
+      border-radius: 18px 4px 18px 18px;
+      padding: 14px 18px;
+      max-width: 68%;
+      box-shadow: 0 4px 16px rgba(232, 132, 90, 0.3);
+      line-height: 1.65;
     }
   }
 }
 
 .message-text {
-  line-height: 1.6;
+  line-height: 1.65;
   word-break: break-word;
-  white-space: pre-wrap;
 }
 
-// 打字动画
+// ---- 打字动画 ----
 .typing-indicator {
   display: flex;
-  gap: 4px;
-  padding: $spacing-md;
+  gap: 5px;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 4px 18px 18px 18px;
+  width: fit-content;
+  border: 1px solid $border-lighter;
+  box-shadow: $box-shadow-card;
 
   span {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: $text-placeholder;
-    animation: typing 1.4s infinite;
+    background: $primary-light;
+    animation: typing 1.4s ease-in-out infinite;
 
-    &:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    &:nth-child(3) {
-      animation-delay: 0.4s;
-    }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
   }
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-  }
-  30% {
-    transform: translateY(-10px);
-  }
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-8px); opacity: 1; }
 }
 
-// 输入区域
+// ---- 输入区域 ----
 .chat-input-area {
-  background: $bg-white;
-  border-top: 1px solid $border-light;
-  padding: $spacing-md;
+  background: white;
+  border-top: 1px solid $border-lighter;
+  padding: 16px;
 }
 
 .input-toolbar {
@@ -1183,43 +1213,80 @@ onBeforeUnmount(() => {
 
 .input-box {
   display: flex;
-  gap: $spacing-sm;
+  gap: 10px;
   align-items: flex-end;
 
-  .el-textarea {
-    flex: 1;
-  }
+  .el-textarea { flex: 1; }
 
   :deep(.el-textarea__inner) {
-    border-radius: $border-radius-md;
+    border-radius: $border-radius-lg !important;
+    border: 1px solid $border-base !important;
+    background: $bg-page !important;
+    transition: $transition-base;
+
+    &:focus {
+      border-color: $primary-color !important;
+      box-shadow: 0 0 0 3px rgba(232, 132, 90, 0.12) !important;
+    }
   }
 }
 
-.file-preview {
-  margin-top: $spacing-sm;
-}
+.file-preview { margin-top: 10px; }
 
-// 响应式
+// ---- 响应式 ----?----
 @media (max-width: $breakpoint-md) {
   .chat-sidebar {
     position: absolute;
-    left: -280px;
-    height: calc(100vh - 60px);
+    left: -268px;
+    height: calc(100vh - 64px);
     z-index: 100;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
     transition: $transition-base;
 
-    &.show {
-      left: 0;
+    &.show { left: 0; }
+  }
+
+  .message-bubble { max-width: 86% !important; }
+}
+</style>
+
+<!-- 标签管理对话框样式?-->
+<style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
+.tag-manager {
+  .tag-create {
+    display: flex;
+    align-items: center;
+    padding: $spacing-md 0;
+    margin-bottom: $spacing-lg;
+    border-bottom: 1px solid $border-lighter;
+
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      font-size: $font-size-medium;
+      color: $text-secondary;
     }
   }
 
-  .message-bubble {
-    max-width: 85%;
+  .tag-list {
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      font-size: $font-size-medium;
+      color: $text-secondary;
+    }
+
+    .tag-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-sm;
+      padding: $spacing-sm 0;
+    }
   }
 }
 </style>
 
-<!-- 标签管理对话框样式 -->
+<!-- 标签管理对话框样式?-->
 <style lang="scss" scoped>
 @use '@/styles/variables.scss' as *;
 

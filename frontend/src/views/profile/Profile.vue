@@ -29,7 +29,7 @@
         <!-- 数据统计 -->
         <div class="stats-grid">
           <div class="stat-item" @click="navigateTo('/test')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f4a57a 0%, #e8845a 100%)">
               <el-icon :size="28"><DocumentCopy /></el-icon>
             </div>
             <div class="stat-content">
@@ -39,7 +39,7 @@
           </div>
 
           <div class="stat-item" @click="navigateTo('/chat')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e8c4d8 0%, #9b8bb4 100%)">
               <el-icon :size="28"><ChatDotSquare /></el-icon>
             </div>
             <div class="stat-content">
@@ -49,7 +49,7 @@
           </div>
 
           <div class="stat-item" @click="navigateTo('/counselor/orders')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%)">
               <el-icon :size="28"><Calendar /></el-icon>
             </div>
             <div class="stat-content">
@@ -59,7 +59,7 @@
           </div>
 
           <div class="stat-item" @click="navigateTo('/knowledge')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fde8d8 0%, #f4a57a 100%)">
               <el-icon :size="28"><Star /></el-icon>
             </div>
             <div class="stat-content">
@@ -79,21 +79,21 @@
         <div class="quick-access-grid">
           <div class="access-item" @click="navigateTo('/test')">
             <div class="access-icon">
-              <el-icon :size="32" color="#667eea"><DocumentCopy /></el-icon>
+              <el-icon :size="32" color="#e8845a"><DocumentCopy /></el-icon>
             </div>
             <span>我的测试</span>
           </div>
 
           <div class="access-item" @click="navigateTo('/chat')">
             <div class="access-icon">
-              <el-icon :size="32" color="#f093fb"><ChatDotSquare /></el-icon>
+              <el-icon :size="32" color="#9b8bb4"><ChatDotSquare /></el-icon>
             </div>
             <span>我的对话</span>
           </div>
 
           <div class="access-item" @click="navigateTo('/counselor/orders')">
             <div class="access-icon">
-              <el-icon :size="32" color="#4facfe"><Calendar /></el-icon>
+              <el-icon :size="32" color="#56ab91"><Calendar /></el-icon>
             </div>
             <span>我的预约</span>
           </div>
@@ -419,195 +419,141 @@ onMounted(() => {
 })
 </script>
 
+
 <style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
+@use "@/styles/variables.scss" as *;
 
 .profile-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 40px 24px;
 }
 
+// ── 顶部用户信息卡片 ──────────────────────────────────
 .profile-card {
-  margin-bottom: $spacing-lg;
+  border-radius: 24px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 24px rgba(107,82,68,0.08) !important;
+  margin-bottom: 28px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #fde8d8 0%, #fbd4c0 60%, $bg-white 100%) !important;
+
+  :deep(.el-card__body) { padding: 36px 40px; }
 }
 
 .profile-header {
   display: flex;
   align-items: center;
-  gap: $spacing-lg;
-  padding: $spacing-xl 0;
-  border-bottom: 1px solid $border-lighter;
-  margin-bottom: $spacing-xl;
-
-  .avatar-section {
-    position: relative;
-    cursor: pointer;
-
-    .edit-avatar-btn {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      opacity: 0;
-      transition: $transition-base;
-    }
-
-    &:hover .edit-avatar-btn {
-      opacity: 1;
-    }
-  }
+  gap: 28px;
+  flex-wrap: wrap;
 
   .user-info {
     flex: 1;
 
-    h2 {
-      margin: 0 0 $spacing-sm;
-      font-size: $font-size-extra-large;
-    }
-
-    .email {
-      color: $text-secondary;
-      margin-bottom: $spacing-md;
-    }
+    h2 { font-size: 24px; font-weight: 700; color: $text-primary; margin: 0 0 6px; }
+    .email { font-size: 14px; color: $text-secondary; margin-bottom: 14px; }
   }
+
+  .avatar-wrapper { position: relative; }
+
+  .edit-btn { margin-top: 12px; }
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-lg;
-}
-
-.stat-item {
+.profile-stats {
   display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-lg;
-  border: 1px solid $border-lighter;
-  border-radius: $border-radius-md;
-  cursor: pointer;
-  transition: $transition-base;
+  gap: 32px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(232,132,90,0.2);
 
-  &:hover {
-    border-color: $primary-color;
-    box-shadow: $box-shadow-base;
-  }
-
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: $border-radius-md;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-  }
-
-  .stat-content {
-    .stat-number {
-      font-size: 28px;
-      font-weight: 600;
-      color: $text-primary;
-      line-height: 1.2;
-    }
-
-    .stat-label {
-      font-size: $font-size-base;
-      color: $text-secondary;
-    }
-  }
-}
-
-.quick-access-card {
-  .quick-access-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: $spacing-md;
-  }
-
-  .access-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: $spacing-lg;
-    border: 1px solid $border-lighter;
-    border-radius: $border-radius-md;
-    cursor: pointer;
-    transition: $transition-base;
-
-    &:hover {
-      border-color: $primary-color;
-      background: rgba($primary-color, 0.05);
-    }
-
-    .access-icon {
-      margin-bottom: $spacing-sm;
-    }
-
-    span {
-      font-size: $font-size-base;
-      color: $text-primary;
-    }
-  }
-}
-
-// 头像上传
-.avatar-uploader {
-  display: flex;
-  justify-content: center;
-
-  .avatar-preview {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  .avatar-uploader-icon {
-    width: 200px;
-    height: 200px;
-    border: 2px dashed $border-light;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: $text-placeholder;
-    font-size: 48px;
-  }
-}
-
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .profile-header {
-    flex-direction: column;
+  .stat-item {
     text-align: center;
 
-    .user-info {
-      width: 100%;
-    }
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .quick-access-grid {
-    grid-template-columns: repeat(3, 1fr);
+    .value { font-size: 24px; font-weight: 700; color: $primary-color; display: block; }
+    .label { font-size: 12px; color: $text-secondary; margin-top: 2px; }
   }
 }
 
-@media (max-width: $breakpoint-sm) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+// ── 内容卡片通用 ──────────────────────────────────────
+.section-card {
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+  margin-bottom: 24px;
+
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
+    padding: 18px 24px;
   }
 
-  .quick-access-grid {
-    grid-template-columns: repeat(2, 1fr);
+  :deep(.el-card__body) { padding: 24px; }
+}
+
+// ── 测试历史 ──────────────────────────────────────────
+.history-list { display: flex; flex-direction: column; gap: 12px; }
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: $bg-page;
+  border-radius: 12px;
+  border: 1px solid $border-lighter;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(232,132,90,0.06);
+    border-color: rgba(232,132,90,0.25);
+    transform: translateX(4px);
   }
+
+  .item-info {
+    h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: $text-primary; }
+    .meta { font-size: 12px; color: $text-secondary; display: flex; gap: 12px; align-items: center; }
+  }
+}
+
+// ── 咨询记录 ──────────────────────────────────────────
+.consultation-list { display: flex; flex-direction: column; gap: 12px; }
+
+.consultation-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: $bg-page;
+  border-radius: 12px;
+  border: 1px solid $border-lighter;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(232,132,90,0.06);
+    border-color: rgba(232,132,90,0.2);
+  }
+
+  .counselor-info {
+    flex: 1;
+    h4 { margin: 0 0 4px; font-weight: 600; color: $text-primary; font-size: 14px; }
+    .meta { font-size: 12px; color: $text-secondary; }
+  }
+}
+
+// ── 响应式 ──────────────────────────────────────────
+@media (max-width: $breakpoint-md) {
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-stats { justify-content: center; gap: 24px; }
 }
 </style>

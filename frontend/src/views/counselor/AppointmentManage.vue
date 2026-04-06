@@ -14,12 +14,13 @@
       <div v-loading="loading" class="order-list">
         <el-card v-for="order in orders" :key="order.id" class="order-card">
           <div class="order-header">
-            <span class="order-date">{{ order.date }} {{ order.timeSlot }}</span>
-            <el-tag :type="getStatusType(order.status)">{{ order.status }}</el-tag>
+            <span class="order-date">{{ formatDate(order.appointment_date) }}</span>
+            <el-tag :type="getStatusType(order.status)">{{ getStatusLabel(order.status) }}</el-tag>
           </div>
           <div class="order-body">
-            <p><strong>咨询师:</strong> {{ order.counselorName }}</p>
-            <p><strong>方式:</strong> {{ order.type }}</p>
+            <p><strong>预约编号:</strong> {{ order.appointment_no }}</p>
+            <p><strong>咨询师:</strong> {{ order.counselor?.name || '未知' }}</p>
+            <p><strong>方式:</strong> {{ getTypeLabel(order.consultation_type) }}</p>
             <p><strong>费用:</strong> ¥{{ order.price }}</p>
           </div>
           <div class="order-actions">
@@ -50,15 +51,31 @@ const loadOrders = async () => {
   try {
     loading.value = true
     const res = await getUserAppointments({ status: activeTab.value === 'all' ? '' : activeTab.value })
-    orders.value = res.data.list || []
+    orders.value = res.data.items || []
   } finally {
     loading.value = false
   }
 }
 
 const getStatusType = (status) => {
-  const types = { pending: 'warning', confirmed: 'primary', completed: 'success', cancelled: 'info' }
+  const types = { pending: 'warning', confirmed: 'primary', completed: 'success', cancelled: 'info', in_progress: 'primary', refunded: 'info' }
   return types[status] || ''
+}
+
+const getStatusLabel = (status) => {
+  const labels = { pending: '待确认', confirmed: '已确认', in_progress: '进行中', completed: '已完成', cancelled: '已取消', refunded: '已退款' }
+  return labels[status] || status
+}
+
+const getTypeLabel = (type) => {
+  const labels = { video: '视频咨询', voice: '语音咨询', offline: '线下咨询' }
+  return labels[type] || type
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 const cancelOrder = async (id) => {

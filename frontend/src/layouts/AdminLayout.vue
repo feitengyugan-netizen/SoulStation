@@ -10,9 +10,9 @@
       <el-menu
         :default-active="activeMenu"
         class="sidebar-menu"
-        background-color="#1e3a8a"
-        text-color="#ffffff"
-        active-text-color="#ffffff"
+        background-color="#2d1f17"
+        text-color="#e8d5c5"
+        active-text-color="#f4c49e"
         :collapse="isCollapse"
       >
         <el-menu-item index="/admin/dashboard" @click="navigateTo('/admin/dashboard')">
@@ -183,84 +183,91 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.admin-layout {
+
+<style lang="scss" scoped>
+@use "@/styles/variables.scss" as *;
+
+/* 整体布局 */
+:deep(.el-container) {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-/* 左侧导航栏 */
+/* 侧边导航 */
 .sidebar {
   width: 220px;
-  background-color: #1e3a8a;
+  background-color: #2d1f17;
   display: flex;
   flex-direction: column;
   transition: width 0.3s;
   flex-shrink: 0;
 }
 
-.sidebar:has(.el-menu--collapse) {
-  width: 64px;
-}
+.sidebar:has(.el-menu--collapse) { width: 64px; }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 20px;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f4c49e;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .logo-text {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
 }
 
 .sidebar-menu {
   flex: 1;
-  border: none;
+  border: none !important;
   overflow-y: auto;
+  background-color: #2d1f17 !important;
+
+  &:not(.el-menu--collapse) { width: 220px; }
 }
 
-.sidebar-menu:not(.el-menu--collapse) {
-  width: 220px;
+:deep(.sidebar-menu .el-menu-item) {
+  background-color: transparent !important;
+  color: rgba(255,255,255,0.75) !important;
+  border-radius: 10px;
+  margin: 2px 8px;
 }
 
-.sidebar-menu .el-menu-item {
-  background-color: #1e3a8a !important;
+:deep(.sidebar-menu .el-menu-item:hover) {
+  background-color: rgba(232,132,90,0.15) !important;
+  color: #f4a57a !important;
 }
 
-.sidebar-menu .el-menu-item:hover {
-  background-color: rgba(59, 130, 246, 0.3) !important;
+:deep(.sidebar-menu .el-menu-item.is-active) {
+  background-color: rgba(232,132,90,0.25) !important;
+  color: #f4a57a !important;
 }
 
-.sidebar-menu .el-menu-item.is-active {
-  background-color: #3b82f6 !important;
-}
-
-/* 右侧内容区 */
+/* 右侧主内容区 */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: #f5f5f5;
+  background-color: $bg-page;
 }
 
 /* 顶部导航栏 */
 .top-navbar {
   height: 60px;
-  background-color: #fff;
+  background-color: $bg-white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(107,82,68,0.08);
   flex-shrink: 0;
+  border-bottom: 1px solid $border-lighter;
 }
 
 .navbar-left {
@@ -272,10 +279,8 @@ onMounted(() => {
 .collapse-icon {
   cursor: pointer;
   transition: color 0.3s;
-}
-
-.collapse-icon:hover {
-  color: #3b82f6;
+  color: $text-secondary;
+  &:hover { color: $primary-color; }
 }
 
 .navbar-right {
@@ -284,42 +289,21 @@ onMounted(() => {
   gap: 16px;
 }
 
-.welcome-text {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.avatar-container {
-  cursor: pointer;
-  transition: opacity 0.3s;
-}
-
-.avatar-container:hover {
-  opacity: 0.8;
-}
-
-/* 主内容区域 */
+/* 内容区 */
 .content-area {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: $border-base;
+    border-radius: 3px;
+    &:hover { background: $border-lighter; }
+  }
 }
 
-/* 滚动条样式 */
-.content-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content-area::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.content-area::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.content-area::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
+/* 面包屑 */
+.breadcrumb { margin-bottom: 20px; }
 </style>

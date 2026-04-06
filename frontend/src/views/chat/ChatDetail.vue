@@ -342,133 +342,118 @@ onMounted(() => {
 })
 </script>
 
+
 <style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
+@use "@/styles/variables.scss" as *;
 
 .chat-detail {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 40px 24px;
 }
 
 .detail-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 24px;
 
   h2 {
     flex: 1;
     margin: 0;
+    font-weight: 700;
+    color: $text-primary;
   }
 }
 
 .chat-info-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__body) { padding: 8px 24px; }
 
   .info-row {
     display: flex;
     align-items: center;
-    padding: $spacing-md 0;
+    padding: 14px 0;
     border-bottom: 1px solid $border-lighter;
 
-    &:last-child {
-      border-bottom: none;
-    }
+    &:last-child { border-bottom: none; }
 
-    .label {
-      font-weight: 500;
-      color: $text-primary;
-      min-width: 100px;
-    }
-
-    .value {
-      color: $text-regular;
-      flex: 1;
-    }
-
-    .tags {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: $spacing-sm;
-      flex-wrap: wrap;
-    }
+    .label { font-weight: 600; color: $text-regular; min-width: 100px; font-size: 14px; }
+    .value { color: $text-regular; flex: 1; font-size: 14px; }
+    .tags { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   }
 }
 
 .messages-card {
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
   .message-list {
     max-height: 600px;
     overflow-y: auto;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .message-item {
-    margin-bottom: $spacing-lg;
-
-    &.assistant {
-      .message-content {
-        display: flex;
-        justify-content: flex-start;
-      }
+    &.assistant .message-content {
+      display: flex;
+      justify-content: flex-start;
 
       .message-bubble {
-        background: $bg-white;
+        background: $bg-page;
         color: $text-primary;
-        border-radius: $border-radius-md;
-        padding: $spacing-md $spacing-lg;
-        max-width: 80%;
-        box-shadow: $box-shadow-base;
+        border-radius: 4px 18px 18px 18px;
+        border: 1px solid $border-lighter;
       }
     }
 
-    &.user {
-      .message-content {
-        display: flex;
-        justify-content: flex-end;
-      }
+    &.user .message-content {
+      display: flex;
+      justify-content: flex-end;
 
       .message-bubble {
-        background: $primary-color;
+        background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%);
         color: white;
-        border-radius: $border-radius-md;
-        padding: $spacing-md $spacing-lg;
-        max-width: 80%;
+        border-radius: 18px 4px 18px 18px;
       }
     }
-  }
-
-  .message-text {
-    line-height: 1.6;
-    word-break: break-word;
-  }
-
-  .message-time {
-    font-size: $font-size-extra-small;
-    color: $text-placeholder;
-    margin-top: $spacing-xs;
-    display: block;
-    opacity: 0.8;
-  }
-
-  .message-user .message-time {
-    color: rgba(255, 255, 255, 0.8);
-  }
-}
-
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .container {
-    padding: $spacing-md;
   }
 
   .message-bubble {
-    max-width: 90%;
+    padding: 12px 16px;
+    max-width: 80%;
+    word-break: break-word;
+    box-shadow: 0 2px 8px rgba(107,82,68,0.06);
   }
+
+  .message-text { line-height: 1.7; }
+
+  .message-time {
+    font-size: 11px;
+    color: $text-secondary;
+    margin-top: 4px;
+    display: block;
+
+    &.user-time { text-align: right; color: rgba(255,255,255,0.75); }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .container { padding: 16px; }
+  .message-bubble { max-width: 90%; }
 }
 </style>

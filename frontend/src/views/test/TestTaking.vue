@@ -413,20 +413,21 @@ onBeforeUnmount(() => {
 
 .test-taking {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 36px $spacing-lg;
 }
 
 .taking-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 24px;
 
   .test-info {
     flex: 1;
@@ -436,74 +437,97 @@ onBeforeUnmount(() => {
 
     h2 {
       margin: 0;
+      color: $text-primary;
+      font-weight: 700;
     }
 
     .timer {
       display: flex;
       align-items: center;
-      gap: $spacing-sm;
+      gap: 8px;
       font-size: $font-size-large;
-      font-weight: 600;
+      font-weight: 700;
       color: $primary-color;
+      background: rgba(232,132,90,0.1);
+      padding: 6px 16px;
+      border-radius: 999px;
     }
   }
 }
 
 .progress-bar {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+
+  :deep(.el-progress-bar__outer) {
+    background: $border-lighter;
+    border-radius: 999px;
+  }
+
+  :deep(.el-progress-bar__inner) {
+    background: $primary-gradient;
+    border-radius: 999px;
+  }
 }
 
 .question-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__body) {
+    padding: 32px;
+  }
 }
 
 .question-content {
   .question-header {
-    margin-bottom: $spacing-xl;
+    margin-bottom: 28px;
 
     .question-number {
-      font-size: $font-size-small;
+      font-size: 13px;
       color: $text-secondary;
-      margin-bottom: $spacing-sm;
+      margin-bottom: 10px;
+      font-weight: 500;
     }
 
     .question-text {
       font-size: $font-size-extra-large;
-      font-weight: 500;
-      line-height: 1.6;
+      font-weight: 600;
+      line-height: 1.65;
       color: $text-primary;
     }
   }
 
   .options-list {
-    margin-bottom: $spacing-xl;
+    margin-bottom: 28px;
   }
 
   .option-item {
     display: flex;
     align-items: center;
-    padding: $spacing-md;
-    margin-bottom: $spacing-md;
-    border: 2px solid $border-light;
-    border-radius: $border-radius-md;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    border: 2px solid $border-lighter;
+    border-radius: 14px;
     cursor: pointer;
-    transition: $transition-base;
+    transition: all 0.2s ease;
+    background: $bg-page;
 
     &:hover {
-      border-color: $primary-color;
-      background: rgba($primary-color, 0.05);
+      border-color: rgba(232,132,90,0.4);
+      background: rgba(232,132,90,0.04);
     }
 
     &.selected {
       border-color: $primary-color;
-      background: rgba($primary-color, 0.1);
+      background: rgba(232,132,90,0.08);
     }
 
     .option-radio {
       flex-shrink: 0;
-      margin-right: $spacing-md;
+      margin-right: 14px;
 
-      // 隐藏radio中显示的数字
       :deep(.el-radio__label) {
         display: none;
       }
@@ -513,22 +537,30 @@ onBeforeUnmount(() => {
       flex: 1;
       font-size: $font-size-base;
       color: $text-primary;
+      line-height: 1.5;
     }
   }
 
   .action-buttons {
     display: flex;
     justify-content: space-between;
-    gap: $spacing-md;
+    gap: 16px;
   }
 }
 
 .answer-card {
+  border-radius: 16px !important;
+  border: 1px solid $border-lighter !important;
+
+  :deep(.el-card__body) {
+    padding: 20px 24px;
+  }
+
   .answer-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-    gap: $spacing-sm;
-    margin-bottom: $spacing-md;
+    gap: 8px;
+    margin-bottom: 14px;
   }
 
   .answer-item {
@@ -537,65 +569,30 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid $border-light;
-    border-radius: $border-radius-md;
-    cursor: pointer;
-    transition: $transition-base;
+    border: 2px solid $border-lighter;
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: 500;
-
-    &:hover {
-      border-color: $primary-color;
-    }
+    color: $text-secondary;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
     &.answered {
-      background: $success-color;
-      color: white;
-      border-color: $success-color;
+      background: rgba(232,132,90,0.1);
+      border-color: $primary-color;
+      color: $primary-color;
     }
 
     &.current {
-      border-color: $primary-color;
-      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      background: $primary-gradient;
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(200,110,60,0.3);
     }
 
-    &.skipped {
-      background: $warning-color;
-      color: white;
-      border-color: $warning-color;
-    }
-  }
-
-  .answer-legend {
-    display: flex;
-    justify-content: center;
-    gap: $spacing-lg;
-    padding-top: $spacing-md;
-    border-top: 1px solid $border-lighter;
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: $spacing-sm;
-      font-size: $font-size-small;
-
-      .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-
-        &.answered {
-          background: $success-color;
-        }
-
-        &.current {
-          background: transparent;
-          border: 2px solid $primary-color;
-        }
-
-        &.skipped {
-          background: $warning-color;
-        }
-      }
+    &:hover:not(.current) {
+      border-color: rgba(232,132,90,0.5);
+      background: rgba(232,132,90,0.06);
     }
   }
 }
@@ -606,7 +603,6 @@ onBeforeUnmount(() => {
   margin-top: $spacing-md;
 }
 
-// 响应式
 @media (max-width: $breakpoint-md) {
   .action-buttons {
     flex-direction: column !important;

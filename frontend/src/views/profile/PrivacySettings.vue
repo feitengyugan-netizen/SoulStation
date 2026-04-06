@@ -335,136 +335,86 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
 
-.privacy-settings {
+<style lang="scss" scoped>
+@use "@/styles/variables.scss" as *;
+
+.privacy-settings-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 40px 24px;
 }
 
 .page-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 28px;
 
-  h2 {
-    flex: 1;
-    margin: 0;
-  }
+  h2 { margin: 0; font-size: 24px; font-weight: 700; color: $text-primary; }
 }
 
 .settings-card {
-  .setting-section {
-    margin-bottom: $spacing-xl;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+  margin-bottom: 20px;
 
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    h3 {
-      display: flex;
-      align-items: center;
-      gap: $spacing-sm;
-      font-size: $font-size-large;
-      margin-bottom: $spacing-xs;
-    }
-
-    .section-desc {
-      color: $text-secondary;
-      margin-bottom: $spacing-lg;
-    }
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
+    padding: 18px 24px;
   }
 
-  .setting-list {
-    .setting-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: $spacing-md 0;
-      border-bottom: 1px solid $border-lighter;
+  :deep(.el-card__body) { padding: 28px 24px; }
+}
 
-      &:last-child {
-        border-bottom: none;
-      }
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid $border-lighter;
 
-      .setting-info {
-        flex: 1;
-        padding-right: $spacing-lg;
+  &:last-child { border-bottom: none; }
 
-        .setting-label {
-          display: block;
-          font-weight: 500;
-          margin-bottom: $spacing-xs;
-        }
+  .setting-info {
+    flex: 1;
 
-        .setting-desc {
-          display: block;
-          font-size: $font-size-small;
-          color: $text-secondary;
-        }
-      }
-    }
+    .setting-label { font-weight: 500; color: $text-primary; margin-bottom: 4px; font-size: 15px; }
+    .setting-desc { font-size: 13px; color: $text-secondary; }
   }
+}
 
-  .action-list {
-    .action-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: $spacing-md;
-      border: 1px solid $border-lighter;
-      border-radius: $border-radius-md;
-      margin-bottom: $spacing-md;
+.danger-zone {
+  border-color: rgba(230, 80, 60, 0.2) !important;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+  .danger-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid $border-lighter;
 
-      .action-info {
-        flex: 1;
+    &:last-child { border-bottom: none; }
 
-        .action-label {
-          display: block;
-          font-weight: 500;
-          margin-bottom: $spacing-xs;
-        }
-
-        .action-desc {
-          display: block;
-          font-size: $font-size-small;
-          color: $text-secondary;
-        }
-      }
-    }
-  }
-
-  .save-section {
-    margin-top: $spacing-xl;
-    padding-top: $spacing-xl;
-    border-top: 1px solid $border-light;
-    text-align: center;
-
-    .el-button {
-      min-width: 200px;
+    .item-info {
+      .item-label { font-weight: 500; color: #c0392b; margin-bottom: 4px; }
+      .item-desc { font-size: 13px; color: $text-secondary; }
     }
   }
 }
 
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .setting-item,
-  .action-item {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: $spacing-md;
-  }
+.save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 </style>

@@ -55,18 +55,101 @@ const goToDetail = (id) => router.push(`/knowledge/${id}`)
 onMounted(() => loadArticles())
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @use '@/styles/variables.scss' as *;
-.knowledge-list-page { min-height: 100vh; background: $bg-color; }
-.container { max-width: 1200px; margin: 0 auto; padding: $spacing-lg; }
-.knowledge-list-page h1 { text-align: center; font-size: 36px; margin-bottom: $spacing-xl; }
-.filter-card { margin-bottom: $spacing-lg; padding: $spacing-lg; display: flex; gap: $spacing-md; }
-.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: $spacing-lg; }
-.article-card { cursor: pointer; transition: $transition-base; }
-.article-card:hover { transform: translateY(-4px); }
-.article-card .cover { width: 100%; height: 180px; object-fit: cover; }
-.article-card .content { padding: $spacing-md; }
-.article-card h3 { margin: $spacing-sm 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.summary { color: $text-secondary; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; height: 44px; }
-.meta { display: flex; gap: $spacing-md; color: $text-secondary; font-size: $font-size-small; }
+
+.knowledge-list-page {
+  min-height: 100vh;
+  background: $bg-page;
+  padding-top: $header-height;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px $spacing-lg 40px;
+}
+
+.knowledge-list-page h1 {
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 40px;
+}
+
+.filter-card {
+  margin-bottom: 32px;
+  border-radius: 16px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+
+  :deep(.el-card__body) {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    flex-wrap: wrap;
+  }
+}
+
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.article-card {
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(107,82,68,0.14) !important;
+  }
+
+  :deep(.el-card__body) {
+    padding: 0;
+  }
+
+  .cover {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .content {
+    padding: 18px 20px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-primary;
+      margin: 10px 0 8px;
+      line-height: 1.4;
+    }
+
+    .summary {
+      font-size: 13px;
+      color: $text-secondary;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      margin: 0 0 14px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 14px;
+      font-size: 13px;
+      color: $text-secondary;
+    }
+  }
+}
 </style>

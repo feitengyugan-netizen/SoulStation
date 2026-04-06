@@ -283,74 +283,66 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
 
-.profile-edit {
+<style lang="scss" scoped>
+@use "@/styles/variables.scss" as *;
+
+.profile-edit-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 700px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 40px 24px;
 }
 
 .page-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 28px;
 
-  h2 {
-    flex: 1;
-    margin: 0;
-  }
+  h2 { margin: 0; font-size: 24px; font-weight: 700; color: $text-primary; }
 }
 
-.form-card {
-  margin-bottom: $spacing-lg;
+.edit-card {
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__body) { padding: 36px 40px; }
 }
 
-.profile-form {
-  .avatar-upload {
-    display: flex;
-    align-items: center;
-    gap: $spacing-lg;
-
-    .avatar-uploader {
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-sm;
-    }
-
-    .upload-tip {
-      font-size: $font-size-small;
-      color: $text-secondary;
-    }
-  }
-
-  .form-tip {
-    font-size: $font-size-small;
-    color: $text-secondary;
-    margin-top: $spacing-xs;
-  }
-
-  :deep(.el-form-item__content) {
-    max-width: 500px;
-  }
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 12px;
 }
 
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .avatar-upload {
-    flex-direction: column !important;
-    align-items: flex-start;
-  }
+.avatar-tip { font-size: 13px; color: $text-secondary; }
 
-  :deep(.el-form-item__content) {
-    max-width: 100% !important;
-  }
+.form-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 28px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid $border-lighter;
+
+  &:first-of-type { margin-top: 0; }
 }
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  justify-content: flex-end;
+}
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 </style>

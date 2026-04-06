@@ -11,7 +11,7 @@
 
       <!-- 标题 -->
       <div class="header">
-        <el-icon :size="48" color="#409EFF">
+        <el-icon :size="48" color="#e8845a">
           <Lock />
         </el-icon>
         <h1 class="title">重置密码</h1>
@@ -330,22 +330,46 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
 .forgot-password-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(160deg, #fde8d8 0%, #fbd4c0 45%, #e8c4d8 100%);
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -60px;
+    width: 250px; height: 250px;
+    background: rgba(155,139,180,0.15);
+    border-radius: 50%;
+  }
 }
 
 .forgot-password-box {
   width: 100%;
   max-width: 480px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: $bg-white;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(61,43,31,0.15);
   padding: 40px;
+  position: relative;
+  z-index: 1;
 }
 
 .back-button {
@@ -358,19 +382,34 @@ onBeforeUnmount(() => {
 
   .title {
     font-size: 26px;
-    font-weight: 600;
-    color: #303133;
+    font-weight: 700;
+    color: $text-primary;
     margin: 16px 0 8px;
   }
 
   .subtitle {
     font-size: 14px;
-    color: #909399;
+    color: $text-secondary;
   }
 }
 
 .steps {
   margin-bottom: 32px;
+
+  :deep(.el-step__head.is-finish .el-step__icon) {
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+
+  :deep(.el-step__head.is-process .el-step__icon) {
+    background: $primary-color;
+    border-color: $primary-color;
+  }
+
+  :deep(.el-step__title.is-finish),
+  :deep(.el-step__title.is-process) {
+    color: $primary-color;
+  }
 }
 
 .step-content {
@@ -414,7 +453,6 @@ onBeforeUnmount(() => {
   }
 }
 
-// 响应式
 @media (max-width: 768px) {
   .forgot-password-box {
     padding: 32px 24px;
@@ -433,3 +471,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

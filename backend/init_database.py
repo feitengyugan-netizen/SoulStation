@@ -12,8 +12,70 @@ from app.core.database import engine, Base, SessionLocal
 from app.core.security import get_password_hash
 from passlib.context import CryptContext
 from datetime import datetime
+from sqlalchemy import inspect, text
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def unify_appointments_schema():
+    """统一 appointments 表结构到 appointment_no 规范"""
+    print("\n" + "="*60)
+    print("正在统一 appointments 表结构...")
+    print("="*60)
+
+    inspector = inspect(engine)
+    if not inspector.has_table("appointments"):
+        print("  appointments 表不存在，跳过结构统一")
+        return True
+
+    conn = engine.connect()
+    trans = conn.begin()
+    try:
+        columns = {col["name"]: col for col in inspector.get_columns("appointments")}
+        indexes = {idx["name"] for idx in inspector.get_indexes("appointments")}
+
+        has_order_no = "order_no" in columns
+        has_appointment_no = "appointment_no" in columns
+
+        if has_order_no and not has_appointment_no:
+            conn.execute(text("""
+                ALTER TABLE appointments
+                ADD COLUMN appointment_no VARCHAR(50) NULL COMMENT '预约编号' AFTER id
+            """))
+            print("  [OK] 已添加 appointment_no 字段")
+
+        if has_order_no:
+            conn.execute(text("""
+                UPDATE appointments
+                SET appointment_no = order_no
+                WHERE (appointment_no IS NULL OR appointment_no = '')
+                  AND order_no IS NOT NULL
+            """))
+            print("  [OK] 已将历史 order_no 回填到 appointment_no")
+
+            order_no_col = columns.get("order_no")
+            if order_no_col and not order_no_col.get("nullable", True):
+                conn.execute(text("""
+                    ALTER TABLE appointments
+                    MODIFY COLUMN order_no VARCHAR(50) NULL COMMENT '旧订单号（兼容字段）'
+                """))
+                print("  [OK] 已放宽 order_no 为可空兼容字段")
+
+        if "appointment_no" not in indexes:
+            conn.execute(text("CREATE INDEX idx_appointment_no ON appointments(appointment_no)"))
+            print("  [OK] 已创建 appointment_no 索引")
+
+        trans.commit()
+        print("[OK] appointments 表结构统一完成（标准字段: appointment_no）")
+        return True
+    except Exception as e:
+        trans.rollback()
+        print(f"[ERROR] appointments 表结构统一失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    finally:
+        conn.close()
 
 
 def create_all_tables():
@@ -26,7 +88,7 @@ def create_all_tables():
         # 创建所有表
         Base.metadata.create_all(bind=engine)
 
-        print("✓ 数据库表创建完成")
+        print("[OK] 数据库表创建完成")
         print("\n已创建的表：")
         print("  - users (用户表)")
         print("  - admins (管理员表)")
@@ -48,7 +110,7 @@ def create_all_tables():
         print("  - knowledge_likes (知识点赞表)")
         return True
     except Exception as e:
-        print(f"✗ 创建表失败: {e}")
+        print(f"[ERROR] 创建表失败: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -82,14 +144,14 @@ def create_test_user():
         db.add(test_user)
         db.commit()
 
-        print("✓ 测试用户（咨询师）创建成功")
+        print("[OK] 测试用户（咨询师）创建成功")
         print("\n测试咨询师登录信息:")
         print("  邮箱: test@example.com")
         print("  密码: 123456")
         print("  角色: 咨询师")
         return True
     except Exception as e:
-        print(f"✗ 创建测试用户失败: {e}")
+        print(f"[ERROR] 创建测试用户失败: {e}")
         db.rollback()
         return False
     finally:
@@ -125,15 +187,15 @@ def create_admin_user():
         db.add(default_admin)
         db.commit()
 
-        print("✓ 管理员账号创建成功")
+        print("[OK] 管理员账号创建成功")
         print("\n管理员登录信息:")
         print("  用户名: admin")
         print("  密码: admin123")
         print("  角色: super_admin")
-        print("\n⚠️  重要提示：请在首次登录后修改默认密码！")
+        print("\n[WARN] 重要提示：请在首次登录后修改默认密码！")
         return True
     except Exception as e:
-        print(f"✗ 创建管理员失败: {e}")
+        print(f"[ERROR] 创建管理员失败: {e}")
         db.rollback()
         return False
     finally:
@@ -236,10 +298,10 @@ def create_test_counselors():
             db.add(counselor)
 
         db.commit()
-        print(f"✓ 成功创建 {len(counselors)} 位测试咨询师")
+        print(f"[OK] 成功创建 {len(counselors)} 位测试咨询师")
         return True
     except Exception as e:
-        print(f"✗ 创建咨询师数据失败: {e}")
+        print(f"[ERROR] 创建咨询师数据失败: {e}")
         db.rollback()
         return False
     finally:
@@ -318,10 +380,10 @@ def create_test_knowledge():
             db.add(article)
 
         db.commit()
-        print(f"✓ 成功创建 {len(articles)} 篇测试知识文章")
+        print(f"[OK] 成功创建 {len(articles)} 篇测试知识文章")
         return True
     except Exception as e:
-        print(f"✗ 创建知识数据失败: {e}")
+        print(f"[ERROR] 创建知识数据失败: {e}")
         db.rollback()
         return False
     finally:
@@ -347,30 +409,38 @@ def init_psychological_tests():
 
         db = SessionLocal()
 
-        # 检查是否已有数据
-        existing = db.query(PsychologicalTest).count()
-        if existing >= 9:
-            print(f"  数据库中已有 {existing} 套测试，跳过初始化")
+        init_map = {
+            "SAS20": ("焦虑自评量表 (SAS-20)", init_sas_test),
+            "SDS20": ("抑郁自评量表 (SDS-20)", init_sds_test),
+            "BIG5_20": ("大五人格简版量表 (BIG5-20)", init_big5_test),
+            "STRESS20": ("工作生活压力量表 (STRESS-20)", init_stress_test),
+            "SES10": ("自尊量表 (SES-10)", init_ses_test),
+            "LSAS20": ("社交焦虑量表 (LSAS-20)", init_lsas_test),
+            "ES15": ("情绪稳定性量表 (ES-15)", init_emotional_stability_test),
+            "MBI15": ("职业倦怠量表 (MBI-15)", init_burnout_test),
+            "PSQI19": ("匹茨堡睡眠质量指数 (PSQI-19)", init_sleep_test),
+        }
+
+        existing_codes = {
+            row[0] for row in db.query(PsychologicalTest.test_code).all()
+            if row[0]
+        }
+
+        missing_codes = [code for code in init_map if code not in existing_codes]
+        if not missing_codes:
+            print(f"  数据库中已有 {len(existing_codes)} 套测试，跳过初始化")
             db.close()
             return True
 
-        # 初始化基础测试（4套）
-        init_sas_test(db)
-        init_sds_test(db)
-        init_big5_test(db)
-        init_stress_test(db)
+        for code in missing_codes:
+            title, init_func = init_map[code]
+            print(f"  -> 初始化 {title}")
+            init_func(db)
+            db.commit()
 
-        # 初始化扩展测试（5套）
-        init_ses_test(db)
-        init_lsas_test(db)
-        init_emotional_stability_test(db)
-        init_burnout_test(db)
-        init_sleep_test(db)
-
-        db.commit()
         db.close()
 
-        print("✓ 心理测试数据初始化完成（9套，共159题）")
+        print(f"[OK] 心理测试数据初始化完成（新增 {len(missing_codes)} 套）")
         print("\n可用测试列表：")
         print("  1. 焦虑自评量表 (SAS-20)")
         print("  2. 抑郁自评量表 (SDS-20)")
@@ -383,7 +453,7 @@ def init_psychological_tests():
         print("  9. 匹茨堡睡眠质量指数 (PSQI-19)")
         return True
     except Exception as e:
-        print(f"✗ 心理测试数据初始化失败: {e}")
+        print(f"[ERROR] 心理测试数据初始化失败: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -392,7 +462,7 @@ def init_psychological_tests():
 def print_summary():
     """打印初始化总结"""
     print("\n" + "="*60)
-    print("🎉 数据库初始化完成！")
+    print("数据库初始化完成！")
     print("="*60)
 
     print("\n后续步骤：")
@@ -410,19 +480,19 @@ def print_summary():
 
 def main():
     """主函数"""
-    print("""
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║           SoulStation 数据库初始化工具                        ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-    """)
+    print("=" * 62)
+    print("SoulStation 数据库初始化工具")
+    print("=" * 62)
 
     success = True
 
     # 创建所有表
     if not create_all_tables():
         return False
+
+    # 统一历史库结构（关键兼容修复）
+    if not unify_appointments_schema():
+        success = False
 
     # 创建测试用户
     if not create_test_user():
@@ -447,7 +517,7 @@ def main():
     if success:
         print_summary()
     else:
-        print("\n⚠️  部分数据初始化失败，请查看上方错误信息")
+        print("\n[WARN] 部分数据初始化失败，请查看上方错误信息")
 
     return success
 

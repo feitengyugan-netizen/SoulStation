@@ -22,7 +22,7 @@
       <div class="overview-grid">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f4a57a 0%, #e8845a 100%)">
               <el-icon :size="32"><DocumentCopy /></el-icon>
             </div>
             <div class="stat-info">
@@ -34,7 +34,7 @@
 
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e8c4d8 0%, #9b8bb4 100%)">
               <el-icon :size="32"><ChatDotSquare /></el-icon>
             </div>
             <div class="stat-info">
@@ -46,7 +46,7 @@
 
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%)">
               <el-icon :size="32"><Calendar /></el-icon>
             </div>
             <div class="stat-info">
@@ -58,7 +58,7 @@
 
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fde8d8 0%, #f4a57a 100%)">
               <el-icon :size="32"><Star /></el-icon>
             </div>
             <div class="stat-info">
@@ -237,16 +237,13 @@ const renderActivityChart = (data) => {
         data: activities,
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
-            { offset: 1, color: 'rgba(64, 158, 255, 0.05)' }
+            { offset: 0, color: 'rgba(232, 132, 90, 0.3)' },
+            { offset: 1, color: 'rgba(232, 132, 90, 0.03)' }
           ])
         },
         lineStyle: {
           width: 3,
-          color: '#409EFF'
-        },
-        itemStyle: {
-          color: '#409EFF',
+          color: '#e8845a',
           borderWidth: 2,
           borderColor: '#fff'
         }
@@ -412,123 +409,94 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
 
-.data-statistics {
+<style lang="scss" scoped>
+@use "@/styles/variables.scss" as *;
+
+.data-statistics-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 40px 24px;
 }
 
 .page-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 32px;
 
-  h2 {
-    flex: 1;
-    margin: 0;
-  }
+  h2 { margin: 0; font-size: 24px; font-weight: 700; color: $text-primary; }
 }
 
-.overview-grid {
+// ── 汇总卡片行 ──────────────────────────────────────
+.stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: $spacing-lg;
-  margin-bottom: $spacing-lg;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
-  :deep(.el-card__body) {
-    padding: $spacing-lg;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+  text-align: center;
+
+  :deep(.el-card__body) { padding: 28px 20px; }
+
+  .stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    color: $primary-color;
+    display: block;
+    margin-bottom: 6px;
   }
+
+  .stat-label { font-size: 13px; color: $text-secondary; }
 }
 
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: $border-radius-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-  }
-
-  .stat-info {
-    .stat-number {
-      font-size: 28px;
-      font-weight: 600;
-      color: $text-primary;
-      line-height: 1.2;
-    }
-
-    .stat-label {
-      font-size: $font-size-base;
-      color: $text-secondary;
-    }
-  }
-}
-
+// ── 图表卡片 ──────────────────────────────────────────
 .chart-card {
-  margin-bottom: $spacing-lg;
-}
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+  margin-bottom: 24px;
 
-.charts-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: $spacing-lg;
-}
-
-.chart-container {
-  width: 100%;
-  height: 350px;
-
-  &.small {
-    height: 300px;
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
   }
 }
 
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .overview-grid {
-    grid-template-columns: repeat(2, 1fr);
+.chart-container { width: 100%; height: 350px; }
+
+// ── 数据表 ──────────────────────────────────────────
+.data-table-card {
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
   }
 
-  .charts-row {
-    grid-template-columns: 1fr;
+  :deep(.el-table th) {
+    background: $bg-page;
+    color: $text-regular;
+    font-weight: 600;
   }
 
-  .chart-container,
-  .chart-container.small {
-    height: 250px !important;
-  }
-}
-
-@media (max-width: $breakpoint-sm) {
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-sm;
-
-    .el-select {
-      width: 100% !important;
-    }
+  :deep(.el-table tr:hover td) {
+    background: rgba(232,132,90,0.04) !important;
   }
 }
 </style>

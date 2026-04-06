@@ -59,47 +59,48 @@ defineProps({
 })
 </script>
 
-<style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
 
-.skeleton-wrapper {
-  width: 100%;
-}
+<style lang="scss" scoped>
+@use "@/styles/variables.scss" as *;
+
+.skeleton-wrapper { width: 100%; }
 
 .skeleton-card {
   .skeleton-card-content {
-    border-radius: $border-radius-md;
+    border-radius: 20px;
     overflow: hidden;
     background: $bg-white;
+    border: 1px solid $border-lighter;
   }
 }
 
 .skeleton-list {
-  padding: $spacing-lg;
+  padding: 20px 24px;
   background: $bg-white;
-  border-radius: $border-radius-md;
+  border-radius: 16px;
+  border: 1px solid $border-lighter;
 }
 
 .skeleton-table {
   background: $bg-white;
-  border-radius: $border-radius-md;
-  padding: $spacing-lg;
+  border-radius: 16px;
+  border: 1px solid $border-lighter;
+  padding: 20px 24px;
 
   .skeleton-table-row {
     display: flex;
-    gap: $spacing-md;
-    padding: $spacing-md 0;
+    gap: 16px;
+    padding: 14px 0;
     border-bottom: 1px solid $border-lighter;
 
-    &:last-child {
-      border-bottom: none;
-    }
+    &:last-child { border-bottom: none; }
   }
 }
 
 .skeleton-default {
-  padding: $spacing-lg;
+  padding: 20px 24px;
   background: $bg-white;
-  border-radius: $border-radius-md;
+  border-radius: 16px;
+  border: 1px solid $border-lighter;
 }
 </style>

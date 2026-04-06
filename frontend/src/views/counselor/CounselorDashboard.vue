@@ -17,7 +17,7 @@
             <div class="stats">
               <div class="stat-item">
                 <span class="label">评分：</span>
-                <el-rate v-model="counselorInfo?.rating" disabled show-score text-color="#ff9900" />
+                <el-rate :model-value="counselorInfo?.rating" disabled show-score text-color="#ff9900" />
               </div>
               <div class="stat-item">
                 <span class="label">咨询次数：</span>

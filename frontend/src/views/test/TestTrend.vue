@@ -257,22 +257,22 @@ const renderChart = () => {
         data: scores,
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
-            { offset: 1, color: 'rgba(64, 158, 255, 0.05)' }
+            { offset: 0, color: 'rgba(232, 132, 90, 0.3)' },
+            { offset: 1, color: 'rgba(232, 132, 90, 0.03)' }
           ])
         },
         lineStyle: {
           width: 3,
-          color: '#409EFF'
+          color: '#e8845a'
         },
         itemStyle: {
-          color: '#409EFF',
+          color: '#e8845a',
           borderWidth: 2,
           borderColor: '#fff'
         },
         emphasis: {
           itemStyle: {
-            color: '#409EFF',
+            color: '#e8845a',
             borderWidth: 4,
             borderColor: '#fff'
           }
@@ -330,50 +330,70 @@ onBeforeUnmount(() => {
 
 .test-trend {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 36px $spacing-lg;
 }
 
 .trend-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 24px;
 
   h2 {
     flex: 1;
     margin: 0;
+    color: $text-primary;
+    font-weight: 700;
   }
 }
 
 .filter-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+  border-radius: 16px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+
+  :deep(.el-card__body) {
+    padding: 20px 24px;
+  }
 }
 
 .filter-row {
   display: flex;
-  gap: $spacing-xl;
+  gap: 24px;
   flex-wrap: wrap;
 
   .filter-item {
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
+    gap: 10px;
 
     .label {
       font-weight: 500;
-      color: $text-primary;
+      color: $text-regular;
+      white-space: nowrap;
     }
   }
 }
 
 .chart-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
+  }
 }
 
 .chart-container {
@@ -382,10 +402,31 @@ onBeforeUnmount(() => {
 }
 
 .history-card {
-  // 样式
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__header) {
+    font-weight: 600;
+    color: $text-primary;
+    border-bottom: 1px solid $border-lighter;
+  }
+
+  :deep(.el-table) {
+    background: transparent;
+
+    th {
+      background: $bg-page;
+      color: $text-regular;
+      font-weight: 600;
+    }
+
+    tr:hover td {
+      background: rgba(232,132,90,0.04) !important;
+    }
+  }
 }
 
-// 响应式
 @media (max-width: $breakpoint-md) {
   .filter-row {
     flex-direction: column;

@@ -1,45 +1,105 @@
 <template>
   <div class="home-page">
-    <!-- 页面头部 -->
     <PageHeader />
 
-    <!-- 轮播图区域 -->
+    <!-- Hero 区域 -->
     <section class="hero-section">
       <div class="container">
-        <el-carousel :interval="5000" arrow="always" height="400px" indicator-position="outside">
-          <el-carousel-item v-for="(item, index) in carouselItems" :key="index">
-            <div class="carousel-item" :style="{ backgroundImage: `url(${item.image})` }">
-              <div class="carousel-content">
-                <h1>{{ item.title }}</h1>
-                <p>{{ item.subtitle }}</p>
-                <el-button type="primary" size="large" @click="handleCarouselClick(item)">
-                  立即体验
-                </el-button>
+        <div class="hero-content">
+          <div class="hero-text">
+            <div class="hero-badge">🌸 专业心理健康服务平台</div>
+            <h1 class="hero-title">
+              守护您的<span class="highlight">内心世界</span>
+              <br>从这里开始
+            </h1>
+            <p class="hero-desc">
+              智能 AI 陪伴、专业心理测试、一对一咨询预约，
+              全方位守护您的心理健康，让每一次倾诉都有温暖回应。
+            </p>
+            <div class="hero-actions">
+              <el-button type="primary" size="large" class="hero-btn-primary" @click="navigateTo('/chat')">
+                立即体验 →
+              </el-button>
+              <el-button size="large" class="hero-btn-secondary" @click="navigateTo('/test')">
+                测试一下我
+              </el-button>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="hero-card-stack">
+              <div class="floating-card card-1">
+                <span class="fc-icon">🤖</span>
+                <div>
+                  <div class="fc-title">AI 智能陪伴</div>
+                  <div class="fc-sub">24小时在线</div>
+                </div>
+              </div>
+              <div class="floating-card card-2">
+                <span class="fc-icon">💆</span>
+                <div>
+                  <div class="fc-title">情绪疏导</div>
+                  <div class="fc-sub">专业贴心</div>
+                </div>
+              </div>
+              <div class="floating-card card-3">
+                <span class="fc-icon">✨</span>
+                <div>
+                  <div class="fc-title">好评用户</div>
+                  <div class="fc-sub">满意度 98%</div>
+                </div>
+              </div>
+              <div class="hero-main-card">
+                <div class="hmc-emoji">🌿</div>
+                <p>心灵驿站</p>
+                <p class="hmc-sub">您的心理健康守护者</p>
               </div>
             </div>
-          </el-carousel-item>
-        </el-carousel>
+          </div>
+        </div>
+      </div>
+
+      <!-- 背景装饰 -->
+      <div class="hero-bg-blob blob-1"></div>
+      <div class="hero-bg-blob blob-2"></div>
+    </section>
+
+    <!-- 平台统计 -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div v-for="stat in platformStats" :key="stat.id" class="stat-item">
+            <div class="stat-icon">{{ stat.emoji }}</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(stat.value) }}{{ stat.suffix || '' }}</div>
+              <div class="stat-label">{{ stat.label }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- 功能导航 -->
     <section class="features-section">
       <div class="container">
+        <div class="section-header">
+          <div class="section-badge">核心功能</div>
+          <h2>您需要的，都在这里</h2>
+          <p>专为您的心理健康设计的全套服务</p>
+        </div>
         <div class="features-grid">
           <div
             v-for="feature in features"
             :key="feature.id"
             class="feature-card"
+            :style="{ '--card-color': feature.color, '--card-bg': feature.bg }"
             @click="navigateTo(feature.path)"
           >
-            <div class="feature-icon" :style="{ background: feature.color }">
-              <el-icon :size="40">
-                <component :is="feature.icon" />
-              </el-icon>
+            <div class="feature-icon-wrap">
+              <span class="feature-emoji">{{ feature.emoji }}</span>
             </div>
             <h3>{{ feature.title }}</h3>
             <p>{{ feature.description }}</p>
-            <span class="feature-link">了解更多 →</span>
+            <span class="feature-arrow">→</span>
           </div>
         </div>
       </div>
@@ -49,11 +109,12 @@
     <section class="knowledge-section">
       <div class="container">
         <div class="section-header">
+          <div class="section-badge">知识专区</div>
           <h2>热门心理知识</h2>
-          <el-link type="primary" @click="navigateTo('/knowledge')">查看更多 →</el-link>
+          <p>专业心理学文章，帮助您了解自己</p>
         </div>
         <div class="knowledge-grid">
-          <el-skeleton v-if="loadingKnowledge" :rows="3" animated />
+          <el-skeleton v-if="loadingKnowledge" :rows="3" animated style="grid-column: 1 / -1" />
           <div
             v-for="article in hotArticles"
             :key="article.id"
@@ -61,16 +122,21 @@
             @click="viewArticle(article.id)"
           >
             <div class="article-cover">
-              <img :src="article.coverImage" :alt="article.title" />
+              <img :src="article.coverImage" :alt="article.title" loading="lazy" />
+              <div class="article-tag">{{ article.category }}</div>
             </div>
-            <div class="article-info">
+            <div class="article-body">
               <h3>{{ article.title }}</h3>
-              <p class="article-meta">
-                <span>{{ article.category }}</span>
-                <span>👁️ {{ formatNumber(article.views) }}</span>
-              </p>
+              <div class="article-meta">
+                <span class="meta-views">👁 {{ formatNumber(article.views) }}</span>
+              </div>
             </div>
           </div>
+        </div>
+        <div class="section-more">
+          <el-button class="more-btn" @click="navigateTo('/knowledge')">
+            查看更多文章 →
+          </el-button>
         </div>
       </div>
     </section>
@@ -79,53 +145,43 @@
     <section class="counselor-section">
       <div class="container">
         <div class="section-header">
+          <div class="section-badge">专家团队</div>
           <h2>推荐咨询师</h2>
-          <el-link type="primary" @click="navigateTo('/counselor')">查看更多 →</el-link>
+          <p>经过严格认证的专业心理咨询师</p>
         </div>
         <div class="counselor-grid">
-          <el-skeleton v-if="loadingCounselors" :rows="3" animated />
+          <el-skeleton v-if="loadingCounselors" :rows="3" animated style="grid-column: 1 / -1" />
           <div
             v-for="counselor in recommendedCounselors"
             :key="counselor.id"
             class="counselor-card"
           >
-            <div class="counselor-avatar">
-              <el-avatar :size="80" :src="counselor.avatar">
-                <el-icon><User /></el-icon>
+            <div class="counselor-top">
+              <el-avatar :size="72" :src="counselor.avatar">
+                <span style="font-size:28px">👤</span>
               </el-avatar>
+              <div class="counselor-badge">推荐</div>
             </div>
             <h3>{{ counselor.name }}</h3>
             <div class="counselor-rating">
-              <el-rate v-model="counselor.rating" disabled show-score text-color="#ff9900" />
+              <el-rate v-model="counselor.rating" disabled show-score text-color="#e8845a" />
             </div>
-            <p class="counselor-specialty">
-              擅长: {{ counselor.specialties?.join('、') }}
-            </p>
+            <div class="counselor-tags">
+              <span v-for="tag in counselor.specialties" :key="tag" class="tag">{{ tag }}</span>
+            </div>
             <div class="counselor-price">
-              <span class="price">¥{{ counselor.price }}</span>
-              <span class="unit">/小时</span>
+              <span class="price-num">¥{{ counselor.price }}</span>
+              <span class="price-unit">/小时</span>
             </div>
-            <el-button type="primary" @click="bookCounselor(counselor.id)">预约</el-button>
+            <el-button type="primary" class="book-btn" @click="bookCounselor(counselor.id)">
+              立即预约
+            </el-button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- 平台数据 -->
-    <section class="stats-section">
-      <div class="container">
-        <div class="stats-grid">
-          <div v-for="stat in platformStats" :key="stat.id" class="stat-item">
-            <div class="stat-icon" :style="{ background: stat.color }">
-              <el-icon :size="32">
-                <component :is="stat.icon" />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ formatNumber(stat.value) }}</h3>
-              <p>{{ stat.label }}</p>
-            </div>
-          </div>
+        <div class="section-more">
+          <el-button class="more-btn" @click="navigateTo('/counselor')">
+            查看全部咨询师 →
+          </el-button>
         </div>
       </div>
     </section>
@@ -133,27 +189,28 @@
     <!-- 页脚 -->
     <footer class="page-footer">
       <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h4>关于我们</h4>
-            <p>心理咨询平台致力于为用户提供专业的心理健康服务</p>
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-logo">🌸 心灵驿站</div>
+            <p>专注心理健康服务，用专业与温暖陪伴每一位用户走过心灵低谷，找到属于自己的光。</p>
           </div>
-          <div class="footer-section">
-            <h4>快速链接</h4>
+          <div class="footer-links">
+            <h4>快速导航</h4>
             <ul>
               <li><a href="/chat">智能问答</a></li>
               <li><a href="/test">心理测试</a></li>
               <li><a href="/counselor">找咨询师</a></li>
+              <li><a href="/knowledge">心理知识</a></li>
             </ul>
           </div>
-          <div class="footer-section">
+          <div class="footer-contact">
             <h4>联系我们</h4>
-            <p>邮箱: support@soulstation.com</p>
-            <p>电话: 400-123-4567</p>
+            <p>📧 support@soulstation.com</p>
+            <p>📞 400-123-4567</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>© 2026 心理咨询平台 - 关注心理健康</p>
+          © 2026 心灵驿站 · 守护您的心理健康 · 保持善良，保持温柔 🌸
         </div>
       </div>
     </footer>
@@ -163,85 +220,63 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, ChatDotSquare, Document, Calendar, DataAnalysis, TrendCharts } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 
 const router = useRouter()
 
-// 加载状态
 const loadingKnowledge = ref(true)
 const loadingCounselors = ref(true)
 
-// 轮播图数据
-const carouselItems = ref([
-  {
-    title: '关注心理健康',
-    subtitle: '从这里开始，探索内心世界',
-    image: 'https://images.unsplash.com/photo-1499209974431-2761b8c71e43?w=1200',
-    path: '/chat'
-  },
-  {
-    title: '专业心理测试',
-    subtitle: '科学评估，了解真实的自己',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200',
-    path: '/test'
-  },
-  {
-    title: '预约专业咨询师',
-    subtitle: '一对一服务，解决心理困扰',
-    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1200',
-    path: '/counselor'
-  }
-])
-
-// 功能导航数据
 const features = ref([
   {
     id: 1,
     title: '智能问答',
-    description: '24h在线，AI心理咨询助手',
-    icon: ChatDotSquare,
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    description: '24h AI 心理咨询助手，随时倾听您的心声',
+    emoji: '🤖',
+    color: '#e8845a',
+    bg: 'rgba(232, 132, 90, 0.08)',
     path: '/chat'
   },
   {
     id: 2,
     title: '心理测试',
-    description: '专业评估，科学分析',
-    icon: Document,
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    description: '9套专业量表，科学评估心理状态',
+    emoji: '📝',
+    color: '#9b8bb4',
+    bg: 'rgba(155, 139, 180, 0.08)',
     path: '/test'
   },
   {
     id: 3,
     title: '预约咨询',
-    description: '专家团队，贴心服务',
-    icon: Calendar,
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    description: '专业认证咨询师，一对一贴心服务',
+    emoji: '👨‍⚕️',
+    color: '#72b087',
+    bg: 'rgba(114, 176, 135, 0.08)',
     path: '/counselor'
   },
   {
     id: 4,
     title: '心理知识',
-    description: '科普文章，助您成长',
-    icon: DataAnalysis,
-    color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    description: '科普文章与案例，丰富您的心理认知',
+    emoji: '📚',
+    color: '#e8b55a',
+    bg: 'rgba(232, 181, 90, 0.08)',
     path: '/knowledge'
   }
 ])
 
-// 热门文章（模拟数据）
 const hotArticles = ref([
   {
     id: 1,
-    title: '如何缓解焦虑情绪 - 实用技巧分享',
+    title: '如何缓解焦虑情绪 — 实用技巧分享',
     category: '焦虑症',
     views: 1234,
     coverImage: 'https://images.unsplash.com/photo-1499209974431-2761b8c71e43?w=400'
   },
   {
     id: 2,
-    title: '抑郁症的早期信号与自我调节',
+    title: '抑郁症的早期信号与自我调节方法',
     category: '抑郁症',
     views: 980,
     coverImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'
@@ -256,13 +291,12 @@ const hotArticles = ref([
   {
     id: 4,
     title: '改善睡眠质量的科学方法',
-    category: '健康',
+    category: '健康睡眠',
     views: 723,
     coverImage: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400'
   }
 ])
 
-// 推荐咨询师（模拟数据）
 const recommendedCounselors = ref([
   {
     id: 1,
@@ -298,53 +332,28 @@ const recommendedCounselors = ref([
   }
 ])
 
-// 平台数据
 const platformStats = ref([
-  { id: 1, label: '用户数', value: 1234, icon: User, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-  { id: 2, label: '咨询师', value: 89, icon: Calendar, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-  { id: 3, label: '服务次数', value: 2567, icon: TrendCharts, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-  { id: 4, label: '满意度', value: 98, icon: DataAnalysis, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', suffix: '%' }
+  { id: 1, label: '注册用户', value: 12340, emoji: '👥' },
+  { id: 2, label: '专业咨询师', value: 89, emoji: '🩺' },
+  { id: 3, label: '服务次数', value: 25670, emoji: '💬' },
+  { id: 4, label: '好评满意度', value: 98, emoji: '⭐', suffix: '%' }
 ])
 
-// 格式化数字
 const formatNumber = (num) => {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
-  }
+  if (num >= 10000) return (num / 10000).toFixed(1) + '万'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
   return num.toString()
 }
 
-// 导航到指定路径
-const navigateTo = (path) => {
-  router.push(path)
-}
+const navigateTo = (path) => router.push(path)
+const viewArticle = (id) => router.push(`/knowledge/${id}`)
+const bookCounselor = (id) => router.push(`/counselor/${id}`)
 
-// 轮播图点击处理
-const handleCarouselClick = (item) => {
-  if (item.path) {
-    navigateTo(item.path)
-  }
-}
-
-// 查看文章详情
-const viewArticle = (id) => {
-  router.push(`/knowledge/${id}`)
-}
-
-// 预约咨询师
-const bookCounselor = (id) => {
-  router.push(`/counselor/${id}`)
-}
-
-// 加载数据
 onMounted(() => {
-  // 模拟数据加载
   setTimeout(() => {
     loadingKnowledge.value = false
     loadingCounselors.value = false
-  }, 1000)
+  }, 800)
 })
 </script>
 
@@ -353,137 +362,369 @@ onMounted(() => {
 
 .home-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
 }
 
+// ===================== Hero =====================
 .hero-section {
-  padding: $spacing-lg 0;
+  position: relative;
+  padding: 72px 0 80px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #fff8f2 0%, #fdf0e8 50%, #f8eefd 100%);
 }
 
-.carousel-item {
+.hero-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+
+  &.blob-1 {
+    width: 400px; height: 400px;
+    background: rgba(232, 132, 90, 0.12);
+    top: -100px; right: -80px;
+  }
+
+  &.blob-2 {
+    width: 300px; height: 300px;
+    background: rgba(155, 139, 180, 0.1);
+    bottom: -60px; left: -60px;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 64px;
+}
+
+.hero-text {
+  flex: 1;
+
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(232, 132, 90, 0.1);
+    border: 1px solid rgba(232, 132, 90, 0.25);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $primary-dark;
+    margin-bottom: 24px;
+  }
+
+  .hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: $text-primary;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+
+    .highlight {
+      background: linear-gradient(135deg, #f4a57a, #c96f42);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    line-height: 1.75;
+    color: $text-regular;
+    max-width: 480px;
+    margin-bottom: 36px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+
+    .hero-btn-primary {
+      height: 50px;
+      padding: 0 32px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 14px !important;
+      background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%) !important;
+      border: none !important;
+      box-shadow: 0 8px 24px rgba(232, 132, 90, 0.38) !important;
+      letter-spacing: 1px;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(232, 132, 90, 0.48) !important;
+      }
+    }
+
+    .hero-btn-secondary {
+      height: 50px;
+      padding: 0 28px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 14px !important;
+      background: white !important;
+      border: 1.5px solid $border-base !important;
+      color: $text-regular !important;
+
+      &:hover {
+        border-color: $primary-color !important;
+        color: $primary-color !important;
+      }
+    }
+  }
+}
+
+.hero-visual {
+  flex: 0 0 420px;
+  position: relative;
+  height: 380px;
+}
+
+.hero-card-stack {
+  position: relative;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  position: relative;
+}
+
+.hero-main-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(140deg, #fde8d8 0%, #f4cdd8 100%);
+  border-radius: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 48px rgba(107, 82, 68, 0.18);
+
+  .hmc-emoji { font-size: 56px; margin-bottom: 10px; }
+  p { font-size: 15px; font-weight: 700; color: #3d2b1f; }
+  .hmc-sub { font-size: 11px; color: #9e8070; margin-top: 2px; }
+}
+
+.floating-card {
+  position: absolute;
+  background: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(107, 82, 68, 0.12);
+  border: 1px solid $border-lighter;
+  white-space: nowrap;
+
+  .fc-icon { font-size: 24px; }
+  .fc-title { font-size: 13px; font-weight: 600; color: $text-primary; }
+  .fc-sub { font-size: 11px; color: $text-secondary; }
+
+  &.card-1 { top: 20px; left: 20px; animation: float1 4s ease-in-out infinite; }
+  &.card-2 { bottom: 40px; left: 0; animation: float2 5s ease-in-out 1s infinite; }
+  &.card-3 { top: 30px; right: 10px; animation: float3 4.5s ease-in-out 0.5s infinite; }
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes float3 {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+// ===================== Stats =====================
+.stats-section {
+  padding: 40px 0;
+  background: white;
+  border-top: 1px solid $border-lighter;
+  border-bottom: 1px solid $border-lighter;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.stat-item {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  border-right: 1px solid $border-lighter;
+
+  &:last-child { border-right: none; }
+
+  .stat-icon { font-size: 40px; }
+  .stat-value { font-size: 28px; font-weight: 800; color: $primary-color; line-height: 1; }
+  .stat-label { font-size: 13px; color: $text-secondary; margin-top: 4px; }
+}
+
+// ===================== Sections 通用 =====================
+.features-section,
+.knowledge-section,
+.counselor-section {
+  padding: 72px 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 48px;
+
+  .section-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    background: rgba(232, 132, 90, 0.1);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: $primary-dark;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  h2 {
+    font-size: 32px;
+    font-weight: 800;
+    color: $text-primary;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  p {
+    font-size: 15px;
+    color: $text-secondary;
+  }
+}
+
+.section-more {
+  text-align: center;
+  margin-top: 40px;
+
+  .more-btn {
+    border-radius: 999px !important;
+    padding: 0 32px !important;
+    height: 44px !important;
+    border: 1.5px solid $border-base !important;
+    color: $text-regular !important;
+    font-weight: 600;
+
+    &:hover {
+      border-color: $primary-color !important;
+      color: $primary-color !important;
+    }
+  }
+}
+
+// ===================== Features =====================
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid $border-lighter;
+  position: relative;
+  overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-color);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+    transform-origin: left;
   }
-}
-
-.carousel-content {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  color: white;
-
-  h1 {
-    font-size: 48px;
-    margin-bottom: $spacing-md;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  p {
-    font-size: $font-size-large;
-    margin-bottom: $spacing-lg;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-}
-
-.features-section {
-  padding: $spacing-xl 0;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: $spacing-lg;
-}
-
-.feature-card {
-  background: $bg-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-lg;
-  text-align: center;
-  cursor: pointer;
-  transition: $transition-base;
-  box-shadow: $box-shadow-base;
 
   &:hover {
     transform: translateY(-8px);
-    box-shadow: $box-shadow-dark;
+    box-shadow: 0 20px 48px rgba(107, 82, 68, 0.14);
+    border-color: rgba(232, 132, 90, 0.2);
+
+    &::before { transform: scaleX(1); }
   }
 
-  .feature-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
+  .feature-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--card-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto $spacing-md;
-    color: white;
+    margin-bottom: 20px;
+    transition: $transition-base;
+
+    .feature-emoji { font-size: 32px; }
   }
 
   h3 {
-    font-size: $font-size-large;
-    margin-bottom: $spacing-sm;
+    font-size: 18px;
+    font-weight: 700;
     color: $text-primary;
+    margin-bottom: 8px;
   }
 
   p {
+    font-size: 14px;
+    line-height: 1.6;
     color: $text-secondary;
-    margin-bottom: $spacing-md;
+    margin-bottom: 20px;
   }
 
-  .feature-link {
-    color: $primary-color;
-    font-weight: 500;
+  .feature-arrow {
+    font-size: 16px;
+    color: var(--card-color);
+    font-weight: 700;
+    transition: $transition-base;
   }
-}
 
-.knowledge-section,
-.counselor-section {
-  padding: $spacing-xl 0;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-lg;
-
-  h2 {
-    font-size: $font-size-extra-large;
-    color: $text-primary;
-    font-weight: 600;
+  &:hover .feature-arrow {
+    letter-spacing: 2px;
   }
 }
 
-.knowledge-grid,
-.counselor-grid {
+// ===================== Knowledge =====================
+.knowledge-section {
+  background: $bg-warm;
+}
+
+.knowledge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: $spacing-lg;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
 
 .knowledge-card {
-  background: $bg-white;
-  border-radius: $border-radius-md;
+  background: white;
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   transition: $transition-base;
-  box-shadow: $box-shadow-base;
+  border: 1px solid $border-lighter;
 
   &:hover {
     transform: translateY(-4px);
@@ -491,211 +732,235 @@ onMounted(() => {
   }
 
   .article-cover {
+    position: relative;
     width: 100%;
-    height: 160px;
+    height: 150px;
     overflow: hidden;
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: $transition-base;
+      transition: transform 0.4s ease;
+    }
 
-      &:hover {
-        transform: scale(1.05);
-      }
+    .article-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: $primary-dark;
+      backdrop-filter: blur(4px);
     }
   }
 
-  .article-info {
-    padding: $spacing-md;
+  &:hover .article-cover img { transform: scale(1.06); }
+
+  .article-body {
+    padding: 14px 16px;
 
     h3 {
-      font-size: $font-size-base;
+      font-size: 14px;
+      font-weight: 600;
       color: $text-primary;
-      margin-bottom: $spacing-sm;
+      margin-bottom: 8px;
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
       overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.5;
     }
 
     .article-meta {
-      display: flex;
-      justify-content: space-between;
-      font-size: $font-size-small;
+      font-size: 12px;
       color: $text-secondary;
     }
   }
+}
+
+// ===================== Counselor =====================
+.counselor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
 
 .counselor-card {
-  background: $bg-white;
-  border-radius: $border-radius-md;
-  padding: $spacing-lg;
+  background: white;
+  border-radius: 24px;
+  padding: 28px 20px;
   text-align: center;
   transition: $transition-base;
-  box-shadow: $box-shadow-base;
+  border: 1px solid $border-lighter;
 
   &:hover {
+    transform: translateY(-4px);
     box-shadow: $box-shadow-dark;
+    border-color: rgba(232, 132, 90, 0.2);
   }
 
-  .counselor-avatar {
-    margin-bottom: $spacing-md;
+  .counselor-top {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+
+    .counselor-badge {
+      position: absolute;
+      top: 0;
+      right: calc(50% - 46px);
+      background: $primary-color;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
   }
 
   h3 {
-    font-size: $font-size-large;
+    font-size: 17px;
+    font-weight: 700;
     color: $text-primary;
-    margin-bottom: $spacing-sm;
+    margin-bottom: 8px;
   }
 
-  .counselor-specialty {
-    color: $text-secondary;
-    font-size: $font-size-small;
-    margin: $spacing-sm 0;
+  .counselor-rating {
+    margin-bottom: 12px;
+    :deep(.el-rate__icon) { font-size: 16px !important; }
+  }
+
+  .counselor-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 14px;
+
+    .tag {
+      background: rgba(232, 132, 90, 0.08);
+      color: $primary-dark;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(232, 132, 90, 0.2);
+    }
   }
 
   .counselor-price {
-    margin: $spacing-md 0;
+    margin-bottom: 16px;
 
-    .price {
-      font-size: $font-size-extra-large;
-      color: $primary-color;
-      font-weight: 600;
-    }
+    .price-num { font-size: 22px; font-weight: 800; color: $primary-color; }
+    .price-unit { font-size: 12px; color: $text-secondary; }
+  }
 
-    .unit {
-      font-size: $font-size-small;
-      color: $text-secondary;
-    }
+  .book-btn {
+    width: 100%;
+    border-radius: 12px !important;
+    height: 38px !important;
+    font-weight: 600;
   }
 }
 
-.stats-section {
-  padding: $spacing-xl 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-lg;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-
-  .stat-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: $border-radius-md;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .stat-content {
-    h3 {
-      font-size: $font-size-extra-large;
-      font-weight: 600;
-      margin-bottom: $spacing-xs;
-    }
-
-    p {
-      font-size: $font-size-base;
-      opacity: 0.9;
-    }
-  }
-}
-
+// ===================== Footer =====================
 .page-footer {
-  background: #2c3e50;
-  color: white;
-  padding: $spacing-xl 0 $spacing-lg;
+  background: #2d1f17;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 60px 0 24px;
 }
 
-.footer-content {
+.footer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-xl;
-  margin-bottom: $spacing-lg;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 48px;
+  margin-bottom: 40px;
 }
 
-.footer-section {
-  h4 {
-    font-size: $font-size-large;
-    margin-bottom: $spacing-md;
+.footer-brand {
+  .footer-logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
   }
 
   p {
-    font-size: $font-size-base;
-    opacity: 0.8;
+    font-size: 14px;
     line-height: 1.8;
-    margin-bottom: $spacing-sm;
+    color: rgba(255, 255, 255, 0.6);
+    max-width: 280px;
+  }
+}
+
+.footer-links, .footer-contact {
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
   ul {
     list-style: none;
-    padding: 0;
 
     li {
-      margin-bottom: $spacing-sm;
+      margin-bottom: 10px;
 
       a {
-        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
         text-decoration: none;
-        transition: $transition-base;
+        transition: color 0.2s;
 
-        &:hover {
-          color: white;
-        }
+        &:hover { color: $primary-light; }
       }
     }
+  }
+
+  p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 8px;
   }
 }
 
 .footer-bottom {
   text-align: center;
-  padding-top: $spacing-lg;
+  padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  opacity: 0.8;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
 }
 
-// 响应式
-@media (max-width: $breakpoint-md) {
-  .carousel-content h1 {
-    font-size: 32px;
-  }
-
+// ===================== 响应式 =====================
+@media (max-width: 1024px) {
   .features-grid,
   .knowledge-grid,
-  .counselor-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .counselor-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-item:nth-child(2) { border-right: none; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-brand { grid-column: 1 / -1; }
+  .hero-visual { flex: 0 0 320px; }
+  .hero-text .hero-title { font-size: 38px; }
 }
 
-@media (max-width: $breakpoint-sm) {
-  .carousel-content h1 {
-    font-size: 24px;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 768px) {
+  .hero-content { flex-direction: column; gap: 40px; }
+  .hero-visual { flex: none; width: 100%; height: 280px; }
+  .hero-text .hero-title { font-size: 30px; }
+  .features-grid,
+  .knowledge-grid,
+  .counselor-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; }
 }
 </style>

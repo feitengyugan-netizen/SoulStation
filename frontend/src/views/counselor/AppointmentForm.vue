@@ -25,8 +25,8 @@
           <h3>2. 选择日期和时段</h3>
           <el-calendar v-model="selectedDate">
             <template #date-cell="{ data }">
-              <div class="calendar-day" :class="{ available: isAvailableDate(data) }">
-                {{ data.getDate() }}
+              <div class="calendar-day" :class="{ available: isAvailableDate(data.date) }">
+                {{ data.date.getDate() }}
               </div>
             </template>
           </el-calendar>
@@ -37,11 +37,11 @@
             <el-radio-group v-model="formData.timeSlot" class="slots-group">
               <el-radio
                 v-for="slot in availableSlots"
-                :key="slot"
-                :label="slot"
+                :key="slot.time"
+                :label="slot.time"
                 border
               >
-                {{ slot }}
+                {{ slot.time }}
               </el-radio>
             </el-radio-group>
           </div>
@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
@@ -155,8 +155,15 @@ const loadCounselor = async () => {
 }
 
 const updatePrice = () => {
-  const prices = { video: 300, voice: 200, offline: 500 }
-  price.value = prices[formData.type] || counselor.value.price || 300
+  if (formData.type === 'video') {
+    price.value = counselor.value.price_video || 0
+  } else if (formData.type === 'voice') {
+    price.value = counselor.value.price_voice || 0
+  } else if (formData.type === 'offline') {
+    price.value = counselor.value.price_offline || 0
+  } else {
+    price.value = 0
+  }
 }
 
 const isAvailableDate = (date) => {
@@ -169,7 +176,8 @@ const loadSlots = async () => {
   try {
     const dateStr = selectedDate.value.toISOString().split('T')[0]
     const res = await getAvailableSlots(counselorId, dateStr)
-    availableSlots.value = res.data || []
+    const slots = res.data || []
+    availableSlots.value = slots.filter(item => item.available)
   } catch (error) {
     console.error('加载时段失败')
   }
@@ -189,8 +197,18 @@ const submitAppointment = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    formData.date = selectedDate.value.toISOString().split('T')[0]
-    await createAppointment(formData)
+    const date = selectedDate.value.toISOString().split('T')[0]
+    const startTime = formData.timeSlot.split('-')[0]
+    const payload = {
+      counselor_id: Number(counselorId),
+      consultation_type: formData.type,
+      appointment_date: `${date}T${startTime}:00`,
+      user_name: formData.userName,
+      user_contact: formData.contact,
+      problem_description: formData.description
+    }
+
+    await createAppointment(payload)
 
     ElMessage.success('预约成功')
     router.push('/counselor/orders')
@@ -206,12 +224,28 @@ const goBack = () => {
 }
 
 onMounted(() => {
-  loadCounselor()
-  loading.value = false
+  if (!counselorId) {
+    ElMessage.error('缺少咨询师ID')
+    router.push('/counselor')
+    return
+  }
+
+  Promise.all([loadCounselor(), loadSlots()]).finally(() => {
+    loading.value = false
+  })
+})
+
+watch(selectedDate, () => {
+  formData.timeSlot = ''
+  loadSlots()
+})
+
+watch(() => formData.type, () => {
+  updatePrice()
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @use '@/styles/variables.scss' as *;
 
 .appointment-form { min-height: 100vh; background: $bg-color; }

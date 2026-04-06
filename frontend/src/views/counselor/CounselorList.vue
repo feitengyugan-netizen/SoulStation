@@ -172,17 +172,56 @@ const pagination = reactive({
   pageSize: 12
 })
 
+const parsePriceRange = (range) => {
+  if (!range) return {}
+  if (range === '500+') return { price_min: 500 }
+
+  const [min, max] = range.split('-').map(Number)
+  const params = {}
+  if (!Number.isNaN(min)) params.price_min = min
+  if (!Number.isNaN(max)) params.price_max = max
+  return params
+}
+
+const normalizeCounselor = (item) => {
+  const specialties = typeof item.specialties === 'string'
+    ? item.specialties.split(',').map(s => s.trim()).filter(Boolean)
+    : (item.specialties || [])
+
+  const types = typeof item.consultation_types === 'string'
+    ? item.consultation_types.split(',').map(t => t.trim()).filter(Boolean)
+    : (item.types || [])
+
+  const prices = [item.price_video, item.price_voice, item.price_offline]
+    .filter(v => v !== null && v !== undefined)
+
+  return {
+    ...item,
+    specialties,
+    types,
+    rating: Number(item.rating || 0),
+    reviewCount: item.review_count || item.reviewCount || 0,
+    price: prices.length ? Math.min(...prices) : 0
+  }
+}
+
 const loadCounselors = async () => {
   try {
     loading.value = true
+    const selectedSpecialty = filters.specialties[0] || undefined
+    const selectedType = filters.types[0] || undefined
     const params = {
-      ...filters,
-      specialties: filters.specialties.join(','),
-      types: filters.types.join(','),
-      ...pagination
+      keyword: filters.keyword || undefined,
+      specialty: selectedSpecialty,
+      consultation_type: selectedType,
+      sort: filters.sort,
+      page: pagination.page,
+      page_size: pagination.pageSize,
+      ...parsePriceRange(filters.priceRange)
     }
     const res = await getCounselorList(params)
-    counselors.value = res.data.list || []
+    const rows = res.data.items || res.data.list || []
+    counselors.value = rows.map(normalizeCounselor)
     total.value = res.data.total || 0
   } catch (error) {
     console.error('加载失败:', error)

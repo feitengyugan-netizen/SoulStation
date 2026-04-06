@@ -4,10 +4,8 @@
       <div class="header-content">
         <!-- Logo -->
         <div class="logo" @click="goHome">
-          <el-icon :size="32" color="#409EFF">
-            <ChatLineSquare />
-          </el-icon>
-          <span class="logo-text">心理咨询平台</span>
+          <span class="logo-icon">🌸</span>
+          <span class="logo-text">心灵驿站</span>
         </div>
 
         <!-- 导航菜单 -->
@@ -41,8 +39,8 @@
 
           <!-- 未登录状态 -->
           <template v-if="!isLoggedIn">
-            <el-button text @click="goToLogin">登录</el-button>
-            <el-button type="primary" @click="goToRegister">注册</el-button>
+            <el-button text class="auth-btn-login" @click="goToLogin">登录</el-button>
+            <el-button type="primary" class="auth-btn-register" @click="goToRegister">注册</el-button>
           </template>
 
           <!-- 已登录状态 -->
@@ -199,11 +197,15 @@ const goToRegister = () => {
 @use '@/styles/variables.scss' as *;
 
 .page-header {
-  background: $bg-white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 252, 248, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid $border-lighter;
+  box-shadow: 0 2px 16px rgba(107, 82, 68, 0.06);
   position: sticky;
   top: 0;
   z-index: 1000;
+  transition: $transition-base;
 }
 
 .header-content {
@@ -220,35 +222,58 @@ const goToRegister = () => {
   gap: $spacing-sm;
   cursor: pointer;
   flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: $border-radius-lg;
+  transition: $transition-base;
+
+  &:hover {
+    background: $bg-subtle;
+  }
+
+  .logo-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
 
   .logo-text {
-    font-size: $font-size-large;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 700;
     color: $text-primary;
     white-space: nowrap;
+    letter-spacing: 1px;
   }
 }
 
 .nav-menu {
   flex: 1;
-  overflow-x: auto;
+  overflow: hidden;
 
   :deep(.el-menu) {
-    border-bottom: none;
-    background: transparent;
+    border-bottom: none !important;
+    background: transparent !important;
+    gap: 4px;
 
     .el-menu-item {
-      font-size: $font-size-base;
-      color: $text-regular;
+      font-size: 14px;
+      font-weight: 500;
+      color: $text-regular !important;
+      border-radius: $border-radius-full !important;
+      margin: 0 2px;
+      padding: 0 16px !important;
+      height: 38px;
+      line-height: 38px;
+      transition: $transition-base !important;
+      border-bottom: none !important;
 
       &:hover {
-        color: $primary-color;
+        color: $primary-color !important;
+        background: $bg-subtle !important;
       }
 
       &.is-active {
-        color: $primary-color;
-        font-weight: 500;
-        border-bottom-color: $primary-color;
+        color: $primary-dark !important;
+        background: rgba(232, 132, 90, 0.1) !important;
+        font-weight: 600;
       }
     }
   }
@@ -257,47 +282,86 @@ const goToRegister = () => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  gap: $spacing-sm;
   flex-shrink: 0;
 
   .search-box {
-    width: 200px;
+    width: 180px;
+    transition: $transition-base;
 
     :deep(.el-input__wrapper) {
-      border-radius: 20px;
+      border-radius: $border-radius-full !important;
+      background: $bg-subtle !important;
+      box-shadow: none !important;
+      border: 1px solid $border-lighter !important;
+
+      &:hover, &.is-focus {
+        border-color: $primary-light !important;
+        background: white !important;
+      }
     }
   }
 
   .notification-badge {
     :deep(.el-badge__content) {
-      transform: translateY(-50%) translateX(50%);
+      background: $primary-color;
+    }
+  }
+
+  .auth-btn-login {
+    color: $text-regular !important;
+    font-weight: 500;
+    border-radius: $border-radius-full !important;
+    padding: 0 16px !important;
+
+    &:hover {
+      color: $primary-color !important;
+      background: $bg-subtle !important;
+    }
+  }
+
+  .auth-btn-register {
+    border-radius: $border-radius-full !important;
+    background: $primary-gradient !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 0 20px !important;
+    box-shadow: 0 4px 12px rgba(232, 132, 90, 0.3) !important;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(232, 132, 90, 0.4) !important;
     }
   }
 
   .user-info {
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
+    gap: 8px;
     cursor: pointer;
-    padding: $spacing-xs $spacing-sm;
-    border-radius: $border-radius-md;
+    padding: 6px 10px 6px 6px;
+    border-radius: $border-radius-full;
     transition: $transition-base;
+    border: 1px solid transparent;
 
     &:hover {
-      background-color: $bg-color;
+      background: $bg-subtle;
+      border-color: $border-base;
     }
 
     .username {
-      font-size: $font-size-base;
+      font-size: 14px;
+      font-weight: 500;
       color: $text-primary;
-      max-width: 100px;
+      max-width: 90px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .dropdown-icon {
-      font-size: $font-size-small;
+      font-size: 12px;
       color: $text-secondary;
     }
   }
@@ -305,30 +369,14 @@ const goToRegister = () => {
 
 // 响应式
 @media (max-width: $breakpoint-md) {
-  .nav-menu {
-    display: none;
-  }
-
-  .search-box {
-    width: 150px !important;
-  }
-
-  .username {
-    display: none;
-  }
+  .nav-menu { display: none; }
+  .search-box { width: 140px !important; }
+  .username { display: none !important; }
 }
 
 @media (max-width: $breakpoint-sm) {
-  .header-content {
-    padding: 0 $spacing-md;
-  }
-
-  .search-box {
-    display: none;
-  }
-
-  .logo-text {
-    display: none;
-  }
+  .header-content { padding: 0 $spacing-md; }
+  .search-box { display: none !important; }
+  .logo-text { display: none; }
 }
 </style>

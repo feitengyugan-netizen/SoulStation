@@ -98,9 +98,9 @@ const iconColor = computed(() => {
     nodata: '#C0C4CC',
     success: '#67C23A',
     error: '#F56C6C',
-    search: '#409EFF',
-    cart: '#E6A23C',
-    chat: '#409EFF',
+    search: '#e8845a',
+    cart: '#f4a57a',
+    chat: '#9b8bb4',
     analysis: '#67C23A'
   }
   return colorMap[props.type] || '#909399'
@@ -112,15 +112,16 @@ const handleAction = () => {
 }
 </script>
 
+
 <style lang="scss" scoped>
-@use '@/styles/variables.scss' as *;
+@use "@/styles/variables.scss" as *;
 
 .empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: $spacing-xl;
-  min-height: 400px;
+  min-height: 300px;
 }
 
 .empty-state-content {
@@ -128,28 +129,28 @@ const handleAction = () => {
 }
 
 .empty-icon {
-  margin-bottom: $spacing-lg;
-  opacity: 0.6;
+  margin-bottom: 20px;
+  opacity: 0.55;
 }
 
 .empty-title {
   font-size: $font-size-large;
-  color: $text-primary;
-  margin-bottom: $spacing-sm;
-  font-weight: 500;
+  color: $text-regular;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .empty-description {
   font-size: $font-size-base;
   color: $text-secondary;
-  margin-bottom: $spacing-lg;
-  max-width: 400px;
+  margin-bottom: 20px;
+  max-width: 360px;
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .empty-action {
-  margin-top: $spacing-lg;
+  margin-top: 20px;
 }
 </style>

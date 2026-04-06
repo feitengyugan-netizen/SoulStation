@@ -1,158 +1,162 @@
 <template>
-  <div class="register-container">
-    <div class="register-box">
-      <!-- Logo和标题 -->
-      <div class="register-header">
-        <div class="logo">
-          <el-icon :size="48" color="#409EFF">
-            <ChatLineSquare />
-          </el-icon>
-        </div>
-        <h1 class="title">心理咨询平台</h1>
-        <p class="subtitle">创建新账户，开启心灵之旅</p>
+  <div class="register-page">
+    <!-- 左侧装饰面板 -->
+    <div class="register-panel-left">
+      <div class="panel-brand">
+        <div class="brand-icon">🌸</div>
+        <h1 class="brand-name">心灵驿站</h1>
+        <p class="brand-tagline">SoulStation</p>
       </div>
+      <div class="panel-card">
+        <h3>开启您的心灵之旅</h3>
+        <p>加入数千位用户，共同探索心理健康的奥秘，让专业陪伴您前行。</p>
+      </div>
+      <div class="panel-steps">
+        <div class="step-item" v-for="(step, i) in steps" :key="i">
+          <div class="step-num">{{ i + 1 }}</div>
+          <span>{{ step }}</span>
+        </div>
+      </div>
+      <div class="deco-circle deco-1"></div>
+      <div class="deco-circle deco-2"></div>
+    </div>
 
-      <!-- 注册表单 -->
-      <el-form
-        ref="registerFormRef"
-        :model="registerForm"
-        :rules="registerRules"
-        class="register-form"
-        @submit.prevent="handleRegister"
-      >
-        <!-- 邮箱输入 -->
-        <el-form-item prop="email">
-          <el-input
-            v-model="registerForm.email"
-            placeholder="请输入邮箱"
-            prefix-icon="Message"
-            size="large"
-            clearable
-          />
-        </el-form-item>
+    <!-- 右侧注册表单 -->
+    <div class="register-panel-right">
+      <div class="register-form-wrap">
+        <div class="form-header">
+          <h2>创建账户 ✨</h2>
+          <p>填写以下信息，开始您的心理健康旅程</p>
+        </div>
 
-        <!-- 验证码输入 -->
-        <el-form-item prop="code">
-          <div class="code-input-wrapper">
+        <el-form
+          ref="registerFormRef"
+          :model="registerForm"
+          :rules="registerRules"
+          class="register-form"
+          @submit.prevent="handleRegister"
+        >
+          <el-form-item prop="email">
             <el-input
-              v-model="registerForm.code"
-              placeholder="请输入验证码"
-              prefix-icon="Key"
+              v-model="registerForm.email"
+              placeholder="请输入邮箱"
+              prefix-icon="Message"
               size="large"
-              maxlength="6"
+              clearable
             />
+          </el-form-item>
+
+          <el-form-item prop="code">
+            <div class="code-input-wrapper">
+              <el-input
+                v-model="registerForm.code"
+                placeholder="请输入验证码"
+                prefix-icon="Key"
+                size="large"
+                maxlength="6"
+              />
+              <el-button
+                type="primary"
+                size="large"
+                class="code-btn"
+                :disabled="countdown > 0"
+                :loading="sendingCode"
+                @click="sendVerificationCode"
+              >
+                {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+              </el-button>
+            </div>
+          </el-form-item>
+
+          <el-form-item prop="password">
+            <el-input
+              v-model="registerForm.password"
+              type="password"
+              placeholder="请设置密码（6-20位）"
+              prefix-icon="Lock"
+              size="large"
+              show-password
+              @input="checkPasswordStrength"
+            />
+            <div v-if="registerForm.password" class="password-strength">
+              <span class="strength-label">密码强度：</span>
+              <div class="strength-bar">
+                <div
+                  class="strength-bar-fill"
+                  :class="passwordStrength.class"
+                  :style="{ width: passwordStrength.width }"
+                ></div>
+              </div>
+              <span class="strength-text" :class="passwordStrength.class">
+                {{ passwordStrength.text }}
+              </span>
+            </div>
+          </el-form-item>
+
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="registerForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入密码"
+              prefix-icon="Lock"
+              size="large"
+              show-password
+            />
+          </el-form-item>
+
+          <el-form-item prop="agreed">
+            <el-checkbox v-model="registerForm.agreed">
+              我已阅读并同意
+              <el-link type="primary">《用户协议》</el-link>
+              和
+              <el-link type="primary">《隐私政策》</el-link>
+            </el-checkbox>
+          </el-form-item>
+
+          <el-form-item>
             <el-button
               type="primary"
               size="large"
-              :disabled="countdown > 0"
-              :loading="sendingCode"
-              @click="sendVerificationCode"
+              class="submit-btn"
+              :loading="loading"
+              @click="handleRegister"
             >
-              {{ countdown > 0 ? `${countdown}秒后重试` : '获取验证码' }}
+              {{ loading ? '注册中...' : '注册' }}
             </el-button>
-          </div>
-        </el-form-item>
+          </el-form-item>
+        </el-form>
 
-        <!-- 密码输入 -->
-        <el-form-item prop="password">
-          <el-input
-            v-model="registerForm.password"
-            type="password"
-            placeholder="请设置密码（6-20位）"
-            prefix-icon="Lock"
-            size="large"
-            show-password
-            @input="checkPasswordStrength"
-          />
-          <!-- 密码强度指示器 -->
-          <div v-if="registerForm.password" class="password-strength">
-            <span class="strength-label">密码强度：</span>
-            <div class="strength-bar">
-              <div
-                class="strength-bar-fill"
-                :class="passwordStrength.class"
-                :style="{ width: passwordStrength.width }"
-              ></div>
-            </div>
-            <span class="strength-text" :class="passwordStrength.class">
-              {{ passwordStrength.text }}
-            </span>
-          </div>
-        </el-form-item>
-
-        <!-- 确认密码输入 -->
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="registerForm.confirmPassword"
-            type="password"
-            placeholder="请再次输入密码"
-            prefix-icon="Lock"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-
-        <!-- 用户协议 -->
-        <el-form-item prop="agreed">
-          <el-checkbox v-model="registerForm.agreed">
-            我已阅读并同意
-            <el-link type="primary">《用户协议》</el-link>
-            和
-            <el-link type="primary">《隐私政策》</el-link>
-          </el-checkbox>
-        </el-form-item>
-
-        <!-- 注册按钮 -->
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            class="register-button"
-            :loading="loading"
-            @click="handleRegister"
-          >
-            {{ loading ? '注册中...' : '注册' }}
-          </el-button>
-        </el-form-item>
-
-        <!-- 登录链接 -->
-        <div class="login-link">
-          已有账号？
+        <div class="form-footer">
+          <span>已有账号？</span>
           <el-link type="primary" @click="goToLogin">立即登录</el-link>
         </div>
-      </el-form>
-    </div>
+      </div>
 
-    <!-- 页脚 -->
-    <footer class="register-footer">
-      <p>© 2026 心理咨询平台 - 关注心理健康</p>
-    </footer>
+      <footer class="page-bottom">
+        © 2026 心灵驿站 · 守护您的心理健康
+      </footer>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ChatLineSquare } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { sendEmailCode } from '@/api/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-// 表单引用
 const registerFormRef = ref(null)
-
-// 加载状态
 const loading = ref(false)
 const sendingCode = ref(false)
-
-// 倒计时
 const countdown = ref(0)
 let countdownTimer = null
 
-// 表单数据
+const steps = ['填写邮箱并获取验证码', '设置安全密码', '完成注册，立即使用']
+
 const registerForm = reactive({
   email: '',
   code: '',
@@ -161,24 +165,20 @@ const registerForm = reactive({
   agreed: false
 })
 
-// 密码强度计算
 const passwordStrength = computed(() => {
   const password = registerForm.password
   if (!password) return { width: '0%', text: '', class: '' }
-
   let strength = 0
   if (password.length >= 6) strength++
   if (password.length >= 10) strength++
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++
   if (/\d/.test(password)) strength++
   if (/[^a-zA-Z0-9]/.test(password)) strength++
-
   if (strength <= 2) return { width: '33%', text: '弱', class: 'weak' }
   if (strength <= 3) return { width: '66%', text: '中', class: 'medium' }
   return { width: '100%', text: '强', class: 'strong' }
 })
 
-// 自定义校验规则
 const validateConfirmPassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请再次输入密码'))
@@ -197,15 +197,10 @@ const validateAgreed = (rule, value, callback) => {
   }
 }
 
-// 表单校验规则
 const registerRules = {
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    {
-      type: 'email',
-      message: '请输入正确的邮箱格式',
-      trigger: ['blur', 'change']
-    }
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: ['blur', 'change'] }
   ],
   code: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
@@ -215,41 +210,22 @@ const registerRules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度应为6-20位', trigger: 'blur' }
   ],
-  confirmPassword: [
-    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
-  ],
-  agreed: [
-    { required: true, validator: validateAgreed, trigger: 'change' }
-  ]
+  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }],
+  agreed: [{ required: true, validator: validateAgreed, trigger: 'change' }]
 }
 
-// 发送验证码
 const sendVerificationCode = async () => {
-  // 校验邮箱
-  if (!registerForm.email) {
-    ElMessage.warning('请先输入邮箱地址')
-    return
-  }
-
+  if (!registerForm.email) { ElMessage.warning('请先输入邮箱地址'); return }
   const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailReg.test(registerForm.email)) {
-    ElMessage.error('请输入正确的邮箱格式')
-    return
-  }
-
+  if (!emailReg.test(registerForm.email)) { ElMessage.error('请输入正确的邮箱格式'); return }
   try {
     sendingCode.value = true
     await sendEmailCode(registerForm.email)
     ElMessage.success('验证码已发送至您的邮箱，请注意查收')
-
-    // 开始倒计时
     countdown.value = 60
     countdownTimer = setInterval(() => {
       countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(countdownTimer)
-        countdownTimer = null
-      }
+      if (countdown.value <= 0) { clearInterval(countdownTimer); countdownTimer = null }
     }, 1000)
   } catch (error) {
     console.error('发送验证码失败:', error)
@@ -258,135 +234,173 @@ const sendVerificationCode = async () => {
   }
 }
 
-// 检查密码强度
-const checkPasswordStrength = () => {
-  // 密码强度通过computed自动计算
-}
+const checkPasswordStrength = () => {}
 
-// 注册处理
 const handleRegister = async () => {
   if (!registerFormRef.value) return
-
   try {
-    // 表单校验
     await registerFormRef.value.validate()
-
-    // 开始注册
     loading.value = true
-
-    // 调用注册接口
     await userStore.register({
       email: registerForm.email,
       code: registerForm.code,
       password: registerForm.password
     })
-
-    // 注册成功提示
-    ElMessage.success('注册成功！欢迎加入')
-
-    // 跳转到首页
-    setTimeout(() => {
-      router.push('/')
-    }, 500)
+    ElMessage.success('注册成功！欢迎加入心灵驿站 🌸')
+    setTimeout(() => router.push('/'), 500)
   } catch (error) {
-    // API拦截器已经处理了错误提示，这里只记录日志
     console.error('注册失败:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 跳转到登录页
-const goToLogin = () => {
-  router.push('/login')
-}
+const goToLogin = () => router.push('/login')
 
-// 组件销毁时清除定时器
-const onBeforeUnmount = () => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-  }
-}
+onBeforeUnmount(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
 </script>
 
 <style lang="scss" scoped>
-.register-container {
+@use '@/styles/variables.scss' as *;
+
+.register-page {
+  display: flex;
   min-height: 100vh;
+}
+
+.register-panel-left {
+  flex: 0 0 42%;
+  background: linear-gradient(160deg, #e8d5f0 0%, #f4cdd8 50%, #fde8d0 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  padding: 20px;
+  padding: 60px 44px;
   position: relative;
   overflow: hidden;
 
-  // 背景装饰
-  &::before {
-    content: '';
+  .panel-brand {
+    text-align: center;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+
+    .brand-icon { font-size: 56px; margin-bottom: 12px; }
+    .brand-name { font-size: 32px; font-weight: 700; color: #3d2b1f; letter-spacing: 4px; margin-bottom: 4px; }
+    .brand-tagline { font-size: 13px; color: #9e8070; letter-spacing: 6px; text-transform: uppercase; }
+  }
+
+  .panel-card {
+    background: rgba(255,255,255,0.48);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.6);
+    max-width: 320px;
+    position: relative;
+    z-index: 1;
+
+    h3 { font-size: 17px; font-weight: 600; color: #3d2b1f; margin-bottom: 10px; }
+    p { font-size: 14px; line-height: 1.7; color: #6b5244; }
+  }
+
+  .panel-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 280px;
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.38);
+      border-radius: 40px;
+      padding: 10px 18px;
+      backdrop-filter: blur(4px);
+
+      .step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #e8845a;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      span { font-size: 13px; color: #4a3020; font-weight: 500; }
+    }
+  }
+
+  .deco-circle {
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: moveBackground 20s linear infinite;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    pointer-events: none;
   }
-
-  @keyframes moveBackground {
-    0% {
-      transform: translate(0, 0);
-    }
-    100% {
-      transform: translate(50px, 50px);
-    }
-  }
+  .deco-1 { width: 250px; height: 250px; top: -60px; right: -50px; }
+  .deco-2 { width: 160px; height: 160px; bottom: -30px; left: -40px; background: rgba(155,139,180,0.15); }
 }
 
-.register-box {
+.register-panel-right {
+  flex: 1;
+  background: #fffcf8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 40px;
   position: relative;
-  width: 100%;
-  max-width: 460px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 48px 40px;
-  z-index: 1;
+  overflow-y: auto;
 }
 
-.register-header {
-  text-align: center;
-  margin-bottom: 32px;
+.register-form-wrap {
+  width: 100%;
+  max-width: 420px;
 
-  .logo {
-    margin-bottom: 16px;
-  }
-
-  .title {
-    font-size: 28px;
-    font-weight: 600;
-    color: #303133;
-    margin-bottom: 8px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-    color: #909399;
+  .form-header {
+    margin-bottom: 28px;
+    h2 { font-size: 26px; font-weight: 700; color: #3d2b1f; margin-bottom: 6px; }
+    p { font-size: 14px; color: #9e8070; }
   }
 }
 
 .register-form {
+  :deep(.el-form-item) { margin-bottom: 18px; }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 14px !important;
+    padding: 4px 16px;
+    box-shadow: 0 0 0 1px #e8d5c5 inset !important;
+    &.is-focus { box-shadow: 0 0 0 2px rgba(232, 132, 90, 0.3) inset !important; }
+  }
+
+  :deep(.el-input__inner) { font-size: 14px; height: 40px; }
+
   .code-input-wrapper {
     display: flex;
-    gap: 12px;
+    gap: 10px;
 
-    .el-input {
-      flex: 1;
-    }
+    :deep(.el-input) { flex: 1; }
 
-    .el-button {
+    .code-btn {
       white-space: nowrap;
+      border-radius: 14px !important;
+      background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%) !important;
+      border: none !important;
+      font-weight: 600;
+      min-width: 110px;
     }
   }
 
@@ -396,15 +410,12 @@ const onBeforeUnmount = () => {
     margin-top: 8px;
     font-size: 12px;
 
-    .strength-label {
-      color: #909399;
-      margin-right: 8px;
-    }
+    .strength-label { color: #9e8070; margin-right: 8px; white-space: nowrap; }
 
     .strength-bar {
       flex: 1;
       height: 4px;
-      background: #e4e7ed;
+      background: #f0e0d0;
       border-radius: 2px;
       overflow: hidden;
       margin-right: 8px;
@@ -412,94 +423,57 @@ const onBeforeUnmount = () => {
 
     .strength-bar-fill {
       height: 100%;
-      transition: all 0.3s;
-
-      &.weak {
-        background: #f56c6c;
-      }
-
-      &.medium {
-        background: #e6a23c;
-      }
-
-      &.strong {
-        background: #67c23a;
-      }
+      transition: width 0.3s;
+      &.weak { background: #e87a7a; }
+      &.medium { background: #e8b55a; }
+      &.strong { background: #72b087; }
     }
 
     .strength-text {
-      font-weight: 500;
-
-      &.weak {
-        color: #f56c6c;
-      }
-
-      &.medium {
-        color: #e6a23c;
-      }
-
-      &.strong {
-        color: #67c23a;
-      }
+      font-weight: 600;
+      &.weak { color: #e87a7a; }
+      &.medium { color: #e8b55a; }
+      &.strong { color: #72b087; }
     }
   }
 
-  .el-form-item {
-    margin-bottom: 20px;
-  }
-
-  .register-button {
+  .submit-btn {
     width: 100%;
-    height: 44px;
+    height: 48px;
     font-size: 16px;
-    font-weight: 500;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    border: none;
-    transition: all 0.3s;
+    font-weight: 600;
+    letter-spacing: 2px;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%) !important;
+    border: none !important;
+    box-shadow: 0 6px 20px rgba(232, 132, 90, 0.38) !important;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+      box-shadow: 0 10px 28px rgba(232, 132, 90, 0.45) !important;
     }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  .login-link {
-    text-align: center;
-    font-size: 14px;
-    color: #606266;
-    margin-top: 16px;
   }
 }
 
-.register-footer {
-  position: relative;
-  z-index: 1;
-  margin-top: 32px;
+.form-footer {
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
+  margin-top: 16px;
   font-size: 14px;
+  color: #9e8070;
+  .el-link { margin-left: 4px; font-weight: 600; font-size: 14px; }
 }
 
-// 响应式
+.page-bottom {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: #c4b0a4;
+}
+
 @media (max-width: 768px) {
-  .register-box {
-    padding: 32px 24px;
-  }
-
-  .register-header .title {
-    font-size: 24px;
-  }
-
-  .code-input-wrapper {
-    flex-direction: column !important;
-
-    .el-button {
-      width: 100%;
-    }
-  }
+  .register-panel-left { display: none; }
+  .register-panel-right { padding: 28px 20px; }
 }
 </style>
+
+

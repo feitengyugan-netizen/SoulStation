@@ -212,8 +212,8 @@ const resultData = ref({
 
 // 等级描述映射
 const levelDescriptions = {
-  '正常': '您的心理状态良好，没有明显异常。请继续保持积极的生活方式和健康习惯。',
-  '轻度': '检测到一些轻微的心理困扰，这在生活中很常见。建议通过运动、休息、社交等方式自我调节，一般能够自行缓解。',
+  '正常': '您的心理状态良好，没有明显异常。请继续保持良好的生活方式和健康习惯。',
+  '轻度': '检测到一些轻微心理困扰，这在生活中很常见。建议通过运动、休息、社交等方式自我调节，一般能够自行缓解。',
   '中度': '您的心理状态需要关注。建议尝试放松技巧、规律作息，必要时可寻求专业心理咨询师的帮助。',
   '重度': '您的心理状态需要重视。建议尽快寻求专业心理咨询师或精神科医生的帮助，进行系统的评估和诊断。'
 }
@@ -288,7 +288,7 @@ const loadResult = async () => {
       maxScore: 100,  // 保留但不显示
       level: levelText,
       levelClass: levelData.class,
-      levelDescription: levelDesc,  // ✅ 新增等级描述
+      levelDescription: levelDesc,  // 新增等级描述
       description: data.result_description || '',
       aiSuggestion: data.ai_suggestion || '',
       dimensions: dimensionsArray,
@@ -381,29 +381,39 @@ onMounted(() => {
 
 .test-result {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
+  padding-top: $header-height;
 }
 
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 36px $spacing-lg;
 }
 
 .result-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-lg;
+  gap: 16px;
+  margin-bottom: 24px;
 
   h2 {
     flex: 1;
     margin: 0;
+    color: $text-primary;
+    font-weight: 700;
   }
 }
 
 .result-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 24px;
+  border-radius: 20px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
+
+  :deep(.el-card__body) {
+    padding: 32px;
+  }
 }
 
 .result-content {
@@ -428,8 +438,8 @@ onMounted(() => {
       flex-direction: column;
       align-items: center;
       gap: $spacing-lg;
-      padding: $spacing-xl;
-      border-radius: $border-radius-lg;
+      padding: 40px;
+      border-radius: 24px;
       width: 100%;
       max-width: 500px;
       text-align: center;
@@ -440,41 +450,42 @@ onMounted(() => {
       }
 
       &.level-mild {
-        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-        color: #2d3436;
+        background: linear-gradient(135deg, #fde8d8 0%, #f4a57a 100%);
+        color: #3d2b1f;
       }
 
       &.level-moderate {
-        background: linear-gradient(135deg, #fab1a0 0%, #e17055 100%);
+        background: linear-gradient(135deg, #f4a57a 0%, #e8845a 100%);
         color: white;
       }
 
       &.level-severe {
-        background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+        background: linear-gradient(135deg, #e8845a 0%, #c96f42 100%);
         color: white;
       }
 
       .level-content {
         display: flex;
         flex-direction: column;
-        gap: $spacing-sm;
+        gap: 10px;
 
         .level-label {
           font-size: $font-size-small;
-          opacity: 0.9;
+          opacity: 0.85;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 2px;
+          font-weight: 500;
         }
 
         .level-name {
-          font-size: 32px;
-          font-weight: 700;
+          font-size: 36px;
+          font-weight: 800;
         }
 
         .level-description {
           font-size: $font-size-base;
-          line-height: 1.6;
-          opacity: 0.95;
+          line-height: 1.7;
+          opacity: 0.92;
           max-width: 400px;
           margin: 0 auto;
         }
@@ -484,9 +495,10 @@ onMounted(() => {
 
   .description-section {
     margin-bottom: $spacing-xl;
-    padding: $spacing-lg;
-    background: rgba($primary-color, 0.05);
-    border-radius: $border-radius-md;
+    padding: 20px 24px;
+    background: rgba(232,132,90,0.06);
+    border-radius: 16px;
+    border-left: 4px solid $primary-color;
 
     h3 {
       display: flex;
@@ -500,8 +512,8 @@ onMounted(() => {
 
     .description-text {
       font-size: $font-size-base;
-      line-height: 1.6;
-      color: $text-secondary;
+      line-height: 1.8;
+      color: $text-regular;
       margin: 0;
     }
   }
@@ -515,25 +527,29 @@ onMounted(() => {
       align-items: center;
       gap: $spacing-sm;
       font-size: $font-size-large;
+      font-weight: 600;
+      color: $text-primary;
       margin-bottom: $spacing-md;
     }
   }
 
   .dimensions-list {
     .dimension-item {
-      margin-bottom: $spacing-md;
+      margin-bottom: 16px;
 
       .dimension-info {
         display: flex;
         justify-content: space-between;
-        margin-bottom: $spacing-xs;
+        margin-bottom: 6px;
 
         .dimension-name {
           font-weight: 500;
+          color: $text-primary;
         }
 
         .dimension-score {
           color: $text-secondary;
+          font-size: 13px;
         }
       }
     }
@@ -542,12 +558,12 @@ onMounted(() => {
   .suggestions-list {
     .suggestion-item {
       display: flex;
-      gap: $spacing-md;
-      padding: $spacing-md;
-      background: $bg-white;
-      border: 1px solid $border-light;
-      border-radius: $border-radius-md;
-      margin-bottom: $spacing-sm;
+      gap: 14px;
+      padding: 16px 18px;
+      background: $bg-page;
+      border: 1px solid $border-lighter;
+      border-radius: 14px;
+      margin-bottom: 10px;
 
       .suggestion-number {
         flex-shrink: 0;
@@ -556,21 +572,26 @@ onMounted(() => {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: $primary-color;
+        background: $primary-gradient;
         color: white;
         border-radius: 50%;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 13px;
       }
 
       .suggestion-text {
         flex: 1;
         line-height: 1.8;
+        color: $text-regular;
       }
     }
   }
 
   .ai-suggestion-card {
     margin-bottom: $spacing-xl;
+    border-radius: 16px !important;
+    border: 1px solid rgba(232,132,90,0.2) !important;
+    background: linear-gradient(135deg, rgba(253,232,216,0.5) 0%, rgba(253,212,192,0.3) 100%) !important;
 
     .card-header {
       display: flex;
@@ -662,7 +683,6 @@ onMounted(() => {
   }
 }
 
-// 响应式
 @media (max-width: $breakpoint-md) {
   .action-buttons {
     flex-direction: column !important;
@@ -685,3 +705,4 @@ onMounted(() => {
   }
 }
 </style>
+
