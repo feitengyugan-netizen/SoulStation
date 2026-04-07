@@ -201,7 +201,8 @@ async def submit_test(
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
 
-    result = TestService.submit_test(db, current_user.id, test_id, request)
+    save_record = current_user.save_test_records if hasattr(current_user, 'save_test_records') else True
+    result = TestService.submit_test(db, current_user.id, test_id, request, save_record=save_record)
 
     if not result:
         raise HTTPException(status_code=404, detail="测试不存在")

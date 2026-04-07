@@ -1,6 +1,5 @@
 <template>
   <div class="knowledge-detail">
-    <PageHeader />
     <div class="container">
       <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
 
@@ -47,7 +46,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Star } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getKnowledgeDetail, getRecommendedKnowledge, favoriteKnowledge, unfavoriteKnowledge } from '@/api/knowledge'
 import { formatDate } from '@/utils/format'
 

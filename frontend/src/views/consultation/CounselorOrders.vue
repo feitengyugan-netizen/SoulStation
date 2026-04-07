@@ -1,6 +1,5 @@
 <template>
   <div class="counselor-orders">
-    <PageHeader />
     <div class="container">
       <h2>咨询师工作台</h2>
 
@@ -59,7 +58,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import PageHeader from '@/components/PageHeader.vue'
 import { getCounselorOrders, handleOrder } from '@/api/consultation'
 
 const router = useRouter()

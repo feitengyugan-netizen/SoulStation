@@ -1,17 +1,11 @@
 <template>
   <div class="counselor-list-page">
-    <PageHeader />
 
     <div class="container">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1>找咨询师</h1>
-        <p>专业的心理咨询师，为您提供一对一服务</p>
-      </div>
 
       <!-- 筛选卡片 -->
       <el-card class="filter-card">
-        <div class="search-section">
+        <div class="search-wrap">
           <el-input
             v-model="filters.keyword"
             placeholder="搜索咨询师姓名、擅长领域..."
@@ -22,41 +16,46 @@
           />
         </div>
 
-        <div class="filter-section">
+        <div class="filter-rows">
           <div class="filter-row">
-            <span class="label">擅长领域:</span>
-            <el-checkbox-group v-model="filters.specialties">
-              <el-checkbox label="anxiety">焦虑</el-checkbox>
-              <el-checkbox label="depression">抑郁</el-checkbox>
-              <el-checkbox label="emotion">情感</el-checkbox>
-              <el-checkbox label="career">职场</el-checkbox>
-              <el-checkbox label="family">家庭</el-checkbox>
-            </el-checkbox-group>
+            <span class="label">擅长领域</span>
+            <div class="pills">
+              <button
+                v-for="s in specialtyOptions"
+                :key="s.value"
+                class="pill"
+                :class="{ active: filters.specialties.includes(s.value) }"
+                @click="toggleSpecialty(s.value)"
+              >{{ s.label }}</button>
+            </div>
           </div>
 
           <div class="filter-row">
-            <span class="label">咨询方式:</span>
-            <el-checkbox-group v-model="filters.types">
-              <el-checkbox label="video">视频</el-checkbox>
-              <el-checkbox label="voice">语音</el-checkbox>
-              <el-checkbox label="offline">线下</el-checkbox>
-            </el-checkbox-group>
+            <span class="label">咨询方式</span>
+            <div class="pills">
+              <button
+                v-for="t in typeOptions"
+                :key="t.value"
+                class="pill"
+                :class="{ active: filters.types.includes(t.value) }"
+                @click="toggleType(t.value)"
+              >{{ t.label }}</button>
+            </div>
           </div>
 
           <div class="filter-row">
-            <span class="label">价格范围:</span>
-            <el-radio-group v-model="filters.priceRange">
-              <el-radio label="">不限</el-radio>
-              <el-radio label="0-200">¥0-200</el-radio>
-              <el-radio label="200-500">¥200-500</el-radio>
-              <el-radio label="500+">¥500+</el-radio>
-            </el-radio-group>
-          </div>
-
-          <div class="filter-row">
-            <span class="label">排序:</span>
-            <el-select v-model="filters.sort" style="width: 120px">
-              <el-option label="综合" value="default" />
+            <span class="label">价格范围</span>
+            <div class="pills">
+              <button
+                v-for="p in priceOptions"
+                :key="p.value"
+                class="pill"
+                :class="{ active: filters.priceRange === p.value }"
+                @click="filters.priceRange = p.value; handleFilterChange()"
+              >{{ p.label }}</button>
+            </div>
+            <el-select v-model="filters.sort" @change="handleFilterChange" style="width:120px; margin-left:auto" size="small">
+              <el-option label="综合排序" value="default" />
               <el-option label="评分最高" value="rating" />
               <el-option label="销量最高" value="orders" />
               <el-option label="价格最低" value="price-asc" />
@@ -68,7 +67,6 @@
       <!-- 咨询师列表 -->
       <div v-loading="loading" class="counselor-grid">
         <el-skeleton v-if="loading && counselors.length === 0" :rows="3" animated />
-
         <el-empty v-else-if="!loading && counselors.length === 0" description="暂无咨询师" />
 
         <div
@@ -76,53 +74,46 @@
           :key="counselor.id"
           class="counselor-card"
         >
-          <div class="counselor-avatar">
-            <el-avatar :size="100" :src="counselor.avatar">
-              <el-icon :size="50"><User /></el-icon>
+          <!-- 左侧头像区 -->
+          <div class="card-left">
+            <el-avatar :size="80" :src="counselor.avatar" class="avatar">
+              <el-icon :size="36"><User /></el-icon>
             </el-avatar>
+            <div class="price-tag">
+              <span class="num">¥{{ counselor.price }}</span>
+              <span class="unit">/时</span>
+            </div>
           </div>
 
-          <div class="counselor-info">
-            <h3>{{ counselor.name }}</h3>
-
-            <div class="rating-row">
-              <el-rate
-                v-model="counselor.rating"
-                disabled
-                show-score
-                text-color="#ff9900"
-              />
-              <span class="review-count">({{ counselor.reviewCount }}条评价)</span>
+          <!-- 右侧信息区 -->
+          <div class="card-body">
+            <div class="card-top">
+              <h3>{{ counselor.name }}</h3>
+              <div class="rating-row">
+                <el-rate v-model="counselor.rating" disabled show-score text-color="#e8845a" score-template="{value}" />
+                <span class="review-count">{{ counselor.reviewCount }}条评价</span>
+              </div>
             </div>
 
-            <div class="info-row">
-              <span class="label">擅长:</span>
+            <div class="tags-row">
               <el-tag
-                v-for="specialty in counselor.specialties"
-                :key="specialty"
+                v-for="s in counselor.specialties"
+                :key="s"
                 size="small"
-              >
-                {{ specialty }}
-              </el-tag>
+                class="specialty-tag"
+              >{{ specialtyLabel(s) }}</el-tag>
             </div>
 
             <div class="info-row">
-              <span class="label">方式:</span>
-              <span class="types-text">
-                <span v-if="counselor.types?.includes('video')">视频</span>
-                <span v-if="counselor.types?.includes('voice')">语音</span>
-                <span v-if="counselor.types?.includes('offline')">线下</span>
+              <span class="info-item">
+                <el-icon><VideoCamera /></el-icon>
+                {{ counselor.types?.map(t => typeLabel(t)).join(' · ') || '—' }}
               </span>
             </div>
 
-            <div class="price-row">
-              <span class="price">¥{{ counselor.price }}</span>
-              <span class="unit">/小时</span>
-            </div>
-
-            <div class="action-buttons">
-              <el-button @click="viewDetail(counselor.id)">查看详情</el-button>
-              <el-button type="primary" @click="goToAppointment(counselor.id)">预约</el-button>
+            <div class="card-actions">
+              <el-button round @click="viewDetail(counselor.id)">查看详情</el-button>
+              <el-button type="primary" round @click="goToAppointment(counselor.id)">立即预约</el-button>
             </div>
           </div>
         </div>
@@ -143,18 +134,56 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, User } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import { Search, User, VideoCamera } from '@element-plus/icons-vue'
 import { getCounselorList } from '@/api/counselor'
 import { getToken } from '@/utils/storage'
 
-const router = useRouter()
+const specialtyOptions = [
+  { label: '全部', value: '' },
+  { label: '焦虑', value: 'anxiety' },
+  { label: '抑郁', value: 'depression' },
+  { label: '情感', value: 'emotion' },
+  { label: '职场', value: 'career' },
+  { label: '家庭', value: 'family' },
+]
+const typeOptions = [
+  { label: '视频', value: 'video' },
+  { label: '语音', value: 'voice' },
+  { label: '线下', value: 'offline' },
+]
+const priceOptions = [
+  { label: '不限', value: '' },
+  { label: '¥0-200', value: '0-200' },
+  { label: '¥200-500', value: '200-500' },
+  { label: '¥500+', value: '500+' },
+]
+const typeLabelMap = { video: '视频', voice: '语音', offline: '线下' }
+const typeLabel = (t) => typeLabelMap[t] || t
 
+const specialtyLabelMap = Object.fromEntries(
+  specialtyOptions.filter(o => o.value).map(o => [o.value, o.label])
+)
+const specialtyLabel = (s) => specialtyLabelMap[s] || s
+
+const toggleSpecialty = (val) => {
+  if (!val) { filters.specialties = []; handleFilterChange(); return }
+  const idx = filters.specialties.indexOf(val)
+  if (idx > -1) filters.specialties.splice(idx, 1)
+  else filters.specialties.push(val)
+  handleFilterChange()
+}
+const toggleType = (val) => {
+  const idx = filters.types.indexOf(val)
+  if (idx > -1) filters.types.splice(idx, 1)
+  else filters.types.push(val)
+  handleFilterChange()
+}
+
+const router = useRouter()
 const loading = ref(false)
 const counselors = ref([])
 const total = ref(0)
@@ -269,127 +298,174 @@ onMounted(() => {
 
 .counselor-list-page {
   min-height: 100vh;
-  background: $bg-color;
+  background: $bg-page;
 }
 
+// ── Banner ────────────────────────────────────────────
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: $spacing-lg;
+  padding: 32px $spacing-lg;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: $spacing-xl;
-
-  h1 {
-    font-size: 36px;
-    margin-bottom: $spacing-sm;
-  }
-
-  p {
-    color: $text-secondary;
-  }
-}
-
+// ── 筛选卡片 ──────────────────────────────────────────
 .filter-card {
-  margin-bottom: $spacing-lg;
+  margin-bottom: 28px;
+  border-radius: 18px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+
+  :deep(.el-card__body) { padding: 20px 24px; }
 }
 
-.search-section {
-  margin-bottom: $spacing-lg;
-}
+.search-wrap {
+  margin-bottom: 16px;
 
-.filter-section {
-  .filter-row {
-    display: flex;
-    align-items: center;
-    gap: $spacing-md;
-    margin-bottom: $spacing-md;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .label {
-      font-weight: 500;
-      min-width: 80px;
-    }
+  :deep(.el-input__wrapper) {
+    border-radius: 12px !important;
   }
 }
 
+.filter-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .label {
+    font-weight: 600;
+    font-size: 13px;
+    color: $text-regular;
+    min-width: 64px;
+    white-space: nowrap;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 4px 14px;
+    border-radius: 999px;
+    border: 1px solid $border-base;
+    background: transparent;
+    color: $text-regular;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover { border-color: $primary-light; color: $primary-color; }
+    &.active { background: $primary-color; border-color: $primary-color; color: white; }
+  }
+}
+
+// ── 咨询师卡片网格 ────────────────────────────────────
 .counselor-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: $spacing-lg;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 20px;
   margin-bottom: $spacing-xl;
 }
 
 .counselor-card {
   background: $bg-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-lg;
-  box-shadow: $box-shadow-base;
-  transition: $transition-base;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid $border-lighter;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06);
+  display: flex;
+  gap: 20px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 
   &:hover {
-    box-shadow: $box-shadow-dark;
     transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(107,82,68,0.12);
   }
 
-  .counselor-avatar {
-    text-align: center;
-    margin-bottom: $spacing-md;
-  }
+  .card-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
 
-  .counselor-info {
-    h3 {
-      text-align: center;
-      margin: 0 0 $spacing-sm;
+    .avatar {
+      border: 3px solid $primary-lighter;
     }
 
-    .rating-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: $spacing-sm;
-      margin-bottom: $spacing-md;
+    .price-tag {
+      background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 4px 12px;
+      text-align: center;
+      white-space: nowrap;
 
-      .review-count {
-        font-size: $font-size-small;
-        color: $text-secondary;
+      .num { font-size: 17px; font-weight: 700; }
+      .unit { font-size: 11px; opacity: 0.9; }
+    }
+  }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+
+    .card-top {
+      margin-bottom: 10px;
+
+      h3 {
+        font-size: 17px;
+        font-weight: 700;
+        color: $text-primary;
+        margin-bottom: 4px;
+      }
+
+      .rating-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .review-count {
+          font-size: 12px;
+          color: $text-secondary;
+        }
+      }
+    }
+
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+
+      .specialty-tag {
+        border-radius: 999px !important;
       }
     }
 
     .info-row {
-      display: flex;
-      align-items: center;
-      gap: $spacing-xs;
-      margin-bottom: $spacing-sm;
+      margin-bottom: 14px;
 
-      .label {
-        font-weight: 500;
-      }
-    }
-
-    .price-row {
-      text-align: center;
-      margin: $spacing-md 0;
-
-      .price {
-        font-size: 28px;
-        font-weight: 600;
-        color: $primary-color;
-      }
-
-      .unit {
+      .info-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
         color: $text-secondary;
       }
     }
 
-    .action-buttons {
+    .card-actions {
       display: flex;
-      gap: $spacing-sm;
+      gap: 10px;
 
       .el-button {
         flex: 1;
@@ -401,15 +477,12 @@ onMounted(() => {
 .pagination {
   display: flex;
   justify-content: center;
+  margin-top: $spacing-lg;
 }
 
 @media (max-width: $breakpoint-md) {
-  .counselor-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-
-  .filter-section .filter-row {
-    flex-wrap: wrap;
-  }
+  .counselor-grid { grid-template-columns: 1fr; }
+  .filter-row { flex-wrap: wrap; }
 }
 </style>
+

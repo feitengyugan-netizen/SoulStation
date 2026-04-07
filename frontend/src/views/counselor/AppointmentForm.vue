@@ -1,6 +1,5 @@
 <template>
   <div class="appointment-form">
-    <PageHeader />
     <div class="container">
       <div class="page-header">
         <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
@@ -106,7 +105,6 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getCounselorDetail, getAvailableSlots, createAppointment } from '@/api/counselor'
 
 const router = useRouter()

@@ -1,56 +1,39 @@
 <template>
   <div class="test-list-page">
-    <PageHeader />
 
     <div class="container">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1>心理测试</h1>
-        <p>专业科学的测评，了解真实的自己</p>
-      </div>
-
       <!-- Tab切换 -->
       <el-tabs v-model="activeTab" @tab-change="handleTabChange" class="test-tabs">
         <el-tab-pane label="全部测试" name="all">
           <!-- 筛选栏 -->
-          <el-card class="filter-card">
-            <div class="filter-row">
-              <!-- 分类筛选 -->
-              <div class="filter-item">
-                <span class="label">分类：</span>
-                <el-radio-group v-model="filters.category" @change="handleFilterChange">
-                  <el-radio-button label="">全部</el-radio-button>
-                  <el-radio-button label="anxiety">焦虑</el-radio-button>
-                  <el-radio-button label="depression">抑郁</el-radio-button>
-                  <el-radio-button label="personality">性格</el-radio-button>
-                  <el-radio-button label="career">职业</el-radio-button>
-                  <el-radio-button label="emotion">情感</el-radio-button>
-                </el-radio-group>
-              </div>
-
-              <!-- 排序方式 -->
-              <div class="filter-item">
-                <span class="label">排序：</span>
-                <el-select v-model="filters.sort" @change="handleFilterChange" style="width: 120px">
-                  <el-option label="热门" value="hot" />
-                  <el-option label="最新" value="latest" />
-                  <el-option label="评分" value="rating" />
-                </el-select>
-              </div>
-
-              <!-- 搜索框 -->
-              <div class="filter-item search">
-                <el-input
-                  v-model="filters.keyword"
-                  placeholder="搜索测试名称"
-                  prefix-icon="Search"
-                  clearable
-                  @clear="handleFilterChange"
-                  @keyup.enter="handleFilterChange"
-                />
-              </div>
+          <div class="filter-bar">
+            <div class="category-pills">
+              <button
+                v-for="cat in categoryOptions"
+                :key="cat.value"
+                class="pill"
+                :class="{ active: filters.category === cat.value }"
+                @click="filters.category = cat.value; handleFilterChange()"
+              >{{ cat.label }}</button>
             </div>
-          </el-card>
+            <div class="filter-right">
+              <el-select v-model="filters.sort" @change="handleFilterChange" style="width: 110px" size="small">
+                <el-option label="热门排序" value="hot" />
+                <el-option label="最新发布" value="latest" />
+                <el-option label="高分优先" value="rating" />
+              </el-select>
+              <el-input
+                v-model="filters.keyword"
+                placeholder="搜索测试..."
+                prefix-icon="Search"
+                clearable
+                size="small"
+                style="width: 180px"
+                @clear="handleFilterChange"
+                @keyup.enter="handleFilterChange"
+              />
+            </div>
+          </div>
 
           <!-- 测试列表 -->
           <div v-loading="loading" class="test-grid">
@@ -175,15 +158,24 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { HotWater, DocumentCopy, Clock, User, ArrowRight } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getTestList, getTestHistory } from '@/api/test'
 import { useUserStore } from '@/stores/user'
 import { formatNumber } from '@/utils/format'
 
+const categoryOptions = [
+  { label: '全部', value: '' },
+  { label: '焦虑', value: 'anxiety' },
+  { label: '抑郁', value: 'depression' },
+  { label: '性格', value: 'personality' },
+  { label: '职业', value: 'career' },
+  { label: '情感', value: 'emotion' },
+]
+
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 // 当前激活的tab
@@ -415,7 +407,12 @@ const startTest = (id) => {
 
 // 组件挂载
 onMounted(() => {
-  loadTests()
+  if (route.query.tab === 'history') {
+    activeTab.value = 'history'
+    loadHistory()
+  } else {
+    loadTests()
+  }
 })
 </script>
 
@@ -425,128 +422,62 @@ onMounted(() => {
 .test-list-page {
   min-height: 100vh;
   background: $bg-page;
-  padding-top: $header-height;
 }
 
+// ── Banner ────────────────────────────────────────────
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px $spacing-lg;
+  padding: 32px $spacing-lg;
 }
 
-// ── 页面顶部横幅 ──────────────────────────────────────
-.page-header {
-  text-align: center;
-  margin-bottom: 48px;
-  padding: 56px 24px;
-  background: linear-gradient(160deg, #fde8d8 0%, #fbd4c0 50%, #e8c4d8 100%);
-  border-radius: 24px;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 200px; height: 200px;
-    background: rgba(255,255,255,0.25);
-    border-radius: 50%;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; left: -30px;
-    width: 160px; height: 160px;
-    background: rgba(155,139,180,0.15);
-    border-radius: 50%;
-  }
-
-  h1 {
-    font-size: 36px;
-    font-weight: 700;
-    color: $text-primary;
-    margin-bottom: 12px;
-    position: relative;
-  }
-
-  p {
-    font-size: $font-size-base;
-    color: $text-regular;
-    position: relative;
-  }
-}
-
-// ── Tabs ──────────────────────────────────────────────
-.test-tabs {
-  :deep(.el-tabs__nav-wrap::after) {
-    background-color: $border-lighter;
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: $font-size-large;
-    padding: 0 24px;
-    color: $text-secondary;
-
-    &.is-active {
-      color: $primary-color;
-      font-weight: 600;
-    }
-  }
-
-  :deep(.el-tabs__active-bar) {
-    background-color: $primary-color;
-    border-radius: 2px;
-  }
-
-  :deep(.el-tabs__header) {
-    margin-bottom: 24px;
-  }
-}
-
-// ── 筛选栏 ──────────────────────────────────────────
-.filter-card {
-  margin-bottom: $spacing-lg;
-  border-radius: 16px !important;
-  border: 1px solid $border-lighter !important;
-  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
-
-  :deep(.el-card__body) {
-    padding: 20px 24px;
-  }
-}
-
-.filter-row {
+// ── 筛选栏 ────────────────────────────────────────────
+.filter-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+  background: $bg-white;
+  border: 1px solid $border-lighter;
+  border-radius: 16px;
+  padding: 14px 20px;
+  box-shadow: 0 2px 10px rgba(107,82,68,0.05);
 
-  .filter-item {
+  .category-pills {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
 
-    .label {
-      font-weight: 500;
+    .pill {
+      padding: 5px 16px;
+      border-radius: 999px;
+      border: 1px solid $border-base;
+      background: transparent;
       color: $text-regular;
-      white-space: nowrap;
-    }
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
 
-    &.search {
-      margin-left: auto;
+      &:hover {
+        border-color: $primary-light;
+        color: $primary-color;
+      }
+
+      &.active {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: white;
+      }
     }
   }
 
-  :deep(.el-radio-button__inner) {
-    border-color: $border-base;
-    color: $text-regular;
-  }
-
-  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-    background-color: $primary-color;
-    border-color: $primary-color;
-    box-shadow: -1px 0 0 0 $primary-color;
+  .filter-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
 }
 
@@ -661,6 +592,33 @@ onMounted(() => {
   }
 }
 
+// ── Tabs ──────────────────────────────────────────────
+.test-tabs {
+  :deep(.el-tabs__nav-wrap::after) {
+    background-color: $border-lighter;
+  }
+
+  :deep(.el-tabs__item) {
+    font-size: $font-size-large;
+    padding: 0 24px;
+    color: $text-secondary;
+
+    &.is-active {
+      color: $primary-color;
+      font-weight: 600;
+    }
+  }
+
+  :deep(.el-tabs__active-bar) {
+    background-color: $primary-color;
+    border-radius: 2px;
+  }
+
+  :deep(.el-tabs__header) {
+    margin-bottom: 24px;
+  }
+}
+
 // ── 历史记录 ──────────────────────────────────────────
 .history-card {
   border-radius: 20px !important;
@@ -707,139 +665,54 @@ onMounted(() => {
     .history-meta {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 4px;
-      font-size: 13px;
-      color: $text-secondary;
+      gap: $spacing-md;
+      margin-bottom: $spacing-xs;
 
       .meta-item {
         display: flex;
         align-items: center;
         gap: 4px;
+        font-size: $font-size-small;
+        color: $text-secondary;
+      }
+
+      .level-tag {
+        margin-left: auto;
       }
     }
 
     .result-title {
-      font-size: 13px;
+      font-size: $font-size-base;
       color: $text-secondary;
       margin: 0;
     }
   }
 
   .history-action {
-    flex-shrink: 0;
-    margin-left: 16px;
-
-    :deep(.el-button.is-circle) {
-      background: rgba(232,132,90,0.1);
-      border-color: rgba(232,132,90,0.2);
-      color: $primary-color;
-
-      &:hover {
-        background: $primary-color;
-        border-color: $primary-color;
-        color: #fff;
-      }
-    }
+    margin-left: $spacing-md;
   }
 }
 
-// ── 通用分页 ──────────────────────────────────────────
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 32px;
+  margin-top: $spacing-lg;
 }
 
-.history-card {
-  .history-list {
-    .history-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: $spacing-md;
-      border: 1px solid $border-lighter;
-      border-radius: $border-radius-md;
-      margin-bottom: $spacing-sm;
-      cursor: pointer;
-      transition: $transition-base;
-
-      &:hover {
-        border-color: $primary-color;
-        background: rgba($primary-color, 0.05);
-      }
-
-      .history-info {
-        flex: 1;
-
-        .history-title {
-          font-size: $font-size-large;
-          font-weight: 600;
-          color: $text-primary;
-          margin: 0 0 $spacing-xs 0;
-        }
-
-        .history-meta {
-          display: flex;
-          align-items: center;
-          gap: $spacing-md;
-          margin-bottom: $spacing-xs;
-
-          .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: $font-size-small;
-            color: $text-secondary;
-          }
-
-          .level-tag {
-            margin-left: auto;
-          }
-        }
-
-        .result-title {
-          font-size: $font-size-base;
-          color: $text-secondary;
-          margin: 0;
-        }
-      }
-
-      .history-action {
-        margin-left: $spacing-md;
-      }
-    }
-  }
-}
-
-// 响应式
 @media (max-width: $breakpoint-md) {
   .test-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
-
-  .filter-row {
+  .filter-bar {
     flex-direction: column;
     align-items: stretch;
-
-    .filter-item.search {
-      margin-left: 0;
-    }
-
-    .el-radio-group {
-      display: flex;
-      flex-wrap: wrap;
-    }
+    .filter-right { justify-content: flex-end; }
   }
 }
 
 @media (max-width: $breakpoint-sm) {
-  .test-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .page-header h1 {
-    font-size: 28px;
-  }
+  .test-grid { grid-template-columns: 1fr; }
 }
 </style>
+
+

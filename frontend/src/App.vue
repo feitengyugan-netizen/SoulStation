@@ -1,10 +1,18 @@
 <template>
   <div id="app">
+    <PageHeader v-if="showHeader" />
     <router-view />
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+
+const route = useRoute()
+
+const showHeader = computed(() => !route.meta.hideHeader)
 </script>
 
 <style>

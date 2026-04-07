@@ -1,6 +1,5 @@
 <template>
   <div class="profile-edit">
-    <PageHeader />
 
     <div class="container">
       <!-- 顶部导航 -->
@@ -114,7 +113,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Camera, User } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
 import { getUserProfile, updateUserProfile, uploadAvatar } from '@/api/user'
 
@@ -296,7 +294,7 @@ onMounted(() => {
 .container {
   max-width: 700px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 24px 24px 60px;
 }
 
 .page-header {

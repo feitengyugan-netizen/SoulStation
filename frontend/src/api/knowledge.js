@@ -63,6 +63,17 @@ export function unfavoriteKnowledge(id) {
 }
 
 /**
+ * 获取当前用户收藏列表
+ */
+export function getUserFavorites(params) {
+  return request({
+    url: '/knowledge/user/favorites',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 点赞知识
  * @param {string} id - 知识ID
  */

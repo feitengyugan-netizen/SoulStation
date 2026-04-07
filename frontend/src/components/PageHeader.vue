@@ -246,22 +246,31 @@ const goToRegister = () => {
 
 .nav-menu {
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 
-  :deep(.el-menu) {
+  :deep(.el-menu--horizontal) {
+    height: $header-height !important;
     border-bottom: none !important;
     background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
     gap: 4px;
+
+    &.el-menu {
+      border-bottom: none !important;
+    }
 
     .el-menu-item {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       color: $text-regular !important;
       border-radius: $border-radius-full !important;
       margin: 0 2px;
       padding: 0 16px !important;
-      height: 38px;
-      line-height: 38px;
+      height: 38px !important;
+      line-height: 38px !important;
       transition: $transition-base !important;
       border-bottom: none !important;
 
@@ -273,7 +282,12 @@ const goToRegister = () => {
       &.is-active {
         color: $primary-dark !important;
         background: rgba(232, 132, 90, 0.1) !important;
-        font-weight: 600;
+        border-bottom: none !important;
+      }
+
+      &::before,
+      &::after {
+        display: none !important;
       }
     }
   }

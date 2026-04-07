@@ -1,6 +1,5 @@
 <template>
   <div class="tag-manage">
-    <PageHeader />
 
     <div class="container">
       <!-- 顶部标题栏 -->
@@ -131,7 +130,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getTags, createTag, deleteTag as deleteTagApi } from '@/api/chat'
 
 // 对话框显示

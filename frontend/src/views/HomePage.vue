@@ -1,6 +1,5 @@
 <template>
   <div class="home-page">
-    <PageHeader />
 
     <!-- Hero 区域 -->
     <section class="hero-section">
@@ -61,21 +60,6 @@
       <!-- 背景装饰 -->
       <div class="hero-bg-blob blob-1"></div>
       <div class="hero-bg-blob blob-2"></div>
-    </section>
-
-    <!-- 平台统计 -->
-    <section class="stats-section">
-      <div class="container">
-        <div class="stats-grid">
-          <div v-for="stat in platformStats" :key="stat.id" class="stat-item">
-            <div class="stat-icon">{{ stat.emoji }}</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(stat.value) }}{{ stat.suffix || '' }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- 功能导航 -->
@@ -186,6 +170,21 @@
       </div>
     </section>
 
+    <!-- 平台统计 -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div v-for="stat in platformStats" :key="stat.id" class="stat-item">
+            <div class="stat-icon">{{ stat.emoji }}</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(stat.value) }}{{ stat.suffix || '' }}</div>
+              <div class="stat-label">{{ stat.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 页脚 -->
     <footer class="page-footer">
       <div class="container">
@@ -220,7 +219,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import PageHeader from '@/components/PageHeader.vue'
 
 const router = useRouter()
 

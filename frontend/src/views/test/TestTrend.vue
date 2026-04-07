@@ -1,6 +1,5 @@
 <template>
   <div class="test-trend">
-    <PageHeader />
 
     <div class="container">
       <!-- 顶部操作栏 -->
@@ -108,7 +107,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Download, View } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import PageHeader from '@/components/PageHeader.vue'
 import { getTestHistory, getTestTrend } from '@/api/test'
 import { formatDate } from '@/utils/format'
 

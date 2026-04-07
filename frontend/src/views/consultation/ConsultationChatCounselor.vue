@@ -1,6 +1,5 @@
 <template>
   <div class="consultation-chat-counselor">
-    <PageHeader />
     <div v-loading="loading" class="chat-container">
       <!-- 聊天头部 -->
       <div class="chat-header">
@@ -151,7 +150,6 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Timer, ArrowDown, Picture, Folder, Microphone, Document, ChatDotRound } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation, addConsultationNote } from '@/api/consultation'
 import { useUserStore } from '@/stores/user'
 

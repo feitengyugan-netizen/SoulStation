@@ -592,7 +592,7 @@ class TestService:
         }
 
     @staticmethod
-    def submit_test(db: Session, user_id: int, test_id: int, request: SubmitTestRequest) -> Optional[TestResult]:
+    def submit_test(db: Session, user_id: int, test_id: int, request: SubmitTestRequest, save_record: bool = True) -> Optional[TestResult]:
         """提交测试并计算结果"""
         # 获取测试信息
         test = db.query(PsychologicalTest).filter(
@@ -649,8 +649,9 @@ class TestService:
             suggestions=suggestions
         )
 
-        db.add(result)
-        db.flush()  # 先flush以获得result.id
+        if save_record:
+            db.add(result)
+            db.flush()  # 先flush以获得result.id
 
         # 生成AI建议（异步，不阻塞用户）
         try:
@@ -673,7 +674,8 @@ class TestService:
         ).delete()
 
         db.commit()
-        db.refresh(result)
+        if save_record:
+            db.refresh(result)
 
         # 附加测试信息
         result.test_code = test.test_code

@@ -25,6 +25,8 @@ const Profile = () => import('@/views/profile/Profile.vue')
 const ProfileEdit = () => import('@/views/profile/ProfileEdit.vue')
 const PrivacySettings = () => import('@/views/profile/PrivacySettings.vue')
 const DataStatistics = () => import('@/views/profile/DataStatistics.vue')
+const MyFavorites = () => import('@/views/profile/MyFavorites.vue')
+const AccountSettings = () => import('@/views/profile/AccountSettings.vue')
 
 // 咨询师预约
 const CounselorList = () => import('@/views/counselor/CounselorList.vue')
@@ -35,6 +37,7 @@ const CounselorDashboard = () => import('@/views/counselor/CounselorDashboard.vu
 const AppointmentForm = () => import('@/views/counselor/AppointmentForm.vue')
 const AppointmentManage = () => import('@/views/counselor/AppointmentManage.vue')
 const ReviewForm = () => import('@/views/counselor/ReviewForm.vue')
+const InquiryChat = () => import('@/views/counselor/InquiryChat.vue')
 
 // 咨询对话
 const CounselorOrders = () => import('@/views/consultation/CounselorOrders.vue')
@@ -68,25 +71,25 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
-    meta: { title: '登录 - 心理咨询平台', requiresGuest: true }
+    meta: { title: '登录 - 心理咨询平台', requiresGuest: true, hideHeader: true }
   },
   {
     path: '/register',
     name: 'Register',
     component: Register,
-    meta: { title: '注册 - 心理咨询平台', requiresGuest: true }
+    meta: { title: '注册 - 心理咨询平台', requiresGuest: true, hideHeader: true }
   },
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: ForgotPassword,
-    meta: { title: '忘记密码 - 心理咨询平台', requiresGuest: true }
+    meta: { title: '忘记密码 - 心理咨询平台', requiresGuest: true, hideHeader: true }
   },
   {
     path: '/chat',
     name: 'ChatIndex',
     component: ChatIndex,
-    meta: { title: '智能问答 - 心理咨询平台', requiresAuth: true }
+    meta: { title: '智能问答 - 心理咨询平台', requiresAuth: true, hideHeader: true }
   },
   {
     path: '/chat/:id',
@@ -110,7 +113,7 @@ const routes = [
     path: '/test/:id/taking',
     name: 'TestTaking',
     component: TestTaking,
-    meta: { title: '进行测试 - 心理咨询平台', requiresAuth: true }
+    meta: { title: '进行测试 - 心理咨询平台', requiresAuth: true, hideHeader: true }
   },
   {
     path: '/test/:id/result',
@@ -149,6 +152,18 @@ const routes = [
     meta: { title: '数据统计 - 心理咨询平台', requiresAuth: true }
   },
   {
+    path: '/profile/favorites',
+    name: 'MyFavorites',
+    component: MyFavorites,
+    meta: { title: '我的收藏 - 心理咨询平台', requiresAuth: true }
+  },
+  {
+    path: '/profile/account',
+    name: 'AccountSettings',
+    component: AccountSettings,
+    meta: { title: '账号设置 - 心理咨询平台', requiresAuth: true }
+  },
+  {
     path: '/counselor',
     name: 'CounselorList',
     component: CounselorList,
@@ -158,7 +173,7 @@ const routes = [
     path: '/counselor/register',
     name: 'CounselorRegister',
     component: CounselorRegister,
-    meta: { title: '咨询师入驻 - 心理咨询平台', requiresAuth: true }
+    meta: { title: '咨询师入驻 - 心理咨询平台', requiresAuth: true, hideHeader: true }
   },
   {
     path: '/counselor/apply',
@@ -177,8 +192,12 @@ const routes = [
     name: 'CounselorDetail',
     component: CounselorDetail,
     meta: { title: '咨询师详情 - 心理咨询平台' }
-  },
-  {
+  },  {
+    path: '/counselor/:counselorId/inquiry',
+    name: 'InquiryChat',
+    component: InquiryChat,
+    meta: { title: '联系咋询师 - 心理咋询平台', requiresAuth: true }
+  },  {
     path: '/counselor/appointment',
     name: 'AppointmentForm',
     component: AppointmentForm,
@@ -229,7 +248,7 @@ const routes = [
   {
     path: '/admin',
     component: AdminLayout,
-    meta: { requiresAdmin: true },
+    meta: { requiresAdmin: true, hideHeader: true },
     children: [
       {
         path: '',

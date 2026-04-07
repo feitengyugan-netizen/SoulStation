@@ -1,6 +1,5 @@
 <template>
   <div class="test-result">
-    <PageHeader />
 
     <div class="container">
       <!-- 顶部操作栏 -->
@@ -183,7 +182,6 @@ import {
   RefreshRight,
   ArrowRight
 } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getTestResult, favoriteResult, unfavoriteResult } from '@/api/test'
 
 const router = useRouter()

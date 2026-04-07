@@ -1,6 +1,5 @@
 <template>
   <div class="chat-detail">
-    <PageHeader />
 
     <div class="container">
       <!-- 顶部操作栏 -->
@@ -145,7 +144,6 @@ import {
   ChatDotSquare,
   User
 } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
 import { getChatDetail, deleteChat, updateChatTitle, addTagToChat } from '@/api/chat'
 import { getTags } from '@/api/chat'

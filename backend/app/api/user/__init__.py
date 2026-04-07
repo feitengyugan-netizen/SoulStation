@@ -434,6 +434,32 @@ async def get_chat_distribution(
         )
 
 
+@router.post("/change-password", summary="修改密码")
+async def change_password(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """修改登录密码，需要验证旧密码"""
+    from app.core.security import verify_password, get_password_hash
+    old_password = request.get("old_password", "")
+    new_password = request.get("new_password", "")
+
+    if not old_password or not new_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请填写旧密码和新密码")
+
+    if len(new_password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="新密码长度不能少于6位")
+
+    if not verify_password(old_password, current_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="旧密码不正确")
+
+    current_user.password_hash = get_password_hash(new_password)
+    db.commit()
+
+    return {"code": 200, "message": "密码修改成功"}
+
+
 @router.post("/delete-account", summary="注销账户")
 async def delete_account(
     current_user: User = Depends(get_current_user),

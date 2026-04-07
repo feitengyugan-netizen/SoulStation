@@ -1,6 +1,5 @@
 <template>
   <div class="review-form">
-    <PageHeader />
     <div class="container">
       <el-button :icon="ArrowLeft" @click="goBack" class="back-btn">返回</el-button>
 
@@ -60,7 +59,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { submitReview as submitReviewApi } from '@/api/counselor'
 
 const router = useRouter()

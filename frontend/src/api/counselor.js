@@ -208,3 +208,20 @@ export function reviewApplication(counselorId, action, reason) {
     params: { action, reason }
   })
 }
+
+// ── 预约前沟通 ──────────────────────────────────────
+export function startInquiry(counselorId) {
+  return request({ url: `/inquiry/${counselorId}/start`, method: 'post' })
+}
+
+export function getInquiryMessages(inquiryId) {
+  return request({ url: `/inquiry/${inquiryId}/messages`, method: 'get' })
+}
+
+export function sendInquiryMessage(inquiryId, content) {
+  return request({
+    url: `/inquiry/${inquiryId}/message`,
+    method: 'post',
+    data: { content, msg_type: 'text' }
+  })
+}

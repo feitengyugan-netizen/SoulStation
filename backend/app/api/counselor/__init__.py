@@ -198,6 +198,127 @@ async def get_counselor_reviews(
         )
 
 
+from app.models.counselor import CounselorInquiry, InquiryMessage
+
+
+# ==================== 预约前沟通接口 ====================
+
+router_inquiry = APIRouter(prefix="/inquiry", tags=["预约前沟通"])
+
+
+@router_inquiry.post("/{counselor_id}/start", summary="开启/获取与咨询师的沟通会话")
+async def start_inquiry(
+    counselor_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """获取已有会话，若不存在则创建新会话，返回 inquiry_id"""
+    counselor = db.query(__import__('app.models.counselor', fromlist=['Counselor']).Counselor).filter_by(
+        id=counselor_id, is_deleted=False
+    ).first()
+    if not counselor:
+        raise HTTPException(status_code=404, detail="咨询师不存在")
+
+    inquiry = db.query(CounselorInquiry).filter_by(
+        user_id=user_id, counselor_id=counselor_id
+    ).first()
+    if not inquiry:
+        inquiry = CounselorInquiry(user_id=user_id, counselor_id=counselor_id)
+        db.add(inquiry)
+        db.commit()
+        db.refresh(inquiry)
+
+    return {
+        "code": 200,
+        "message": "ok",
+        "data": {
+            "inquiry_id": inquiry.id,
+            "counselor_id": counselor_id,
+            "counselor_name": counselor.name,
+            "counselor_avatar": counselor.avatar,
+            "counselor_title": counselor.title,
+        }
+    }
+
+
+@router_inquiry.get("/{inquiry_id}/messages", summary="获取会话消息列表")
+async def get_inquiry_messages(
+    inquiry_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    inquiry = db.query(CounselorInquiry).filter_by(id=inquiry_id).first()
+    if not inquiry:
+        raise HTTPException(status_code=404, detail="会话不存在")
+    if inquiry.user_id != user_id:
+        # 咨询师侧也可访问（此时 user_id 对应咨询师账号，暂简化鉴权）
+        from app.models.counselor import Counselor as CounselorModel
+        counselor = db.query(CounselorModel).filter_by(user_id=user_id, id=inquiry.counselor_id).first()
+        if not counselor:
+            raise HTTPException(status_code=403, detail="无权访问此会话")
+
+    msgs = db.query(InquiryMessage).filter_by(inquiry_id=inquiry_id).order_by(InquiryMessage.created_at).all()
+    return {
+        "code": 200,
+        "message": "ok",
+        "data": [
+            {
+                "id": m.id,
+                "sender_id": m.sender_id,
+                "sender_role": m.sender_role,
+                "content": m.content,
+                "msg_type": m.msg_type,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in msgs
+        ]
+    }
+
+
+@router_inquiry.post("/{inquiry_id}/message", summary="发送消息")
+async def send_inquiry_message(
+    inquiry_id: int,
+    body: dict,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    inquiry = db.query(CounselorInquiry).filter_by(id=inquiry_id).first()
+    if not inquiry:
+        raise HTTPException(status_code=404, detail="会话不存在")
+
+    # 判断发送者角色
+    from app.models.counselor import Counselor as CounselorModel
+    counselor = db.query(CounselorModel).filter_by(user_id=user_id, id=inquiry.counselor_id).first()
+    role = "counselor" if counselor else "user"
+
+    msg = InquiryMessage(
+        inquiry_id=inquiry_id,
+        sender_id=user_id,
+        sender_role=role,
+        content=body.get("content", ""),
+        msg_type=body.get("msg_type", "text"),
+    )
+    db.add(msg)
+    # 更新会话时间
+    from datetime import datetime
+    inquiry.updated_at = datetime.now()
+    db.commit()
+    db.refresh(msg)
+
+    return {
+        "code": 200,
+        "message": "发送成功",
+        "data": {
+            "id": msg.id,
+            "sender_id": msg.sender_id,
+            "sender_role": msg.sender_role,
+            "content": msg.content,
+            "msg_type": msg.msg_type,
+            "created_at": msg.created_at.isoformat() if msg.created_at else None,
+        }
+    }
+
+
 # ==================== 预约接口 ====================
 
 router_appointment = APIRouter(prefix="/appointment", tags=["预约管理"])

@@ -348,6 +348,11 @@ async def send_message_stream(
     async def generate():
         try:
             import asyncio
+            from app.models.user import User as UserModel
+
+            # 获取用户隐私设置
+            user = db.query(UserModel).filter(UserModel.id == user_id).first()
+            should_save = user.save_chat_history if user else True
 
             # 保存用户消息
             user_message = ChatMessage(
@@ -355,8 +360,9 @@ async def send_message_stream(
                 role="user",
                 content=message_data.content
             )
-            db.add(user_message)
-            db.flush()
+            if should_save:
+                db.add(user_message)
+                db.flush()
 
             # 获取历史消息
             history_messages = db.query(ChatMessage).filter(
@@ -426,11 +432,15 @@ async def send_message_stream(
                 role="assistant",
                 content=full_response
             )
-            db.add(ai_message)
-            db.commit()
+            if should_save:
+                db.add(ai_message)
+                db.commit()
+            else:
+                db.commit()
 
             # 发送完成信号
-            yield f"data: {json.dumps({'content': '', 'done': True, 'message_id': ai_message.id}, ensure_ascii=False)}\n\n"
+            msg_id = ai_message.id if should_save else None
+            yield f"data: {json.dumps({'content': '', 'done': True, 'message_id': msg_id}, ensure_ascii=False)}\n\n"
 
         except Exception as e:
             db.rollback()

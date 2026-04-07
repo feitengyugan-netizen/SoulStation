@@ -141,6 +141,17 @@ export function getChatDistribution() {
 }
 
 /**
+ * 修改密码
+ */
+export function changePassword(data) {
+  return request({
+    url: '/user/change-password',
+    method: 'post',
+    data
+  })
+}
+
+/**
  * 注销账户
  * ⚠️ 危险操作：永久删除账户和所有相关数据
  */

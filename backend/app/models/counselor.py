@@ -171,3 +171,39 @@ class ConsultationMessage(Base):
 
     def __repr__(self):
         return f"<ConsultationMessage(id={self.id}, type={self.message_type}, sender_type={self.sender_type})>"
+
+
+class CounselorInquiry(Base):
+    """咨询师预约前沟通会话表"""
+    __tablename__ = "counselor_inquiries"
+
+    id = Column(BigInteger, primary_key=True, index=True, comment="会话ID")
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False, comment="用户ID")
+    counselor_id = Column(BigInteger, ForeignKey("counselors.id"), nullable=False, comment="咨询师ID")
+
+    created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="最后消息时间")
+
+    messages = relationship("InquiryMessage", back_populates="inquiry", order_by="InquiryMessage.created_at")
+
+    def __repr__(self):
+        return f"<CounselorInquiry(id={self.id}, user={self.user_id}, counselor={self.counselor_id})>"
+
+
+class InquiryMessage(Base):
+    """预约前沟通消息表"""
+    __tablename__ = "inquiry_messages"
+
+    id = Column(BigInteger, primary_key=True, index=True, comment="消息ID")
+    inquiry_id = Column(BigInteger, ForeignKey("counselor_inquiries.id"), nullable=False, comment="会话ID")
+    sender_id = Column(BigInteger, nullable=False, comment="发送者ID")
+    sender_role = Column(Enum('user', 'counselor'), nullable=False, comment="发送者角色")
+    content = Column(Text, nullable=False, comment="消息内容")
+    msg_type = Column(String(20), default='text', comment="消息类型 text/image")
+
+    created_at = Column(DateTime, server_default=func.now(), comment="发送时间")
+
+    inquiry = relationship("CounselorInquiry", back_populates="messages")
+
+    def __repr__(self):
+        return f"<InquiryMessage(id={self.id}, role={self.sender_role})>"

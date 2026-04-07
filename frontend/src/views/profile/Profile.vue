@@ -1,160 +1,128 @@
 <template>
   <div class="profile-page">
-    <PageHeader />
 
     <div class="container">
+
       <!-- 个人信息卡片 -->
-      <el-card class="profile-card">
+      <div class="profile-card">
         <div class="profile-header">
-          <div class="avatar-section" @click="editAvatar">
-            <el-avatar :size="100" :src="userInfo?.avatar">
-              <el-icon :size="50"><User /></el-icon>
+          <div class="avatar-wrap" @click="editAvatar">
+            <el-avatar :size="88" :src="userInfo?.avatar">
+              <el-icon :size="44"><User /></el-icon>
             </el-avatar>
-            <el-button class="edit-avatar-btn" :icon="Camera" circle />
+            <div class="avatar-mask"><el-icon><Camera /></el-icon></div>
           </div>
 
           <div class="user-info">
             <h2>{{ userInfo?.nickname || '未设置昵称' }}</h2>
             <p class="email">{{ userInfo?.email }}</p>
-            <el-tag :type="userRoleType" size="large">
-              {{ userRoleText }}
-            </el-tag>
+            <el-tag :type="userRoleType" size="small" round>{{ userRoleText }}</el-tag>
           </div>
 
-          <el-button type="primary" :icon="Edit" @click="goToEdit">
-            编辑资料
-          </el-button>
+          <el-button class="edit-btn" :icon="Edit" round @click="goToEdit">编辑资料</el-button>
         </div>
 
-        <!-- 数据统计 -->
-        <div class="stats-grid">
-          <div class="stat-item" @click="navigateTo('/test')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f4a57a 0%, #e8845a 100%)">
-              <el-icon :size="28"><DocumentCopy /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ statistics.testCount || 0 }}</div>
-              <div class="stat-label">心理测试</div>
-            </div>
+        <!-- 数据统计行 -->
+        <div class="stats-row">
+          <div class="stat-cell" @click="navigateTo('/test')">
+            <el-icon :size="20" color="#e8845a"><DocumentCopy /></el-icon>
+            <span class="num">{{ statistics.testCount || 0 }}</span>
+            <span class="lbl">心理测试</span>
           </div>
-
-          <div class="stat-item" @click="navigateTo('/chat')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #e8c4d8 0%, #9b8bb4 100%)">
-              <el-icon :size="28"><ChatDotSquare /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ statistics.chatCount || 0 }}</div>
-              <div class="stat-label">智能问答</div>
-            </div>
+          <div class="stat-divider" />
+          <div class="stat-cell" @click="navigateTo('/chat')">
+            <el-icon :size="20" color="#9b8bb4"><ChatDotSquare /></el-icon>
+            <span class="num">{{ statistics.chatCount || 0 }}</span>
+            <span class="lbl">智能问答</span>
           </div>
-
-          <div class="stat-item" @click="navigateTo('/counselor/orders')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%)">
-              <el-icon :size="28"><Calendar /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ statistics.appointmentCount || 0 }}</div>
-              <div class="stat-label">咨询预约</div>
-            </div>
+          <div class="stat-divider" />
+          <div class="stat-cell" @click="navigateTo('/counselor/orders')">
+            <el-icon :size="20" color="#56ab91"><Calendar /></el-icon>
+            <span class="num">{{ statistics.appointmentCount || 0 }}</span>
+            <span class="lbl">咨询预约</span>
           </div>
-
-          <div class="stat-item" @click="navigateTo('/knowledge')">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #fde8d8 0%, #f4a57a 100%)">
-              <el-icon :size="28"><Star /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ statistics.favoriteCount || 0 }}</div>
-              <div class="stat-label">收藏内容</div>
-            </div>
+          <div class="stat-divider" />
+          <div class="stat-cell" @click="navigateTo('/knowledge')">
+            <el-icon :size="20" color="#f4a57a"><Star /></el-icon>
+            <span class="num">{{ statistics.favoriteCount || 0 }}</span>
+            <span class="lbl">收藏内容</span>
           </div>
         </div>
-      </el-card>
+      </div>
 
       <!-- 快捷入口 -->
-      <el-card class="quick-access-card">
-        <template #header>
-          <span>快捷入口</span>
-        </template>
-
-        <div class="quick-access-grid">
-          <div class="access-item" @click="navigateTo('/test')">
-            <div class="access-icon">
-              <el-icon :size="32" color="#e8845a"><DocumentCopy /></el-icon>
+      <div class="section-card">
+        <div class="section-title">快捷入口</div>
+        <div class="quick-grid">
+          <div class="quick-item" @click="router.push('/test?tab=history')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fde8d8,#f4a57a)">
+              <el-icon :size="26" color="#c96f42"><DocumentCopy /></el-icon>
             </div>
             <span>我的测试</span>
           </div>
-
-          <div class="access-item" @click="navigateTo('/chat')">
-            <div class="access-icon">
-              <el-icon :size="32" color="#9b8bb4"><ChatDotSquare /></el-icon>
+          <div class="quick-item" @click="navigateTo('/chat')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#ede8f5,#c4b5d8)">
+              <el-icon :size="26" color="#7b5ea7"><ChatDotSquare /></el-icon>
             </div>
             <span>我的对话</span>
           </div>
-
-          <div class="access-item" @click="navigateTo('/counselor/orders')">
-            <div class="access-icon">
-              <el-icon :size="32" color="#56ab91"><Calendar /></el-icon>
+          <div class="quick-item" @click="navigateTo('/counselor/orders')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#e0f5ee,#a8e6cf)">
+              <el-icon :size="26" color="#3d8a6e"><Calendar /></el-icon>
             </div>
             <span>我的预约</span>
           </div>
-
-          <div class="access-item" @click="navigateTo('/knowledge')">
-            <div class="access-icon">
-              <el-icon :size="32" color="#43e97b"><Star /></el-icon>
+          <div class="quick-item" @click="navigateTo('/profile/favorites')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fff9e6,#ffe082)">
+              <el-icon :size="26" color="#c68a00"><Star /></el-icon>
             </div>
             <span>我的收藏</span>
           </div>
-
-          <div class="access-item" @click="goToEdit">
-            <div class="access-icon">
-              <el-icon :size="32" color="#E6A23C"><Setting /></el-icon>
+          <div class="quick-item" @click="navigateTo('/profile/account')">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fff3e0,#ffcc80)">
+              <el-icon :size="26" color="#e65100"><Setting /></el-icon>
             </div>
             <span>账号设置</span>
           </div>
-
-          <div class="access-item" @click="goToPrivacy">
-            <div class="access-icon">
-              <el-icon :size="32" color="#F56C6C"><Lock /></el-icon>
+          <div class="quick-item" @click="goToPrivacy">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fce4ec,#f48fb1)">
+              <el-icon :size="26" color="#c2185b"><Lock /></el-icon>
             </div>
             <span>隐私设置</span>
           </div>
-
-          <div class="access-item" @click="goToStatistics">
-            <div class="access-icon">
-              <el-icon :size="32" color="#909399"><DataAnalysis /></el-icon>
+          <div class="quick-item" @click="goToStatistics">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#e8eaf6,#9fa8da)">
+              <el-icon :size="26" color="#3949ab"><DataAnalysis /></el-icon>
             </div>
             <span>数据统计</span>
           </div>
-
-          <div class="access-item" @click="handleLogout">
-            <div class="access-icon">
-              <el-icon :size="32" color="#F56C6C"><SwitchButton /></el-icon>
-            </div>
-            <span>退出登录</span>
-          </div>
-
-          <div class="access-item" @click="handleDeleteAccount">
-            <div class="access-icon">
-              <el-icon :size="32" color="#F56C6C"><Delete /></el-icon>
-            </div>
-            <span>注销账户</span>
-          </div>
-
-          <div class="access-item" @click="goToCounselorApply" v-if="!isCounselor">
-            <div class="access-icon">
-              <el-icon :size="32" color="#67C23A"><Briefcase /></el-icon>
+          <div class="quick-item" @click="goToCounselorApply" v-if="!isCounselor">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#e8f5e9,#a5d6a7)">
+              <el-icon :size="26" color="#2e7d32"><Briefcase /></el-icon>
             </div>
             <span>加入我们</span>
           </div>
-
-          <div class="access-item" @click="goToCounselorDashboard" v-else>
-            <div class="access-icon">
-              <el-icon :size="32" color="#E6A23C"><Briefcase /></el-icon>
+          <div class="quick-item" @click="goToCounselorDashboard" v-else>
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fff8e1,#ffca28)">
+              <el-icon :size="26" color="#f57f17"><Briefcase /></el-icon>
             </div>
             <span>咨询师中心</span>
           </div>
+          <div class="quick-item" @click="handleLogout">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#f5f5f5,#eeeeee)">
+              <el-icon :size="26" color="#9e9e9e"><SwitchButton /></el-icon>
+            </div>
+            <span>退出登录</span>
+          </div>
+          <div class="quick-item" @click="handleDeleteAccount">
+            <div class="quick-icon" style="background:linear-gradient(135deg,#fde8e8,#ffcdd2)">
+              <el-icon :size="26" color="#e53935"><Delete /></el-icon>
+            </div>
+            <span>注销账户</span>
+          </div>
         </div>
-      </el-card>
+      </div>
+
     </div>
 
     <!-- 头像上传对话框 -->
@@ -205,7 +173,6 @@ import {
   Delete,
   Briefcase
 } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
 import { getUserProfile, uploadAvatar as uploadAvatarApi, getUserStatistics, deleteAccount } from '@/api/user'
 
@@ -430,130 +397,186 @@ onMounted(() => {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 24px 24px 60px;
 }
 
-// ── 顶部用户信息卡片 ──────────────────────────────────
+// ── 个人信息卡片 ──────────────────────────────────────
 .profile-card {
-  border-radius: 24px !important;
-  border: 1px solid $border-lighter !important;
-  box-shadow: 0 4px 24px rgba(107,82,68,0.08) !important;
-  margin-bottom: 28px;
+  background: linear-gradient(150deg, #fde8d8 0%, #f9d4c0 50%, #fff 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(232,132,90,0.18);
+  box-shadow: 0 4px 24px rgba(107,82,68,0.1);
+  padding: 32px 36px 0;
+  margin-bottom: 24px;
   overflow: hidden;
-  background: linear-gradient(160deg, #fde8d8 0%, #fbd4c0 60%, $bg-white 100%) !important;
-
-  :deep(.el-card__body) { padding: 36px 40px; }
 }
 
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 28px;
-  flex-wrap: wrap;
+  gap: 24px;
+  padding-bottom: 28px;
+
+  .avatar-wrap {
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover .avatar-mask { opacity: 1; }
+  }
+
+  .avatar-mask {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
 
   .user-info {
     flex: 1;
+    min-width: 0;
 
-    h2 { font-size: 24px; font-weight: 700; color: $text-primary; margin: 0 0 6px; }
-    .email { font-size: 14px; color: $text-secondary; margin-bottom: 14px; }
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: $text-primary;
+      margin: 0 0 4px;
+    }
+
+    .email {
+      font-size: 13px;
+      color: $text-secondary;
+      margin: 0 0 10px;
+    }
   }
 
-  .avatar-wrapper { position: relative; }
+  .edit-btn {
+    flex-shrink: 0;
+    background: rgba(232,132,90,0.12);
+    border-color: rgba(232,132,90,0.3);
+    color: $primary-color;
 
-  .edit-btn { margin-top: 12px; }
+    &:hover {
+      background: $primary-color;
+      border-color: $primary-color;
+      color: #fff;
+    }
+  }
 }
 
-.profile-stats {
+// 数据统计行
+.stats-row {
   display: flex;
-  gap: 32px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(232,132,90,0.2);
+  border-top: 1px solid rgba(232,132,90,0.15);
 
-  .stat-item {
-    text-align: center;
-
-    .value { font-size: 24px; font-weight: 700; color: $primary-color; display: block; }
-    .label { font-size: 12px; color: $text-secondary; margin-top: 2px; }
-  }
-}
-
-.tags { display: flex; flex-wrap: wrap; gap: 8px; }
-
-// ── 内容卡片通用 ──────────────────────────────────────
-.section-card {
-  border-radius: 20px !important;
-  border: 1px solid $border-lighter !important;
-  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
-  margin-bottom: 24px;
-
-  :deep(.el-card__header) {
-    font-weight: 600;
-    color: $text-primary;
-    border-bottom: 1px solid $border-lighter;
-    padding: 18px 24px;
-  }
-
-  :deep(.el-card__body) { padding: 24px; }
-}
-
-// ── 测试历史 ──────────────────────────────────────────
-.history-list { display: flex; flex-direction: column; gap: 12px; }
-
-.history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  background: $bg-page;
-  border-radius: 12px;
-  border: 1px solid $border-lighter;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(232,132,90,0.06);
-    border-color: rgba(232,132,90,0.25);
-    transform: translateX(4px);
-  }
-
-  .item-info {
-    h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: $text-primary; }
-    .meta { font-size: 12px; color: $text-secondary; display: flex; gap: 12px; align-items: center; }
-  }
-}
-
-// ── 咨询记录 ──────────────────────────────────────────
-.consultation-list { display: flex; flex-direction: column; gap: 12px; }
-
-.consultation-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 18px;
-  background: $bg-page;
-  border-radius: 12px;
-  border: 1px solid $border-lighter;
-  transition: all 0.2s ease;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(232,132,90,0.06);
-    border-color: rgba(232,132,90,0.2);
-  }
-
-  .counselor-info {
+  .stat-cell {
     flex: 1;
-    h4 { margin: 0 0 4px; font-weight: 600; color: $text-primary; font-size: 14px; }
-    .meta { font-size: 12px; color: $text-secondary; }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 0 0 4px 4px;
+
+    &:hover { background: rgba(232,132,90,0.08); }
+
+    .num {
+      font-size: 20px;
+      font-weight: 700;
+      color: $text-primary;
+      line-height: 1;
+    }
+
+    .lbl {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+  }
+
+  .stat-divider {
+    width: 1px;
+    background: rgba(232,132,90,0.15);
+    margin: 12px 0;
+  }
+}
+
+// ── 快捷入口 ──────────────────────────────────────────
+.section-card {
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid $border-lighter;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06);
+  padding: 24px 28px 28px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid $border-lighter;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 14px 8px;
+  border-radius: 16px;
+  transition: background 0.2s, transform 0.2s;
+
+  &:hover {
+    background: $bg-page;
+    transform: translateY(-3px);
+  }
+
+  .quick-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  span {
+    font-size: 12px;
+    color: $text-regular;
+    font-weight: 500;
+    text-align: center;
   }
 }
 
 // ── 响应式 ──────────────────────────────────────────
 @media (max-width: $breakpoint-md) {
-  .profile-header { flex-direction: column; text-align: center; }
-  .profile-stats { justify-content: center; gap: 24px; }
+  .profile-header { flex-wrap: wrap; justify-content: center; text-align: center; }
+  .quick-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .profile-card { padding: 24px 20px 0; }
+  .quick-grid { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
+

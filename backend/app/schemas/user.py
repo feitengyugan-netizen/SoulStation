@@ -97,11 +97,13 @@ class AvatarUploadResponse(BaseModel):
 class PrivacySettings(BaseModel):
     """隐私设置"""
     save_chat_history: bool = True
+    chat_visible: bool = True          # True=允许管理员查看, False=仅自己可见
+    save_test_records: bool = True
+    allow_trend_analysis: bool = True
+    # deprecated fields kept for backward compatibility
     allow_ai_analysis: bool = False
     chat_only_visible: bool = False
-    save_test_records: bool = True
     test_only_visible: bool = False
-    allow_trend_analysis: bool = True
 
 
 class UserStatistics(BaseModel):

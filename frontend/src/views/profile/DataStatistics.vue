@@ -1,102 +1,77 @@
 <template>
   <div class="data-statistics">
-    <PageHeader />
+    <div class="ds-container">
 
-    <div class="container">
-      <!-- 顶部导航 -->
-      <div class="page-header">
-        <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
+      <!-- 页头 -->
+      <div class="ds-header">
+        <el-button :icon="ArrowLeft" text @click="goBack">返回</el-button>
         <h2>我的数据统计</h2>
-        <el-select
-          v-model="timeRange"
-          @change="handleTimeRangeChange"
-          style="width: 130px"
-        >
-          <el-option label="最近7天" value="7days" />
+        <el-select v-model="timeRange" @change="handleTimeRangeChange" style="width:130px">
+          <el-option label="最近7天"  value="7days" />
           <el-option label="最近30天" value="30days" />
           <el-option label="最近90天" value="90days" />
         </el-select>
       </div>
 
-      <!-- 总览数据 -->
-      <div class="overview-grid">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f4a57a 0%, #e8845a 100%)">
-              <el-icon :size="32"><DocumentCopy /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-number">{{ overviewData.testCount || 0 }}</div>
-              <div class="stat-label">心理测试</div>
-            </div>
+      <!-- 概览卡片 -->
+      <div class="ds-stats-grid">
+        <div class="ds-stat-card">
+          <div class="ds-stat-icon" style="--c:#e8845a">
+            <el-icon :size="22"><DocumentCopy /></el-icon>
           </div>
-        </el-card>
-
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #e8c4d8 0%, #9b8bb4 100%)">
-              <el-icon :size="32"><ChatDotSquare /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-number">{{ overviewData.chatCount || 0 }}</div>
-              <div class="stat-label">对话</div>
-            </div>
+          <div class="ds-stat-num">{{ overviewData.testCount || 0 }}</div>
+          <div class="ds-stat-lbl">心理测试</div>
+        </div>
+        <div class="ds-stat-card">
+          <div class="ds-stat-icon" style="--c:#9b8bb4">
+            <el-icon :size="22"><ChatDotSquare /></el-icon>
           </div>
-        </el-card>
-
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%)">
-              <el-icon :size="32"><Calendar /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-number">{{ overviewData.appointmentCount || 0 }}</div>
-              <div class="stat-label">预约</div>
-            </div>
+          <div class="ds-stat-num">{{ overviewData.chatCount || 0 }}</div>
+          <div class="ds-stat-lbl">对话次数</div>
+        </div>
+        <div class="ds-stat-card">
+          <div class="ds-stat-icon" style="--c:#56ab91">
+            <el-icon :size="22"><Calendar /></el-icon>
           </div>
-        </el-card>
-
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #fde8d8 0%, #f4a57a 100%)">
-              <el-icon :size="32"><Star /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-number">{{ overviewData.favoriteCount || 0 }}</div>
-              <div class="stat-label">收藏</div>
-            </div>
+          <div class="ds-stat-num">{{ overviewData.appointmentCount || 0 }}</div>
+          <div class="ds-stat-lbl">预约次数</div>
+        </div>
+        <div class="ds-stat-card">
+          <div class="ds-stat-icon" style="--c:#f4a57a">
+            <el-icon :size="22"><Star /></el-icon>
           </div>
-        </el-card>
+          <div class="ds-stat-num">{{ overviewData.favoriteCount || 0 }}</div>
+          <div class="ds-stat-lbl">收藏文章</div>
+        </div>
       </div>
 
       <!-- 活动趋势 -->
-      <el-card v-loading="loading" class="chart-card">
-        <template #header>
-          <span>活动趋势</span>
-        </template>
-
-        <div class="chart-container" ref="activityChartRef"></div>
+      <el-card v-if="allowTrendAnalysis" v-loading="loading" class="ds-chart-card">
+        <template #header><span>活动趋势</span></template>
+        <div class="ds-chart" ref="activityChartRef"></div>
       </el-card>
 
-      <div class="charts-row">
-        <!-- 测试分类分布 -->
-        <el-card v-loading="loading" class="chart-card">
-          <template #header>
-            <span>测试分类分布</span>
-          </template>
+      <el-card v-else class="ds-chart-card ds-disabled">
+        <template #header><span>活动趋势</span></template>
+        <div class="ds-disabled-tip">
+          <el-icon :size="36"><Lock /></el-icon>
+          <p>趋势分析已在隐私设置中关闭</p>
+          <el-button type="primary" plain size="small" @click="$router.push('/profile/privacy')">前往开启</el-button>
+        </div>
+      </el-card>
 
-          <div class="chart-container small" ref="testChartRef"></div>
+      <!-- 分布图 -->
+      <div class="ds-charts-row" v-if="allowTrendAnalysis">
+        <el-card v-loading="loading" class="ds-chart-card">
+          <template #header><span>测试分类分布</span></template>
+          <div class="ds-chart ds-chart-sm" ref="testChartRef"></div>
         </el-card>
-
-        <!-- 对话主题分布 -->
-        <el-card v-loading="loading" class="chart-card">
-          <template #header>
-            <span>对话主题分布</span>
-          </template>
-
-          <div class="chart-container small" ref="chatChartRef"></div>
+        <el-card v-loading="loading" class="ds-chart-card">
+          <template #header><span>对话主题分布</span></template>
+          <div class="ds-chart ds-chart-sm" ref="chatChartRef"></div>
         </el-card>
       </div>
+
     </div>
   </div>
 </template>
@@ -105,14 +80,14 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, DocumentCopy, ChatDotSquare, Calendar, Star } from '@element-plus/icons-vue'
+import { ArrowLeft, DocumentCopy, ChatDotSquare, Calendar, Star, Lock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import PageHeader from '@/components/PageHeader.vue'
 import {
   getUserStatistics,
   getActivityTrend,
   getTestDistribution,
-  getChatDistribution
+  getChatDistribution,
+  getPrivacySettings
 } from '@/api/user'
 
 const router = useRouter()
@@ -131,6 +106,9 @@ const timeRange = ref('30days')
 
 // 加载状态
 const loading = ref(false)
+
+// 趋势分析开关
+const allowTrendAnalysis = ref(true)
 
 // 总览数据
 const overviewData = ref({
@@ -392,10 +370,21 @@ const handleResize = () => {
 
 // 组件挂载
 onMounted(async () => {
+  // 先加载隐私设置
+  try {
+    const privRes = await getPrivacySettings()
+    const privacy = privRes.data || {}
+    allowTrendAnalysis.value = privacy.allow_trend_analysis !== false
+  } catch {
+    allowTrendAnalysis.value = true
+  }
+
   await loadStatistics()
-  await loadActivityTrend()
-  await loadTestDistribution()
-  await loadChatDistribution()
+  if (allowTrendAnalysis.value) {
+    await loadActivityTrend()
+    await loadTestDistribution()
+    await loadChatDistribution()
+  }
 
   window.addEventListener('resize', handleResize)
 })
@@ -413,56 +402,75 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 @use "@/styles/variables.scss" as *;
 
-.data-statistics-page {
+.data-statistics {
   min-height: 100vh;
   background: $bg-page;
   padding-top: $header-height;
 }
 
-.container {
+.ds-container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 24px 24px 60px;
 }
 
-.page-header {
+// 页头
+.ds-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 32px;
-
-  h2 { margin: 0; font-size: 24px; font-weight: 700; color: $text-primary; }
+  h2 { margin: 0; font-size: 22px; font-weight: 700; color: $text-primary; flex: 1; }
 }
 
-// ── 汇总卡片行 ──────────────────────────────────────
-.stats-row {
+// 概览卡片网格
+.ds-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
   margin-bottom: 28px;
+  @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); }
 }
 
-.stat-card {
-  border-radius: 20px !important;
-  border: 1px solid $border-lighter !important;
-  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+.ds-stat-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid $border-lighter;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   text-align: center;
-
-  :deep(.el-card__body) { padding: 28px 20px; }
-
-  .stat-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: $primary-color;
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  .stat-label { font-size: 13px; color: $text-secondary; }
 }
 
-// ── 图表卡片 ──────────────────────────────────────────
-.chart-card {
+.ds-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--c, #e8845a);
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.ds-stat-num {
+  font-size: 32px;
+  font-weight: 800;
+  color: $text-primary;
+  line-height: 1;
+}
+
+.ds-stat-lbl {
+  font-size: 13px;
+  color: $text-secondary;
+}
+
+// 图表卡片
+.ds-chart-card {
   border-radius: 20px !important;
   border: 1px solid $border-lighter !important;
   box-shadow: 0 4px 20px rgba(107,82,68,0.08) !important;
@@ -475,28 +483,27 @@ onBeforeUnmount(() => {
   }
 }
 
-.chart-container { width: 100%; height: 350px; }
+.ds-chart { width: 100%; height: 350px; }
+.ds-chart-sm { height: 280px; }
 
-// ── 数据表 ──────────────────────────────────────────
-.data-table-card {
-  border-radius: 20px !important;
-  border: 1px solid $border-lighter !important;
-  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+.ds-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  @media (max-width: 768px) { grid-template-columns: 1fr; }
+}
 
-  :deep(.el-card__header) {
-    font-weight: 600;
-    color: $text-primary;
-    border-bottom: 1px solid $border-lighter;
-  }
-
-  :deep(.el-table th) {
-    background: $bg-page;
-    color: $text-regular;
-    font-weight: 600;
-  }
-
-  :deep(.el-table tr:hover td) {
-    background: rgba(232,132,90,0.04) !important;
+// 趋势关闭占位符
+.ds-disabled {
+  .ds-disabled-tip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #bbb;
+    gap: 12px;
+    p { margin: 0; font-size: 14px; }
   }
 }
 </style>

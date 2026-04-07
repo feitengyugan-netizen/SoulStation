@@ -1,6 +1,5 @@
 <template>
   <div class="counselor-dashboard-page">
-    <PageHeader />
 
     <div class="container">
       <!-- 欢迎卡片 -->
@@ -180,7 +179,6 @@ import {
   Star,
   ArrowRight
 } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { getApplicationStatus } from '@/api/counselor'
 import dayjs from 'dayjs'
 

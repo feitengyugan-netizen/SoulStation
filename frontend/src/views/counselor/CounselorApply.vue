@@ -1,6 +1,5 @@
 <template>
   <div class="counselor-apply-page">
-    <PageHeader />
 
     <div class="container">
       <el-card class="apply-card">
@@ -333,7 +332,6 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Briefcase } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { submitApplication as submitCounselorApplication } from '@/api/counselor'
 
 const router = useRouter()

@@ -126,10 +126,8 @@ class UserService:
 
         return PrivacySettings(
             save_chat_history=user.save_chat_history,
-            allow_ai_analysis=user.allow_ai_analysis,
-            chat_only_visible=user.chat_only_visible,
+            chat_visible=not user.chat_only_visible,
             save_test_records=user.save_test_records,
-            test_only_visible=user.test_only_visible,
             allow_trend_analysis=user.allow_trend_analysis
         )
 
@@ -142,10 +140,8 @@ class UserService:
 
         # 更新隐私设置
         user.save_chat_history = settings.save_chat_history
-        user.allow_ai_analysis = settings.allow_ai_analysis
-        user.chat_only_visible = settings.chat_only_visible
+        user.chat_only_visible = not settings.chat_visible
         user.save_test_records = settings.save_test_records
-        user.test_only_visible = settings.test_only_visible
         user.allow_trend_analysis = settings.allow_trend_analysis
 
         db.commit()
