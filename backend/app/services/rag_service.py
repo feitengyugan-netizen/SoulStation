@@ -2,6 +2,7 @@
 RAG 服务 - 基于 ChromaDB 的向量检索增强生成
 """
 import logging
+import threading
 from typing import List, Dict
 
 from app.core.config import settings
@@ -16,6 +17,7 @@ class RAGService:
         self._client = None
         self._collection = None
         self._ef = None
+        self._lock = threading.Lock()  # 防止并发初始化时的竞争条件
 
     def _get_embedding_function(self):
         """懒加载 Sentence-Transformers 嵌入函数"""
@@ -30,22 +32,28 @@ class RAGService:
         """懒加载 ChromaDB 客户端"""
         if self._client is None:
             import chromadb
+            from chromadb.config import Settings
             import os
             # 统一解析为 backend/ 目录下的 chroma_db，不受启动目录影响
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             db_path = os.path.join(base_dir, settings.CHROMA_DB_PATH.lstrip("./\\"))
             os.makedirs(db_path, exist_ok=True)
-            self._client = chromadb.PersistentClient(path=db_path)
+            self._client = chromadb.PersistentClient(
+                path=db_path,
+                settings=Settings(anonymized_telemetry=False)
+            )
         return self._client
 
     def _get_collection(self):
-        """获取或创建集合"""
+        """获取或创建集合（双重检查锁，线程安全）"""
         if self._collection is None:
-            client = self._get_client()
-            self._collection = client.get_or_create_collection(
-                name=settings.CHROMA_COLLECTION_NAME,
-                embedding_function=self._get_embedding_function()
-            )
+            with self._lock:
+                if self._collection is None:
+                    client = self._get_client()
+                    self._collection = client.get_or_create_collection(
+                        name=settings.CHROMA_COLLECTION_NAME,
+                        embedding_function=self._get_embedding_function()
+                    )
         return self._collection
 
     def search_similar(self, query: str, n_results: int = None) -> List[Dict]:

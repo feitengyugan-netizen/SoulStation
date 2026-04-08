@@ -276,6 +276,78 @@ async def review_counselor(
         )
 
 
+@router.get("/counselors", summary="获取咨询师列表")
+async def get_counselors(
+    keyword: Optional[str] = Query(None, description="搜索关键词"),
+    counselor_status: Optional[str] = Query(None, description="状态过滤: pending/approved/rejected/disabled"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取咨询师列表（后台管理）
+
+    支持按姓名、邮箱、手机号搜索
+    支持按状态筛选
+    包含申请信息、专业信息、统计数据
+    """
+    try:
+        from app.services.counselor_service import CounselorService
+        result = CounselorService.get_admin_counselors(db, keyword, counselor_status, page, page_size)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except Exception as e:
+        logger.error(f"获取咨询师列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取咨询师列表失败: {str(e)}"
+        )
+
+
+@router.put("/counselor/{counselor_id}/status", summary="切换咨询师状态")
+async def toggle_counselor_status(
+    counselor_id: int,
+    status_data: dict,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    启用/禁用咨询师账号
+
+    - **active**: true 启用 / false 禁用
+
+    禁用后咨询师无法接受新预约
+    """
+    try:
+        from app.services.counselor_service import CounselorService
+        CounselorService.toggle_counselor_status(db, counselor_id, status_data.get("active", True))
+        action = "启用" if status_data.get("active", True) else "禁用"
+        return {
+            "code": 200,
+            "message": f"{action}成功",
+            "data": {
+                "counselor_id": counselor_id,
+                "active": status_data.get("active", True)
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"切换咨询师状态失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"切换咨询师状态失败: {str(e)}"
+        )
+
+
 # ==================== 知识管理接口 ====================
 
 @router.get("/knowledge/list", summary="获取知识文章列表")
@@ -519,4 +591,138 @@ async def export_orders(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"导出订单数据失败: {str(e)}"
+        )
+
+
+# ==================== 心理测试管理接口 ====================
+
+@router.get("/tests", summary="获取心理测试列表")
+async def get_tests(
+    keyword: Optional[str] = Query(None, description="搜索关键词"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取心理测试列表（后台管理）
+
+    支持按标题搜索
+    包含测试的统计信息（题目数、完成次数）
+    """
+    try:
+        from app.services.test_service import TestService
+        result = TestService.get_admin_tests(db, keyword, page, page_size)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except Exception as e:
+        logger.error(f"获取测试列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取测试列表失败: {str(e)}"
+        )
+
+
+@router.get("/test/{test_id}", summary="获取测试详情")
+async def get_test_detail(
+    test_id: int,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取心理测试详情（后台管理）
+
+    包含测试的所有信息（题目、选项、评分规则等）
+    """
+    try:
+        from app.services.test_service import TestService
+        test = TestService.get_admin_test_detail(db, test_id)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": test
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"获取测试详情失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取测试详情失败: {str(e)}"
+        )
+
+
+@router.get("/test/{test_id}/questions", summary="获取测试题目列表")
+async def get_test_questions(
+    test_id: int,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取测试的所有题目
+
+    用于题目的管理和编辑
+    """
+    try:
+        from app.services.test_service import TestService
+        questions = TestService.get_test_questions(db, test_id)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": {
+                "test_id": test_id,
+                "questions": questions
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"获取题目列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取题目列表失败: {str(e)}"
+        )
+
+
+@router.delete("/test/{test_id}", summary="删除心理测试")
+async def delete_test_endpoint(
+    test_id: int,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    删除心理测试
+
+    软删除操作，数据不会真正从数据库中删除
+    """
+    try:
+        from app.services.test_service import TestService
+        TestService.delete_test(db, test_id)
+        return {
+            "code": 200,
+            "message": "删除成功",
+            "data": {
+                "test_id": test_id
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"删除测试失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除测试失败: {str(e)}"
         )

@@ -3,6 +3,7 @@ AI 服务 - 基于豆包 API
 """
 import os
 import httpx
+from typing import Iterator
 from openai import OpenAI
 from app.core.config import settings
 
@@ -72,6 +73,27 @@ class AIService:
 
         except Exception as e:
             raise Exception(f"AI 服务调用失败: {str(e)}")
+
+    def chat_stream(
+        self,
+        messages: list,
+        temperature: float = 0.7,
+        max_tokens: int = 2000
+    ) -> Iterator[str]:
+        """发起流式聊天请求，逐块返回文本。"""
+        try:
+            stream_response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                stream=True,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            for chunk in stream_response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            raise Exception(f"AI 服务流式调用失败: {str(e)}")
 
     def generate_system_prompt(self, context: str = "") -> str:
         """

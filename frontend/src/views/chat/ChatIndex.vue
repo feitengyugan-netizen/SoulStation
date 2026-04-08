@@ -200,10 +200,10 @@
               </div>
             </div>
 
-            <!-- 加载中?-->
+            <!-- 加载中 -->
             <div v-if="loadingMessages" class="message-item assistant">
-              <div class="message-bubble">
-                <div class="typing-indicator">
+              <div class="message-assistant">
+                <div class="message-bubble typing-bubble">
                   <span></span>
                   <span></span>
                   <span></span>
@@ -235,8 +235,8 @@
                 :rows="1"
                 :autosize="{ minRows: 1, maxRows: 6 }"
                 placeholder="输入您的问题...（Enter发送，Shift+Enter换行）"
-                @keydown.enter.exact="sendMessage"
-                @keydown.enter.shift.prevent
+                @keydown.enter.exact.prevent="sendMessage"
+                @keydown.enter.shift.exact.prevent="() => inputMessage += '\n'"
                 resize="none"
               />
               <el-button
@@ -654,7 +654,18 @@ const sendMessage = async () => {
 
               sendingMessage.value = false
               loadingMessages.value = false
-              break
+              // 不 break：继续监听 title_update 事件，直到流自然关闭
+              continue
+            }
+
+            // 后台异步标题生成完成后的更新事件
+            if (data.type === 'title_update' && data.dialogue_title) {
+              const chat = chatList.value.find(c => c.id === currentChatId.value)
+              if (chat) {
+                chat.title = data.dialogue_title
+              }
+              // title_update 是最后一个事件，流会自然关闭
+              continue
             }
 
             // 接收内容并更新UI（打字机效果）
@@ -1136,13 +1147,18 @@ onBeforeUnmount(() => {
   &.assistant {
     display: flex;
     justify-content: flex-start;
+    align-items: flex-start;
+
+    // max-width 控制在直接 flex 子项上，避免气泡百分比循环塌陷
+    .message-assistant { max-width: 68%; }
 
     .message-bubble {
       background: white;
       color: $text-primary;
       border-radius: 4px 18px 18px 18px;
       padding: 14px 18px;
-      max-width: 68%;
+      max-width: 100%;
+      min-width: 56px;   // 流式输出初始内容为空时防止宽度归零
       box-shadow: $box-shadow-card;
       border: 1px solid $border-lighter;
       line-height: 1.65;
@@ -1152,13 +1168,17 @@ onBeforeUnmount(() => {
   &.user {
     display: flex;
     justify-content: flex-end;
+    align-items: flex-start;
+
+    .message-user { max-width: 68%; }
 
     .message-bubble {
       background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%);
       color: white;
       border-radius: 18px 4px 18px 18px;
       padding: 14px 18px;
-      max-width: 68%;
+      max-width: 100%;
+      min-width: 56px;
       box-shadow: 0 4px 16px rgba(232, 132, 90, 0.3);
       line-height: 1.65;
     }
@@ -1171,31 +1191,28 @@ onBeforeUnmount(() => {
 }
 
 // ---- 打字动画 ----
-.typing-indicator {
-  display: flex;
-  gap: 5px;
-  padding: 14px 18px;
-  background: white;
-  border-radius: 4px 18px 18px 18px;
-  width: fit-content;
-  border: 1px solid $border-lighter;
-  box-shadow: $box-shadow-card;
+.typing-bubble {
+  display: flex !important;
+  gap: 7px;
+  align-items: center;
 
   span {
+    display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: $primary-light;
-    animation: typing 1.4s ease-in-out infinite;
+    background: $primary-color;
+    opacity: 0.35;
+    animation: typing-wave 1.2s ease-in-out infinite;
 
-    &:nth-child(2) { animation-delay: 0.2s; }
-    &:nth-child(3) { animation-delay: 0.4s; }
+    &:nth-child(2) { animation-delay: 0.18s; }
+    &:nth-child(3) { animation-delay: 0.36s; }
   }
 }
 
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-  30% { transform: translateY(-8px); opacity: 1; }
+@keyframes typing-wave {
+  0%, 100% { transform: translateY(0) scale(1);   opacity: 0.35; }
+  40%       { transform: translateY(-6px) scale(1.15); opacity: 1; }
 }
 
 // ---- 输入区域 ----
@@ -1246,7 +1263,8 @@ onBeforeUnmount(() => {
     &.show { left: 0; }
   }
 
-  .message-bubble { max-width: 86% !important; }
+  .message-assistant,
+  .message-user { max-width: 86% !important; }
 }
 </style>
 

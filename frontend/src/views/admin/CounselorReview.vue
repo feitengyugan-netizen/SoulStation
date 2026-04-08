@@ -34,7 +34,7 @@
               :key="tag"
               size="small"
               style="margin: 2px"
-            >{{ tag }}</el-tag>
+            >{{ getSpecialtyText(tag) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="experience_years" label="年限" width="70">
@@ -106,7 +106,7 @@
               :key="tag"
               size="small"
               style="margin: 2px"
-            >{{ tag }}</el-tag>
+            >{{ getSpecialtyText(tag) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="咨询方式" :span="2">
             <el-tag
@@ -295,6 +295,46 @@ const confirmReject = async () => {
 const statusLabel = (s) => ({ pending: '待审核', approved: '已通过', rejected: '已拒绝' }[s] || s)
 const statusTagType = (s) => ({ pending: 'warning', approved: 'success', rejected: 'danger' }[s] || '')
 const consultTypeLabel = (t) => ({ video: '视频咨询', voice: '语音咨询', offline: '线下咨询' }[t] || t)
+
+// 擅长领域映射（英文 -> 中文）
+const specialtyMap = {
+  'anxiety': '焦虑症',
+  'depression': '抑郁症',
+  'relationship': '人际关系',
+  'career': '职业发展',
+  'family': '家庭关系',
+  'marriage': '婚姻咨询',
+  'adolescent': '青少年心理',
+  'stress': '压力管理',
+  'emotion': '情绪调节',
+  'sleep': '睡眠障碍',
+  'trauma': '创伤疗愈',
+  'addiction': '成瘾行为',
+  'eating_disorder': '饮食障碍',
+  'obsessive_compulsive': '强迫症',
+  'phobia': '恐惧症',
+  'bipolar': '双相情感障碍',
+  'schizophrenia': '精神分裂症',
+  'personality_disorder': '人格障碍',
+  'gender_identity': '性别认同',
+  'sexual_issues': '性心理',
+  'grief': '丧失与悲伤',
+  'self_esteem': '自尊自信',
+  'perfectionism': '完美主义',
+  'procrastination': '拖延行为',
+  'anger_management': '愤怒管理',
+  'divorce': '离婚调适',
+  'parenting': '亲子教育',
+  'aging': '老年心理',
+  'life_transition': '人生转变',
+  'loneliness': '孤独感',
+  'burnout': '职业倦怠',
+  'other': '其他'
+}
+
+const getSpecialtyText = (specialty) => {
+  return specialtyMap[specialty] || specialty || '未知'
+}
 
 const formatDate = (d) => {
   if (!d) return '—'

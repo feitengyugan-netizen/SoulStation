@@ -18,6 +18,69 @@ from app.services.rag_service import rag_service
 class ChatService:
     """聊天服务类"""
 
+    @staticmethod
+    def _should_generate_dialogue_title(dialogue: ChatDialogue, message_count: int) -> bool:
+        """仅在首轮对话后为默认标题的会话生成主题。"""
+        default_titles = {"", "新对话", "未命名对话", "新聊天"}
+        current_title = (dialogue.title or "").strip()
+        return message_count == 2 and current_title in default_titles
+
+    @staticmethod
+    def _fallback_topic(user_content: str) -> str:
+        """生成失败时，基于用户首条消息给一个简短主题。"""
+        cleaned = " ".join((user_content or "").split())
+        if not cleaned:
+            return "新的心理咨询"
+        return cleaned[:14] + ("..." if len(cleaned) > 14 else "")
+
+    @staticmethod
+    def _generate_dialogue_topic(user_content: str, ai_content: str) -> str:
+        """根据首轮问答生成简短主题。"""
+        prompt_messages = [
+            {
+                "role": "system",
+                "content": (
+                    "你是对话主题提炼助手。"
+                    "请基于以下首轮对话内容生成一个中文短主题。"
+                    "要求：8-16字、不要标点、不要引号、不要解释、不要出现\"用户\"\"AI\"\"助手\"等词汇，只输出主题本身。"
+                )
+            },
+            {
+                "role": "user",
+                "content": f"提问：{user_content}\n回应：{ai_content}"
+            }
+        ]
+        topic = ai_service.chat(messages=prompt_messages, stream=False, temperature=0.2, max_tokens=32)
+        topic = (topic or "").strip().replace("\n", "")
+        if not topic:
+            return ChatService._fallback_topic(user_content)
+        return topic[:24]
+
+    @staticmethod
+    def apply_auto_dialogue_title(
+        db: Session,
+        dialogue: ChatDialogue,
+        user_content: str,
+        ai_content: str
+    ) -> str:
+        """首轮对话后自动设置主题，返回最终标题。"""
+        message_count = db.query(func.count(ChatMessage.id)).filter(
+            and_(
+                ChatMessage.dialogue_id == dialogue.id,
+                ChatMessage.is_deleted == False
+            )
+        ).scalar() or 0
+
+        if not ChatService._should_generate_dialogue_title(dialogue, message_count):
+            return dialogue.title
+
+        try:
+            dialogue.title = ChatService._generate_dialogue_topic(user_content=user_content, ai_content=ai_content)
+        except Exception:
+            dialogue.title = ChatService._fallback_topic(user_content)
+
+        return dialogue.title
+
     # ========== 对话管理 ==========
     @staticmethod
     def get_dialogue_list(db: Session, user_id: int) -> List[dict]:
@@ -316,6 +379,16 @@ class ChatService:
             content=ai_reply
         )
         db.add(ai_message)
+        db.flush()  # flush 后计数包含 ai_message，_should_generate_dialogue_title 判断才准确
+
+        # 首轮问答结束后，自动生成主题标题
+        final_dialogue_title = ChatService.apply_auto_dialogue_title(
+            db=db,
+            dialogue=dialogue,
+            user_content=message_data.content,
+            ai_content=ai_reply
+        )
+
         db.commit()
 
         return {
@@ -330,7 +403,8 @@ class ChatService:
                 "role": "assistant",
                 "content": ai_message.content,
                 "created_at": ai_message.created_at
-            }
+            },
+            "dialogue_title": final_dialogue_title
         }
 
     # ========== 标签管理 ==========

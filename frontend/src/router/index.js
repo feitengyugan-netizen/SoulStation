@@ -52,6 +52,7 @@ const KnowledgeDetail = () => import('@/views/knowledge/KnowledgeDetail.vue')
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 const Dashboard = () => import('@/views/admin/Dashboard.vue')
 const CounselorReview = () => import('@/views/admin/CounselorReview.vue')
+const CounselorManage = () => import('@/views/admin/CounselorManage.vue')
 const KnowledgeManage = () => import('@/views/admin/KnowledgeManage.vue')
 const ArticleEditor = () => import('@/views/admin/ArticleEditor.vue')
 const UserManage = () => import('@/views/admin/UserManage.vue')
@@ -271,6 +272,12 @@ const routes = [
         name: 'CounselorReview',
         component: CounselorReview,
         meta: { title: '咨询师审核 - 心理咨询平台' }
+      },
+      {
+        path: 'counselors',
+        name: 'CounselorManage',
+        component: CounselorManage,
+        meta: { title: '咨询师管理 - 心理咨询平台' }
       },
       {
         path: 'orders',

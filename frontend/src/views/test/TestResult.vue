@@ -333,9 +333,9 @@ const retakeTest = () => {
 
 // 开始AI深度咨询
 const startAIChat = () => {
-  // 跳转到AI咨询页面，携带测试结果ID
+  // 跳转到智能问答页面，携带测试结果ID
   router.push({
-    path: '/consultation/chat',
+    path: '/chat',
     query: {
       result_id: resultId,
       type: 'test_result'
