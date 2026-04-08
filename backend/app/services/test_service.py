@@ -934,3 +934,180 @@ class TestService:
                 TestProgress.test_id == test_id
             )
         ).first()
+
+    # ==================== 管理后台方法 ====================
+
+    @staticmethod
+    def get_admin_tests(
+        db: Session,
+        keyword: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """
+        获取心理测试列表（管理后台）
+
+        Args:
+            db: 数据库会话
+            keyword: 搜索关键词
+            page: 页码
+            page_size: 每页数量
+
+        Returns:
+            包含测试列表和总数的字典
+        """
+        # 构建查询
+        q = db.query(PsychologicalTest)
+
+        # 关键词搜索
+        if keyword:
+            q = q.filter(
+                or_(
+                    PsychologicalTest.title.contains(keyword),
+                    PsychologicalTest.description.contains(keyword),
+                    PsychologicalTest.test_code.contains(keyword)
+                )
+            )
+
+        # 总数
+        total = q.count()
+
+        # 分页
+        offset = (page - 1) * page_size
+        tests = q.order_by(desc(PsychologicalTest.created_at)).offset(offset).limit(page_size).all()
+
+        # 为每个测试添加统计信息
+        items = []
+        for test in tests:
+            # 统计题目数量
+            question_count = db.query(TestQuestion).filter(
+                TestQuestion.test_id == test.id
+            ).count()
+
+            # 统计完成次数
+            completed_count = db.query(TestResult).filter(
+                and_(
+                    TestResult.test_id == test.id,
+                    TestResult.is_deleted == False
+                )
+            ).count()
+
+            items.append({
+                "id": test.id,
+                "title": test.title,
+                "test_code": test.test_code,
+                "category": test.category,
+                "description": test.description,
+                "questionCount": question_count,
+                "completedCount": completed_count,
+                "createTime": test.created_at.strftime("%Y-%m-%d %H:%M:%S") if test.created_at else "",
+                "isActive": test.is_active
+            })
+
+        return {
+            "list": items,
+            "total": total,
+            "page": page,
+            "pageSize": page_size
+        }
+
+    @staticmethod
+    def get_admin_test_detail(db: Session, test_id: int) -> Optional[Dict[str, Any]]:
+        """
+        获取测试详情（管理后台）
+
+        Args:
+            db: 数据库会话
+            test_id: 测试ID
+
+        Returns:
+            包含测试完整信息的字典
+        """
+        test = db.query(PsychologicalTest).filter(PsychologicalTest.id == test_id).first()
+
+        if not test:
+            return None
+
+        # 获取题目列表
+        questions = db.query(TestQuestion).filter(
+            TestQuestion.test_id == test_id
+        ).order_by(TestQuestion.question_number).all()
+
+        question_list = []
+        for q in questions:
+            question_list.append({
+                "id": q.id,
+                "questionNumber": q.question_number,
+                "questionText": q.question_text,
+                "options": q.options,
+                "dimension": q.dimension,
+                "isReverse": q.is_reverse
+            })
+
+        return {
+            "id": test.id,
+            "testCode": test.test_code,
+            "title": test.title,
+            "description": test.description,
+            "category": test.category,
+            "introText": test.intro_text,
+            "totalQuestions": test.total_questions,
+            "optionType": test.option_type,
+            "scoringRules": test.scoring_rules,
+            "hotValue": test.hot_value,
+            "coverImage": test.cover_image,
+            "isActive": test.is_active,
+            "questions": question_list,
+            "createTime": test.created_at.strftime("%Y-%m-%d %H:%M:%S") if test.created_at else ""
+        }
+
+    @staticmethod
+    def get_test_questions(db: Session, test_id: int) -> List[Dict[str, Any]]:
+        """
+        获取测试的所有题目
+
+        Args:
+            db: 数据库会话
+            test_id: 测试ID
+
+        Returns:
+            题目列表
+        """
+        questions = db.query(TestQuestion).filter(
+            TestQuestion.test_id == test_id
+        ).order_by(TestQuestion.question_number).all()
+
+        return [
+            {
+                "id": q.id,
+                "questionNumber": q.question_number,
+                "questionText": q.question_text,
+                "options": q.options,
+                "dimension": q.dimension,
+                "isReverse": q.is_reverse
+            }
+            for q in questions
+        ]
+
+    @staticmethod
+    def delete_test(db: Session, test_id: int) -> bool:
+        """
+        删除心理测试（软删除）
+
+        Args:
+            db: 数据库会话
+            test_id: 测试ID
+
+        Returns:
+            是否删除成功
+        """
+        test = db.query(PsychologicalTest).filter(PsychologicalTest.id == test_id).first()
+
+        if not test:
+            raise ValueError("测试不存在")
+
+        # 软删除：设置 is_active 为 False
+        test.is_active = False
+        db.commit()
+
+        return True

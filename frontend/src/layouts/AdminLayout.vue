@@ -30,6 +30,11 @@
           <template #title>咨询师审核</template>
         </el-menu-item>
 
+        <el-menu-item index="/admin/counselors" @click="navigateTo('/admin/counselors')">
+          <el-icon><Avatar /></el-icon>
+          <template #title>咨询师管理</template>
+        </el-menu-item>
+
         <el-menu-item index="/admin/orders" @click="navigateTo('/admin/orders')">
           <el-icon><List /></el-icon>
           <template #title>订单管理</template>
@@ -111,7 +116,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  HomeFilled, User, UserFilled, List, Document, Notebook,
+  HomeFilled, User, UserFilled, Avatar, List, Document, Notebook,
   ChatDotRound, Edit, Setting, Fold, Expand, SwitchButton
 } from '@element-plus/icons-vue'
 
@@ -130,6 +135,7 @@ const currentPageTitle = computed(() => {
     '/admin/dashboard': '首页',
     '/admin/users': '用户管理',
     '/admin/counselor-review': '咨询师审核',
+    '/admin/counselors': '咨询师管理',
     '/admin/orders': '订单管理',
     '/admin/knowledge': '知识管理',
     '/admin/tests': '测试管理',
@@ -188,6 +194,12 @@ onMounted(() => {
 @use "@/styles/variables.scss" as *;
 
 /* 整体布局 */
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
 :deep(.el-container) {
   display: flex;
   height: 100vh;
@@ -197,14 +209,24 @@ onMounted(() => {
 /* 侧边导航 */
 .sidebar {
   width: 220px;
+  min-width: 220px;
   background-color: #2d1f17;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.sidebar:has(.el-menu--collapse) { width: 64px; }
+.sidebar.is-collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.sidebar:has(.el-menu--collapse) {
+  width: 64px;
+  min-width: 64px;
+}
 
 .logo {
   display: flex;
@@ -213,6 +235,8 @@ onMounted(() => {
   padding: 20px;
   color: #f4c49e;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .logo-text {
@@ -220,15 +244,36 @@ onMounted(() => {
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .sidebar-menu {
   flex: 1;
   border: none !important;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: #2d1f17 !important;
 
-  &:not(.el-menu--collapse) { width: 220px; }
+  &:not(.el-menu--collapse) {
+    width: 220px;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 }
 
 :deep(.sidebar-menu .el-menu-item) {
@@ -293,17 +338,71 @@ onMounted(() => {
 .content-area {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
+  min-height: 0;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   &::-webkit-scrollbar-thumb {
     background: $border-base;
-    border-radius: 3px;
-    &:hover { background: $border-lighter; }
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: $border-lighter;
   }
 }
 
 /* 面包屑 */
 .breadcrumb { margin-bottom: 20px; }
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+
+  .navbar-left {
+    gap: 8px;
+  }
+
+  .welcome-text {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-navbar {
+    padding: 0 16px;
+  }
+
+  .content-area {
+    padding: 12px;
+  }
+}
 </style>

@@ -150,3 +150,111 @@ export function exportOrders() {
     responseType: 'blob'
   })
 }
+
+/**
+ * 获取咨询师列表（管理后台）
+ * @param {Object} params
+ * @param {string} params.keyword - 搜索关键词
+ * @param {string} params.counselor_status - 状态过滤
+ * @param {number} params.page - 页码
+ * @param {number} params.page_size - 每页数量
+ */
+export function getAdminCounselors(params) {
+  return request({
+    url: '/admin/counselors',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 切换咨询师状态（启用/禁用）
+ * @param {string} id - 咨询师ID
+ * @param {Object} data
+ * @param {boolean} data.active - 是否启用
+ */
+export function toggleCounselorStatus(id, data) {
+  return request({
+    url: `/admin/counselor/${id}/status`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 获取心理测试列表（管理后台）
+ * @param {Object} params
+ * @param {string} params.keyword - 搜索关键词
+ * @param {number} params.page - 页码
+ * @param {number} params.pageSize - 每页数量
+ */
+export function getAdminTestList(params) {
+  return request({
+    url: '/admin/tests',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取心理测试详情（管理后台）
+ * @param {string} id - 测试ID
+ */
+export function getAdminTestDetail(id) {
+  return request({
+    url: `/admin/test/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 创建心理测试
+ * @param {Object} data
+ * @param {string} data.title - 测试标题
+ * @param {string} data.description - 测试描述
+ * @param {string} data.category - 分类
+ * @param {string} data.coverImage - 封面图
+ * @param {Array} data.questions - 题目列表
+ */
+export function createTest(data) {
+  return request({
+    url: '/admin/test',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新心理测试
+ * @param {string} id - 测试ID
+ * @param {Object} data
+ */
+export function updateTest(id, data) {
+  return request({
+    url: `/admin/test/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除心理测试
+ * @param {string} id - 测试ID
+ */
+export function deleteTest(id) {
+  return request({
+    url: `/admin/test/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 获取测试题目列表
+ * @param {string} testId - 测试ID
+ */
+export function getTestQuestions(testId) {
+  return request({
+    url: `/admin/test/${testId}/questions`,
+    method: 'get'
+  })
+}

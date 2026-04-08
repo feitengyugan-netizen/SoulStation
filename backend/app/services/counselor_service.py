@@ -426,6 +426,106 @@ class CounselorService:
             "reviewed_at": counselor.reviewed_at
         }
 
+    # ==================== 管理后台方法 ====================
+
+    @staticmethod
+    def get_admin_counselors(
+        db: Session,
+        keyword: Optional[str] = None,
+        status: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """
+        获取咨询师列表（管理后台）
+
+        Args:
+            db: 数据库会话
+            keyword: 搜索关键词（姓名/邮箱/手机号）
+            status: 状态过滤
+            page: 页码
+            page_size: 每页数量
+
+        Returns:
+            包含咨询师列表和总数的字典
+        """
+        # 构建查询（关联 users 表获取邮箱和手机号）
+        from app.models.user import User
+
+        q = db.query(Counselor).filter(Counselor.is_deleted == False)
+
+        # 关键词搜索（只搜索姓名）
+        if keyword:
+            q = q.filter(Counselor.name.contains(keyword))
+
+        # 状态筛选
+        if status:
+            q = q.filter(Counselor.status == status)
+
+        # 总数
+        total = q.count()
+
+        # 分页
+        offset = (page - 1) * page_size
+        counselors = q.order_by(desc(Counselor.created_at)).offset(offset).limit(page_size).all()
+
+        # 转换为字典格式
+        items = []
+        for counselor in counselors:
+            # 获取关联的用户信息
+            user = None
+            if counselor.user_id:
+                user = db.query(User).filter(User.id == counselor.user_id).first()
+
+            # 解析擅长领域
+            specialties = counselor.specialties if counselor.specialties else []
+            if isinstance(specialties, str):
+                specialties = specialties.split(',')
+
+            items.append({
+                "id": counselor.id,
+                "name": counselor.name,
+                "email": user.email if user else "",
+                "phone": user.phone if user else "",
+                "specialties": specialties,
+                "status": counselor.status,
+                "is_active": counselor.is_verified,  # 前端期望的字段名
+                "createTime": counselor.created_at.strftime("%Y-%m-%d %H:%M:%S") if counselor.created_at else ""
+            })
+
+        return {
+            "list": items,
+            "total": total,
+            "page": page,
+            "pageSize": page_size
+        }
+
+    @staticmethod
+    def toggle_counselor_status(db: Session, counselor_id: int, active: bool) -> bool:
+        """
+        切换咨询师状态（启用/禁用）
+
+        Args:
+            db: 数据库会话
+            counselor_id: 咨询师ID
+            active: 是否启用
+
+        Returns:
+            是否操作成功
+        """
+        counselor = db.query(Counselor).filter(
+            Counselor.id == counselor_id,
+            Counselor.is_deleted == False
+        ).first()
+
+        if not counselor:
+            raise ValueError("咨询师不存在")
+
+        counselor.is_verified = active
+        db.commit()
+
+        return True
+
 
 class AppointmentService:
     """预约服务"""
