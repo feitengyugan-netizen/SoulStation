@@ -3,6 +3,7 @@
 """
 import os
 import uuid
+import base64
 import time
 import asyncio
 from typing import Optional
@@ -29,9 +30,6 @@ class DoubaoSpeechService:
         self.query_url = "https://openspeech.bytedance.com/api/v3/auc/bigmodel/query"
         self.resource_id = "volc.seedasr.auc"  # 豆包录音文件识别模型2.0
 
-        # 公网访问URL（用于音频文件）
-        self.public_url = getattr(settings, 'PUBLIC_URL', 'http://localhost:8000').rstrip('/')
-
         # 判断使用哪种认证方式
         self.use_legacy_auth = bool(self.app_id and self.access_token)
 
@@ -39,7 +37,7 @@ class DoubaoSpeechService:
             logger.warning("豆包 API 未配置，语音识别功能将不可用")
         else:
             auth_type = "旧版控制台" if self.use_legacy_auth else "新版控制台"
-            logger.info(f"语音识别服务已初始化（{auth_type}），公网URL: {self.public_url}")
+            logger.info(f"语音识别服务已初始化（{auth_type}）")
 
     async def transcribe_audio(
         self,
@@ -77,11 +75,11 @@ class DoubaoSpeechService:
             )
 
         try:
-            # 1. 保存音频文件到本地
-            audio_url = await self._save_audio_file(audio_file)
+            # 1. 读取音频内容
+            audio_content = await audio_file.read()
 
-            # 2. 提交识别任务
-            task_id = await self._submit_task(audio_url, file_ext, language)
+            # 2. 提交识别任务（base64直传，无需公网URL）
+            task_id = await self._submit_task(audio_content, file_ext, language)
 
             # 3. 轮询查询结果（最长等待30秒）
             result = await self._poll_result(task_id, max_wait=30)
@@ -97,63 +95,25 @@ class DoubaoSpeechService:
                 detail=f"音频转录失败: {str(e)}"
             )
 
-    async def _save_audio_file(self, audio_file: UploadFile) -> str:
-        """
-        保存音频文件并返回可访问的URL
-
-        注意：生产环境应该使用对象存储服务（如OSS、COS等）
-        开发环境暂时使用本地文件
-        """
-        # 创建上传目录
-        upload_dir = "uploads/audio"
-        os.makedirs(upload_dir, exist_ok=True)
-
-        # 生成唯一文件名
-        file_ext = audio_file.filename.split('.')[-1].lower()
-        unique_filename = f"{uuid.uuid4()}.{file_ext}"
-        file_path = os.path.join(upload_dir, unique_filename)
-
-        # 保存文件
-        try:
-            content = await audio_file.read()
-            with open(file_path, "wb") as f:
-                f.write(content)
-
-            # 检查文件大小（限制25MB）
-            if len(content) > 25 * 1024 * 1024:
-                os.unlink(file_path)
-                raise HTTPException(
-                    status_code=400,
-                    detail="音频文件过大，请上传小于 25MB 的文件"
-                )
-
-            logger.info(f"音频文件已保存: {file_path}")
-
-            # 返回公网可访问的URL
-            # 使用配置的 PUBLIC_URL，开发环境可使用 ngrok 等内网穿透工具
-            return f"{self.public_url}/uploads/audio/{unique_filename}"
-
-        except Exception as e:
-            logger.error(f"保存音频文件失败: {e}")
-            if os.path.exists(file_path):
-                os.unlink(file_path)
-            raise HTTPException(
-                status_code=500,
-                detail=f"保存音频文件失败: {str(e)}"
-            )
-
     async def _submit_task(
         self,
-        audio_url: str,
+        audio_content: bytes,
         format: str,
         language: str = "zh-CN"
     ) -> str:
         """
-        提交识别任务
+        提交识别任务（base64直传音频，无需公网URL）
 
         Returns:
             task_id: 任务ID
         """
+        # 检查文件大小（限制25MB）
+        if len(audio_content) > 25 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail="音频文件过大，请上传小于 25MB 的文件"
+            )
+
         task_id = str(uuid.uuid4())
 
         # 根据认证方式构建 headers
@@ -175,10 +135,13 @@ class DoubaoSpeechService:
                 "X-Api-Sequence": "-1"
             }
 
+        # 将音频编码为base64，直接传入请求体，无需公网URL
+        audio_b64 = base64.b64encode(audio_content).decode("utf-8")
+
         payload = {
             "audio": {
                 "format": format,
-                "url": audio_url
+                "data": audio_b64
             },
             "request": {
                 "model_name": "bigmodel",

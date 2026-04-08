@@ -7,6 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 from typing import List
+import asyncio
 import json
 from app.core.database import get_db
 from app.models.chat import ChatDialogue, ChatMessage
@@ -304,7 +305,8 @@ async def send_message(
             "data": {
                 "id": result["ai_message"]["id"],
                 "content": result["ai_message"]["content"],
-                "created_at": result["ai_message"]["created_at"]
+                "created_at": result["ai_message"]["created_at"],
+                "dialogue_title": result.get("dialogue_title")
             }
         }
     except ValueError as e:
@@ -347,7 +349,6 @@ async def send_message_stream(
 
     async def generate():
         try:
-            import asyncio
             from app.models.user import User as UserModel
 
             # 获取用户隐私设置
@@ -405,28 +406,20 @@ async def send_message_stream(
             # 调用AI服务获取流式回复
             full_response = ""
 
-            # 使用同步方式调用，然后转换为流式
             try:
-                # 调用AI服务（非流式）
-                ai_reply = ai_service.chat(messages=messages_list, stream=False)
-                full_response = ai_reply
-
-                # 逐字发送，模拟流式效果
-                for char in full_response:
-                    chunk = f"data: {json.dumps({'content': char, 'done': False}, ensure_ascii=False)}\n\n"
+                # 直接使用模型流式输出，降低首字和整体延迟
+                for content_chunk in ai_service.chat_stream(messages=messages_list):
+                    full_response += content_chunk
+                    chunk = f"data: {json.dumps({'content': content_chunk, 'done': False}, ensure_ascii=False)}\n\n"
                     yield chunk
-                    # 增加延迟，确保前端有时间渲染
-                    await asyncio.sleep(0.05)  # 50ms延迟，让流式效果更明显
 
             except Exception as ai_error:
                 print(f"AI调用失败: {ai_error}")
                 full_response = f"抱歉，我遇到了一些问题：{str(ai_error)}。请稍后再试。"
-                for char in full_response:
-                    chunk = f"data: {json.dumps({'content': char, 'done': False}, ensure_ascii=False)}\n\n"
-                    yield chunk
-                    await asyncio.sleep(0.01)
+                chunk = f"data: {json.dumps({'content': full_response, 'done': False}, ensure_ascii=False)}\n\n"
+                yield chunk
 
-            # 保存AI回复
+            # 保存AI回复（先 add+flush，保证消息计数准确）
             ai_message = ChatMessage(
                 dialogue_id=dialogue_id,
                 role="assistant",
@@ -434,13 +427,50 @@ async def send_message_stream(
             )
             if should_save:
                 db.add(ai_message)
+                db.flush()  # flush 后 user+ai 均可见，计数为 2
+                message_count = db.query(ChatMessage).filter(
+                    and_(
+                        ChatMessage.dialogue_id == dialogue_id,
+                        ChatMessage.is_deleted == False
+                    )
+                ).count()
+                needs_title = chat_service._should_generate_dialogue_title(dialogue, message_count)
                 db.commit()
             else:
+                needs_title = False
                 db.commit()
 
-            # 发送完成信号
+            # 立即发送完成信号，不等标题生成
             msg_id = ai_message.id if should_save else None
             yield f"data: {json.dumps({'content': '', 'done': True, 'message_id': msg_id}, ensure_ascii=False)}\n\n"
+
+            # 后台异步生成标题，结束后推送 title_update 事件
+            if needs_title:
+                _user_content = message_data.content
+                _ai_content = full_response
+                _dial_id = dialogue_id
+
+                def _bg_gen_title():
+                    from app.core.database import SessionLocal
+                    _db = SessionLocal()
+                    try:
+                        title = chat_service._generate_dialogue_topic(_user_content, _ai_content)
+                        d = _db.query(ChatDialogue).filter(ChatDialogue.id == _dial_id).first()
+                        if d:
+                            d.title = title
+                            _db.commit()
+                        return title
+                    except Exception:
+                        _db.rollback()
+                        return chat_service._fallback_topic(_user_content)
+                    finally:
+                        _db.close()
+
+                try:
+                    final_title = await asyncio.get_running_loop().run_in_executor(None, _bg_gen_title)
+                    yield f"data: {json.dumps({'type': 'title_update', 'dialogue_title': final_title}, ensure_ascii=False)}\n\n"
+                except Exception:
+                    pass
 
         except Exception as e:
             db.rollback()

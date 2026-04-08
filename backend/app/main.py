@@ -2,6 +2,8 @@
 SoulStation - 心理咨询服务平台
 FastAPI 应用入口
 """
+from contextlib import asynccontextmanager
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -11,10 +13,30 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def _warmup_rag_sync():
+    """在线程池中执行 RAG 冷启动，不阻塞主线程。"""
+    try:
+        from app.services.rag_service import rag_service
+        collection = rag_service._get_collection()
+        count = collection.count()
+        logger.info(f"[RAG预热] 完成，知识库共 {count} 条记录")
+    except Exception as e:
+        logger.warning(f"[RAG预热] 失败（不影响服务启动）: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期：启动时在后台预热 RAG，避免首次请求冷启动。"""
+    asyncio.get_event_loop().run_in_executor(None, _warmup_rag_sync)
+    yield
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="心理咨询服务平台 API"
+    description="心理咨询服务平台 API",
+    lifespan=lifespan
 )
 
 
