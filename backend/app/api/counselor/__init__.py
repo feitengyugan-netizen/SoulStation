@@ -45,8 +45,8 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
 @router.get("/list", summary="获取咨询师列表")
 async def get_counselor_list(
     keyword: Optional[str] = Query(None, description="搜索关键词"),
-    specialty: Optional[str] = Query(None, description="擅长领域"),
-    consultation_type: Optional[str] = Query(None, description="咨询方式"),
+    specialties: Optional[str] = Query(None, description="擅长领域(多个用逗号分隔)"),
+    consultation_types: Optional[str] = Query(None, description="咨询方式(多个用逗号分隔)"),
     price_min: Optional[float] = Query(None, description="最低价格"),
     price_max: Optional[float] = Query(None, description="最高价格"),
     sort: Optional[str] = Query("default", description="排序方式"),
@@ -59,18 +59,22 @@ async def get_counselor_list(
 
     支持多维度筛选：
     - **keyword**: 搜索咨询师姓名、擅长领域
-    - **specialty**: 擅长领域（anxiety/depression/emotion/career/family）
-    - **consultation_type**: 咨询方式（video/voice/offline）
+    - **specialties**: 擅长领域（多个用逗号分隔，如：anxiety,depression）
+    - **consultation_types**: 咨询方式（多个用逗号分隔，如：video,voice）
     - **price_min/price_max**: 价格范围
     - **sort**: 排序方式（default/rating/orders/price-asc）
 
     返回分页列表数据
     """
     try:
+        # 处理多选参数
+        specialty_list = specialties.split(',') if specialties else None
+        consultation_type_list = consultation_types.split(',') if consultation_types else None
+
         query = CounselorListQuery(
             keyword=keyword,
-            specialty=specialty,
-            consultation_type=consultation_type,
+            specialties=specialty_list,
+            consultation_types=consultation_type_list,
             price_min=price_min,
             price_max=price_max,
             sort=sort,
@@ -397,6 +401,90 @@ async def get_user_appointments(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取预约列表失败: {str(e)}"
+        )
+
+
+@router_appointment.get("/counselor/list", summary="获取咨询师预约列表")
+async def get_counselor_appointments(
+    status_filter: Optional[str] = Query(None, description="状态筛选"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    获取咨询师收到的预约列表
+
+    支持状态筛选：
+    - **pending**: 待确认
+    - **confirmed**: 已确认
+    - **in_progress**: 进行中
+    - **completed**: 已完成
+    - **cancelled**: 已取消
+    - **refunded**: 已退款
+
+    返回分页列表，包含预约的用户信息
+    """
+    try:
+        result = AppointmentService.get_counselor_appointments(
+            db, user_id, status_filter, page, page_size
+        )
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except Exception as e:
+        logger.error(f"获取咨询师预约列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取咨询师预约列表失败: {str(e)}"
+        )
+
+
+@router_appointment.get("/{appointment_id}", summary="获取预约详情")
+async def get_appointment_detail(
+    appointment_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    获取预约订单详情
+
+    包含完整的订单信息、咨询师信息和用户信息
+    """
+    try:
+        appointment = AppointmentService.get_appointment_detail(db, appointment_id)
+
+        # 验证访问权限
+        if appointment.user_id != user_id:
+            # 检查是否是咨询师
+            from app.models.counselor import Counselor
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.id == appointment.counselor_id
+            ).first()
+            if not counselor:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="无权访问此订单"
+                )
+
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": appointment
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"获取预约详情失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取预约详情失败: {str(e)}"
         )
 
 

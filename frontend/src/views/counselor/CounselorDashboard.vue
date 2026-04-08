@@ -180,6 +180,7 @@ import {
   ArrowRight
 } from '@element-plus/icons-vue'
 import { getApplicationStatus } from '@/api/counselor'
+import { getCounselorOrders } from '@/api/consultation'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -227,19 +228,42 @@ const loadCounselorInfo = async () => {
 }
 
 // 加载统计数据
-const loadStatistics = () => {
-  // TODO: 从API加载统计数据
-  statistics.value = {
-    totalOrders: 0,
-    pendingOrders: 0,
-    completedOrders: 0
+const loadStatistics = async () => {
+  try {
+    // 获取所有订单来计算统计数据
+    const res = await getCounselorOrders({ page: 1, page_size: 100 })
+    const orders = res.data.items || []
+
+    // 计算统计数据
+    const totalOrders = orders.length
+    const pendingOrders = orders.filter(o => o.status === 'pending').length
+    const completedOrders = orders.filter(o => o.status === 'completed').length
+
+    statistics.value = {
+      totalOrders,
+      pendingOrders,
+      completedOrders
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    statistics.value = {
+      totalOrders: 0,
+      pendingOrders: 0,
+      completedOrders: 0
+    }
   }
 }
 
 // 加载最近预约
-const loadRecentOrders = () => {
-  // TODO: 从API加载最近预约
-  recentOrders.value = []
+const loadRecentOrders = async () => {
+  try {
+    // 获取最近的5条订单
+    const res = await getCounselorOrders({ page: 1, page_size: 5 })
+    recentOrders.value = res.data.items || []
+  } catch (error) {
+    console.error('加载最近预约失败:', error)
+    recentOrders.value = []
+  }
 }
 
 // 导航

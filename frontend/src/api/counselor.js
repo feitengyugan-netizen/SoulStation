@@ -79,6 +79,20 @@ export function getUserAppointments(params) {
 }
 
 /**
+ * 获取咨询师预约列表
+ * @param {Object} params
+ * @param {string} params.status - 订单状态筛选
+ * @param {number} params.page - 页码
+ */
+export function getCounselorAppointments(params) {
+  return request({
+    url: '/appointment/counselor/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 取消预约
  * @param {string} id - 订单ID
  */
@@ -86,6 +100,17 @@ export function cancelAppointment(id) {
   return request({
     url: `/appointment/${id}/cancel`,
     method: 'post'
+  })
+}
+
+/**
+ * 获取预约详情
+ * @param {string} id - 订单ID
+ */
+export function getAppointmentDetail(id) {
+  return request({
+    url: `/appointment/${id}`,
+    method: 'get'
   })
 }
 

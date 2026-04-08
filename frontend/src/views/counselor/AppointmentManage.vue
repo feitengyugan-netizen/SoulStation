@@ -62,7 +62,14 @@
             <!-- 操作按钮 -->
             <div class="card-actions">
               <el-button
-                v-if="order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'refunded'"
+                v-if="order.status === 'confirmed' || order.status === 'in_progress'"
+                type="success"
+                size="small"
+                round
+                @click="enterConsultation(order.id)"
+              >💬 进入咨询</el-button>
+              <el-button
+                v-if="order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'refunded' && order.status !== 'in_progress'"
                 size="small"
                 round
                 @click="cancelOrder(order.id)"
@@ -145,6 +152,10 @@ const cancelOrder = async (id) => {
 
 const goToReview = (id) => {
   router.push(`/counselor/review/${id}`)
+}
+
+const enterConsultation = (id) => {
+  router.push(`/consultation/user/${id}`)
 }
 
 onMounted(() => loadOrders())

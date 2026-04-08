@@ -20,8 +20,10 @@ security = HTTPBearer()
 logger = logging.getLogger(__name__)
 
 
-def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[int]:
-    """从 token 中获取当前用户 ID"""
+def get_current_user_id(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))) -> Optional[int]:
+    """从 token 中获取当前用户 ID（可选认证）"""
+    if not credentials:
+        return None
     try:
         token = credentials.credentials
         payload = decode_access_token(token)

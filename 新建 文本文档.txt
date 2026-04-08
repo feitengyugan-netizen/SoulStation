@@ -1,0 +1,12 @@
+普通用户 (5个):
+
+user1@example.com / 123456 - 张三
+user2@example.com / 123456 - 李四
+user3@example.com / 123456 - 王五
+user4@example.com / 123456 - 赵六
+user5@example.com / 123456 - 小明
+咨询师 (3个):
+
+counselor1@example.com / 123456 - 王静怡 (资深心理咨询师)
+counselor2@example.com / 123456 - 李明远 (婚姻家庭治疗师)
+counselor3@example.com / 123456 - 张雅婷 (认知行为治疗师)

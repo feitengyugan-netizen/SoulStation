@@ -144,11 +144,14 @@ import { getToken } from '@/utils/storage'
 
 const specialtyOptions = [
   { label: '全部', value: '' },
-  { label: '焦虑', value: 'anxiety' },
-  { label: '抑郁', value: 'depression' },
-  { label: '情感', value: 'emotion' },
-  { label: '职场', value: 'career' },
-  { label: '家庭', value: 'family' },
+  { label: '焦虑症', value: '焦虑症' },
+  { label: '抑郁症', value: '抑郁症' },
+  { label: '情感障碍', value: '情感障碍' },
+  { label: '人际关系', value: '人际关系' },
+  { label: '家庭治疗', value: '家庭治疗' },
+  { label: '青少年问题', value: '青少年问题' },
+  { label: '职业发展', value: '职业发展' },
+  { label: '自我成长', value: '自我成长' },
 ]
 const typeOptions = [
   { label: '视频', value: 'video' },
@@ -164,9 +167,20 @@ const priceOptions = [
 const typeLabelMap = { video: '视频', voice: '语音', offline: '线下' }
 const typeLabel = (t) => typeLabelMap[t] || t
 
-const specialtyLabelMap = Object.fromEntries(
-  specialtyOptions.filter(o => o.value).map(o => [o.value, o.label])
-)
+const specialtyLabelMap = {
+  '焦虑症': '焦虑症',
+  '抑郁症': '抑郁症',
+  '情感障碍': '情感障碍',
+  '人际关系': '人际关系',
+  '家庭治疗': '家庭治疗',
+  '青少年问题': '青少年问题',
+  '职业发展': '职业发展',
+  '自我成长': '自我成长',
+  '婚姻家庭': '婚姻家庭',
+  '情绪管理': '情绪管理',
+  '压力管理': '压力管理',
+  '个人成长': '个人成长'
+}
 const specialtyLabel = (s) => specialtyLabelMap[s] || s
 
 const toggleSpecialty = (val) => {
@@ -237,12 +251,10 @@ const normalizeCounselor = (item) => {
 const loadCounselors = async () => {
   try {
     loading.value = true
-    const selectedSpecialty = filters.specialties[0] || undefined
-    const selectedType = filters.types[0] || undefined
     const params = {
       keyword: filters.keyword || undefined,
-      specialty: selectedSpecialty,
-      consultation_type: selectedType,
+      specialties: filters.specialties.length > 0 ? filters.specialties.join(',') : undefined,
+      consultation_types: filters.types.length > 0 ? filters.types.join(',') : undefined,
       sort: filters.sort,
       page: pagination.page,
       page_size: pagination.pageSize,

@@ -56,21 +56,21 @@
           v-for="msg in messages"
           :key="msg.id"
           class="message"
-          :class="{ 'message-self': msg.senderId === currentUserId }"
+          :class="{ 'message-self': msg.sender_type === 'counselor' }"
         >
-          <el-avatar :size="40" :src="msg.senderId === currentUserId ? currentAvatar : appointment?.userAvatar" />
+          <el-avatar :size="40" :src="msg.sender_type === 'counselor' ? currentAvatar : appointment?.userAvatar" />
           <div class="message-content">
-            <div class="message-sender">{{ msg.senderId === currentUserId ? '我' : appointment?.userName }}</div>
-            <div v-if="msg.type === 'text'" class="message-bubble">{{ msg.content }}</div>
-            <div v-else-if="msg.type === 'image'" class="message-image">
+            <div class="message-sender">{{ msg.sender_type === 'counselor' ? '我' : appointment?.userName }}</div>
+            <div v-if="msg.message_type === 'text'" class="message-bubble">{{ msg.content }}</div>
+            <div v-else-if="msg.message_type === 'image'" class="message-image">
               <el-image :src="msg.content" fit="cover" :preview-src-list="[msg.content]" />
             </div>
-            <div v-else-if="msg.type === 'file'" class="message-file">
+            <div v-else-if="msg.message_type === 'file'" class="message-file">
               <el-icon><Document /></el-icon>
               <span>{{ getFileName(msg.content) }}</span>
               <el-button type="primary" link @click="downloadFile(msg.content)">下载</el-button>
             </div>
-            <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
+            <div class="message-time">{{ formatTime(msg.created_at) }}</div>
           </div>
         </div>
 
@@ -150,7 +150,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Timer, ArrowDown, Picture, Folder, Microphone, Document, ChatDotRound } from '@element-plus/icons-vue'
-import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation, addConsultationNote } from '@/api/consultation'
+import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation, addConsultationNote, getCounselorOrders } from '@/api/consultation'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -187,22 +187,74 @@ let pollingTimer = null
 let durationTimer = null
 
 const loadAppointment = async () => {
-  // 加载预约信息
-  appointment.value = {
-    userName: '李同学',
-    userAvatar: '',
-    date: '2026-02-26',
-    timeSlot: '14:00-15:00',
-    type: 'video',
-    description: '最近感到压力很大，睡眠不好，希望得到帮助。',
-    historyCount: 2
+  try {
+    loading.value = true
+
+    // 获取咨询师的所有订单，然后找到当前订单
+    const res = await getCounselorOrders({ page: 1, page_size: 100 })
+    const orders = res.data.items || []
+    const currentOrder = orders.find(o => o.id == appointmentId)
+
+    if (currentOrder) {
+      // 格式化预约数据
+      appointment.value = {
+        id: currentOrder.id,
+        appointmentNo: currentOrder.appointment_no,
+        userName: currentOrder.user_name || '用户',
+        userAvatar: currentOrder.user_info?.avatar || '',
+        date: formatDate(currentOrder.appointment_date),
+        timeSlot: formatTimeSlot(currentOrder.appointment_date, currentOrder.duration),
+        type: currentOrder.consultation_type,
+        description: currentOrder.problem_description || '暂无描述',
+        status: currentOrder.status,
+        historyCount: 0,
+        price: currentOrder.price,
+        counselor: currentOrder.counselor,
+        userInfo: currentOrder.user_info
+      }
+
+      // 更新页面标题
+      document.title = `与${appointment.value.userName}的咨询 - SoulStation`
+    } else {
+      throw new Error('订单不存在')
+    }
+  } catch (error) {
+    console.error('加载预约信息失败', error)
+    ElMessage.error('加载预约信息失败')
+    // 保留默认数据以便调试
+    appointment.value = {
+      userName: '用户',
+      userAvatar: '',
+      date: '待定',
+      timeSlot: '待定',
+      type: 'video',
+      description: '无法加载预约信息',
+      status: 'unknown'
+    }
+  } finally {
+    loading.value = false
   }
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const formatTimeSlot = (dateStr, duration) => {
+  if (!dateStr) return '待定'
+  const d = new Date(dateStr)
+  const startTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const endDate = new Date(d.getTime() + duration * 60000)
+  const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`
+  return `${startTime}-${endTime}`
 }
 
 const loadMessages = async (lastId = null) => {
   try {
     const res = await getMessages(appointmentId, { lastId })
-    const newMessages = res.data.list || []
+    const newMessages = res.data.items || []
 
     if (lastId === null) {
       messages.value = newMessages
@@ -223,7 +275,7 @@ const sendMessage = async () => {
     sending.value = true
     await sendMessageApi(appointmentId, {
       content: inputContent.value,
-      type: 'text'
+      message_type: 'text'
     })
     inputContent.value = ''
     await loadMessages()
@@ -239,7 +291,7 @@ const handleUploadImage = async (file) => {
     const res = await uploadFile(file)
     await sendMessageApi(appointmentId, {
       content: res.data.url,
-      type: 'image'
+      message_type: 'image'
     })
     await loadMessages()
   } catch (error) {
@@ -253,7 +305,7 @@ const handleUploadFile = async (file) => {
     const res = await uploadFile(file)
     await sendMessageApi(appointmentId, {
       content: res.data.url,
-      type: 'file'
+      message_type: 'file'
     })
     await loadMessages()
   } catch (error) {

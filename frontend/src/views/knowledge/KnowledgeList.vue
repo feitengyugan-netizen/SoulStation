@@ -16,21 +16,45 @@
         <div class="search-wrap">
           <el-input
             v-model="keyword"
-            placeholder="搜索文章..."
+            placeholder="搜索文章标题、内容、标签..."
             prefix-icon="Search"
             clearable
             size="small"
-            style="width: 220px"
-            @keyup.enter="loadArticles"
-            @clear="loadArticles"
-          />
+            style="width: 280px"
+            @keyup.enter="handleSearch"
+            @clear="handleClear"
+            @input="handleSearchInput"
+          >
+            <template #append>
+              <el-button :icon="Search" @click="handleSearch" />
+            </template>
+          </el-input>
         </div>
+      </div>
+
+      <!-- 热门搜索 -->
+      <div v-if="!keyword" class="hot-keywords">
+        <span class="hot-label">🔥 热门搜索：</span>
+        <el-button
+          v-for="kw in hotKeywords"
+          :key="kw"
+          size="small"
+          round
+          @click="keyword = kw; handleSearch()"
+        >{{ kw }}</el-button>
+      </div>
+
+      <!-- 搜索结果提示 -->
+      <div v-if="keyword" class="search-result-info">
+        <span class="search-keyword">"{{ keyword }}"</span>
+        <span class="search-count">找到 {{ totalCount }} 篇相关文章</span>
+        <el-button link type="primary" @click="handleClear">清除搜索</el-button>
       </div>
 
       <!-- 文章网格 -->
       <div v-loading="loading" class="article-grid">
         <el-skeleton v-if="loading && articles.length === 0" :rows="4" animated style="grid-column: 1/-1" />
-        <el-empty v-else-if="!loading && articles.length === 0" description="暂无文章" style="grid-column: 1/-1" />
+        <el-empty v-else-if="!loading && articles.length === 0" :description="keyword ? '没有找到相关文章，试试其他关键词吧' : '暂无文章'" style="grid-column: 1/-1" />
 
         <div
           v-for="article in articles"
@@ -60,6 +84,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Search } from '@element-plus/icons-vue'
 import { getKnowledgeList } from '@/api/knowledge'
 
 const router = useRouter()
@@ -67,8 +92,13 @@ const loading = ref(false)
 const articles = ref([])
 const keyword = ref('')
 const category = ref('')
+const totalCount = ref(0)
 
 const defaultCover = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&h=400&fit=crop'
+
+const hotKeywords = [
+  '焦虑', '抑郁', '压力', '失眠', '情绪', '人际关系', '自我提升', '心理健康'
+]
 
 const categoryOptions = [
   { label: '全部', value: '' },
@@ -84,8 +114,31 @@ const loadArticles = async () => {
   try {
     const res = await getKnowledgeList({ keyword: keyword.value, category: category.value })
     articles.value = res.data.list || res.data.items || []
+    totalCount.value = res.data.total || 0
   } finally {
     loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  loadArticles()
+}
+
+const handleClear = () => {
+  keyword.value = ''
+  loadArticles()
+}
+
+// 添加防抖功能，避免频繁搜索
+let searchTimer = null
+const handleSearchInput = () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  if (keyword.value.trim()) {
+    searchTimer = setTimeout(() => {
+      handleSearch()
+    }, 500) // 500ms 防抖延迟
   }
 }
 
@@ -146,6 +199,61 @@ onMounted(() => loadArticles())
 
   .search-wrap {
     :deep(.el-input__wrapper) { border-radius: 999px !important; }
+  }
+}
+
+// ── 热门搜索 ────────────────────────────────────────────
+.hot-keywords {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: $bg-white;
+  border-radius: 12px;
+  border: 1px solid $border-lighter;
+  flex-wrap: wrap;
+
+  .hot-label {
+    font-weight: 600;
+    color: $text-primary;
+    font-size: 14px;
+  }
+
+  .el-button {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(232, 132, 90, 0.2);
+    }
+  }
+}
+
+// ── 搜索结果信息 ──────────────────────────────────────
+.search-result-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(250, 248, 245, 0.8));
+  border-left: 4px solid $primary-color;
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+  color: $text-secondary;
+
+  .search-keyword {
+    font-weight: 600;
+    color: $primary-color;
+    background: rgba(232, 132, 90, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .search-count {
+    color: $text-primary;
+    font-weight: 500;
   }
 }
 

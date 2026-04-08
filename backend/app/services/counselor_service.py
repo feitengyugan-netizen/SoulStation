@@ -42,13 +42,23 @@ class CounselorService:
                 )
             )
 
-        # 擅长领域筛选
-        if query.specialty:
-            q = q.filter(Counselor.specialties.contains(query.specialty))
+        # 擅长领域筛选（支持多选）
+        if query.specialties and len(query.specialties) > 0:
+            specialty_conditions = []
+            for specialty in query.specialties:
+                if specialty.strip():
+                    specialty_conditions.append(Counselor.specialties.contains(specialty.strip()))
+            if specialty_conditions:
+                q = q.filter(or_(*specialty_conditions))
 
-        # 咨询方式筛选
-        if query.consultation_type:
-            q = q.filter(Counselor.consultation_types.contains(query.consultation_type))
+        # 咨询方式筛选（支持多选）
+        if query.consultation_types and len(query.consultation_types) > 0:
+            type_conditions = []
+            for consult_type in query.consultation_types:
+                if consult_type.strip():
+                    type_conditions.append(Counselor.consultation_types.contains(consult_type.strip()))
+            if type_conditions:
+                q = q.filter(or_(*type_conditions))
 
         # 价格范围筛选
         if query.price_min is not None:
@@ -601,11 +611,80 @@ class AppointmentService:
             raise ValueError("预约不存在")
 
         appt_data = AppointmentResponse.model_validate(appointment)
+
         # 添加咨询师信息
         if appointment.counselor:
             appt_data.counselor = CounselorResponse.model_validate(appointment.counselor)
 
+        # 添加用户信息
+        from app.models.user import User
+        user = db.query(User).filter(User.id == appointment.user_id).first()
+        if user:
+            appt_data.user_info = {
+                "id": user.id,
+                "nickname": user.nickname,
+                "email": user.email,
+                "phone": user.phone,
+                "avatar": user.avatar
+            }
+
         return appt_data
+
+    @staticmethod
+    def get_counselor_appointments(
+        db: Session,
+        counselor_id: int,
+        status_filter: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 10
+    ) -> Dict[str, Any]:
+        """获取咨询师收到的预约列表"""
+        # 先获取咨询师ID（通过user_id）
+        counselor = db.query(Counselor).filter(Counselor.user_id == counselor_id).first()
+        if not counselor:
+            raise ValueError("咨询师档案不存在")
+
+        # 查询该咨询师的预约订单
+        q = db.query(Appointment).filter(Appointment.counselor_id == counselor.id)
+
+        # 状态筛选
+        if status_filter:
+            q = q.filter(Appointment.status == status_filter)
+
+        # 按创建时间倒序
+        q = q.order_by(Appointment.created_at.desc())
+
+        # 总数
+        total = q.count()
+
+        # 分页
+        offset = (page - 1) * page_size
+        appointments = q.offset(offset).limit(page_size).all()
+
+        # 转换为响应格式
+        items = []
+        for appt in appointments:
+            appt_data = AppointmentResponse.model_validate(appt)
+            # 添加用户信息
+            if appt.user:
+                # 添加用户基本信息
+                from app.models.user import User
+                user_info = {
+                    "id": appt.user.id,
+                    "nickname": appt.user.nickname,
+                    "email": appt.user.email,
+                    "phone": appt.user.phone
+                }
+                # 将用户信息附加到预约数据中
+                appt_data.user_info = user_info
+            items.append(appt_data)
+
+        return {
+            "total": total,
+            "items": items,
+            "page": page,
+            "page_size": page_size
+        }
 
     @staticmethod
     def cancel_appointment(db: Session, user_id: int, appointment_id: int, reason: Optional[str] = None) -> bool:
@@ -758,13 +837,45 @@ class ConsultationService:
         # 转换为响应格式
         items = []
         for appt in appointments:
-            appt_data = AppointmentResponse.model_validate(appt)
+            # 转换为字典
+            appt_dict = {
+                "id": appt.id,
+                "appointment_no": appt.appointment_no,
+                "counselor_id": appt.counselor_id,
+                "consultation_type": appt.consultation_type,
+                "appointment_date": appt.appointment_date,
+                "duration": appt.duration,
+                "price": appt.price,
+                "paid_amount": appt.paid_amount,
+                "status": appt.status,
+                "user_name": appt.user_name,
+                "user_contact": appt.user_contact,
+                "problem_description": appt.problem_description,
+                "counselor_notes": appt.counselor_notes,
+                "created_at": appt.created_at,
+                "confirmed_at": appt.confirmed_at,
+                "completed_at": appt.completed_at,
+                "cancelled_at": appt.cancelled_at
+            }
+
+            # 添加咨询师信息
+            if appt.counselor:
+                counselor_dict = CounselorResponse.model_validate(appt.counselor).model_dump()
+                appt_dict["counselor"] = counselor_dict
+
             # 添加用户信息
             from app.models.user import User
             user = db.query(User).filter(User.id == appt.user_id).first()
             if user:
-                appt_data.user_name = appt_data.user_name or user.nickname
-            items.append(appt_data)
+                appt_dict["user_info"] = {
+                    "id": user.id,
+                    "nickname": user.nickname,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "avatar": user.avatar
+                }
+
+            items.append(appt_dict)
 
         return {
             "total": total,

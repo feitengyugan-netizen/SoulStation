@@ -93,8 +93,8 @@ class CounselorResponse(CounselorBase):
 class CounselorListQuery(BaseModel):
     """咨询师列表查询参数"""
     keyword: Optional[str] = Field(None, description="搜索关键词")
-    specialty: Optional[str] = Field(None, description="擅长领域")
-    consultation_type: Optional[str] = Field(None, description="咨询方式")
+    specialties: Optional[List[str]] = Field(None, description="擅长领域列表")
+    consultation_types: Optional[List[str]] = Field(None, description="咨询方式列表")
     price_min: Optional[float] = Field(None, description="最低价格")
     price_max: Optional[float] = Field(None, description="最高价格")
     sort: Optional[str] = Field("default", description="排序方式")
@@ -126,6 +126,7 @@ class AppointmentResponse(BaseModel):
     id: int
     appointment_no: str
     counselor_id: int
+    user_id: int
     consultation_type: str
     appointment_date: datetime
     duration: int
@@ -142,7 +143,10 @@ class AppointmentResponse(BaseModel):
     cancelled_at: Optional[datetime] = None
 
     # 关联的咨询师信息
-    counselor: Optional[CounselorResponse] = None
+    counselor: Optional['CounselorResponse'] = None
+
+    # 关联的用户信息（用于咨询师查看）
+    user_info: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True)
 

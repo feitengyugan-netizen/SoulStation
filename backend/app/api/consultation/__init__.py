@@ -183,8 +183,18 @@ async def get_messages(
     自动标记对方消息为已读
     """
     try:
+        # 如果是咨询师，获取咨询师ID
+        actual_user_id = user_id
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if counselor:
+                actual_user_id = counselor.id
+
         result = ConsultationService.get_messages(
-            db, appointment_id, user_id, user_type, last_id, limit
+            db, appointment_id, actual_user_id, user_type, last_id, limit
         )
         return {
             "code": 200,
@@ -223,8 +233,18 @@ async def send_message(
     只能在已确认或进行中的预约中发送消息
     """
     try:
+        # 如果是咨询师，获取咨询师ID
+        actual_user_id = user_id
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if counselor:
+                actual_user_id = counselor.id
+
         message = ConsultationService.send_message(
-            db, appointment_id, user_id, user_type, message_data
+            db, appointment_id, actual_user_id, user_type, message_data
         )
         return {
             "code": 200,
@@ -304,8 +324,18 @@ async def end_consultation(
     只能结束状态为"进行中"的咨询
     """
     try:
+        # 如果是咨询师，获取咨询师ID
+        actual_user_id = user_id
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if counselor:
+                actual_user_id = counselor.id
+
         ConsultationService.end_consultation(
-            db, appointment_id, user_id, user_type
+            db, appointment_id, actual_user_id, user_type
         )
         return {
             "code": 200,
