@@ -32,9 +32,9 @@
           <div class="card-header">
             <span>用户增长趋势</span>
             <el-radio-group v-model="userChartPeriod" size="small" @change="loadUserChart">
-              <el-radio-button label="week">周</el-radio-button>
-              <el-radio-button label="month">月</el-radio-button>
-              <el-radio-button label="year">年</el-radio-button>
+              <el-radio-button value="week">周</el-radio-button>
+              <el-radio-button value="month">月</el-radio-button>
+              <el-radio-button value="year">年</el-radio-button>
             </el-radio-group>
           </div>
         </template>

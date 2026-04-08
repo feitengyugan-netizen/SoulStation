@@ -77,9 +77,9 @@
           <!-- 性别 -->
           <el-form-item label="性别" prop="gender">
             <el-radio-group v-model="form.gender">
-              <el-radio label="male">男</el-radio>
-              <el-radio label="female">女</el-radio>
-              <el-radio label="secret">保密</el-radio>
+              <el-radio value="male">男</el-radio>
+              <el-radio value="female">女</el-radio>
+              <el-radio value="secret">保密</el-radio>
             </el-radio-group>
           </el-form-item>
 

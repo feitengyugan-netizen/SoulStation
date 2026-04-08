@@ -19,12 +19,12 @@
               <div class="filter-item">
                 <span class="label">分类：</span>
                 <el-radio-group v-model="filters.category" @change="handleFilterChange">
-                  <el-radio-button label="">全部</el-radio-button>
-                  <el-radio-button label="anxiety">焦虑</el-radio-button>
-                  <el-radio-button label="depression">抑郁</el-radio-button>
-                  <el-radio-button label="personality">性格</el-radio-button>
-                  <el-radio-button label="career">职业</el-radio-button>
-                  <el-radio-button label="emotion">情感</el-radio-button>
+                  <el-radio-button value="">全部</el-radio-button>
+                  <el-radio-button value="anxiety">焦虑</el-radio-button>
+                  <el-radio-button value="depression">抑郁</el-radio-button>
+                  <el-radio-button value="personality">性格</el-radio-button>
+                  <el-radio-button value="career">职业</el-radio-button>
+                  <el-radio-button value="emotion">情感</el-radio-button>
                 </el-radio-group>
               </div>
 

@@ -1,0 +1,11 @@
+普通用户:
+邮箱: xiaoming@example.com
+密码: 123456
+咨询师：
+李静怡: counselor_li@example.com / 123456
+张雅婷: counselor_zhang@example.com / 123456
+陈刚: counselor_chen@example.com / 123456
+刘雪: counselor_liu@example.com / 123456
+王芳: counselor_wang@example.com / 123456
+赵明: counselor_zhao@example.com / 123456
+孙莉: counselor_sun@example.com / 123456

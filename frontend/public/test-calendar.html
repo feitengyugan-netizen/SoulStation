@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日历修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; font-weight: bold; }
+        h1 { color: #333; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #409eff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #66b1ff; }
+        .fix-list {
+            background: #f0f9ff;
+            padding: 15px;
+            border-left: 4px solid #409eff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>📅 日历组件修复验证</h1>
+        <p><span class="success">✅ 修复完成</span></p>
+
+        <div class="fix-list">
+            <h3>🔧 修复内容</h3>
+            <ul>
+                <li><strong>问题:</strong> <code>data.getDate() is not a function</code></li>
+                <li><strong>原因:</strong> Element Plus日历组件传递的data对象结构为 <code>{date: Date, ...}</code></li>
+                <li><strong>修复:</strong> 将 <code>data.getDate()</code> 改为 <code>data.date.getDate()</code></li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <h3>🧪 测试步骤</h3>
+            <ol>
+                <li>点击下面按钮访问预约页面</li>
+                <li>检查日历组件是否正常显示日期</li>
+                <li>检查浏览器控制台是否还有错误</li>
+                <li>测试点击不同日期是否正常工作</li>
+            </ol>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button onclick="testAppointmentPage()">测试预约页面</button>
+            <button onclick="checkConsole()">查看控制台说明</button>
+        </div>
+
+        <div id="result" style="margin-top: 20px; display: none;">
+            <h3>📋 预期结果</h3>
+            <ul>
+                <li><span class="success">✅</span> 日历正常显示，日期数字可见</li>
+                <li><span class="success">✅</span> 无 <code>getDate() is not a function</code> 错误</li>
+                <li><span class="success">✅</span> 点击日期正常响应</li>
+                <li><span class="success">✅</span> 周末日期显示为禁用状态</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>💡 Element Plus 日历组件数据结构</h3>
+        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
+// Element Plus 日历组件传递的数据结构
+data = {
+  date: Date,           // 实际的Date对象 ✅ 使用这个
+  isSelected: Boolean,  // 是否被选中
+  type: String         // 'prev-month' | 'current-month' | 'next-month'
+}
+
+// ❌ 错误用法
+data.getDate()  // Error: data.getDate is not a function
+
+// ✅ 正确用法
+data.date.getDate()  // 正确调用Date对象的方法
+        </pre>
+    </div>
+
+    <div class="test-card">
+        <h3>🔍 其他相关修复</h3>
+        <ul>
+            <li><span class="success">✅</span> isAvailableDate(data) 函数已修复</li>
+            <li><span class="success">✅</span> isSelectedDate(data) 函数已修复</li>
+            <li><span class="success">✅</span> 模板中的日期显示已修复</li>
+        </ul>
+    </div>
+
+    <script>
+        function testAppointmentPage() {
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+
+            // 打开预约页面
+            const url = 'http://localhost:5176/counselor/appointment?counselorId=5&counselorName=测试老师';
+            window.open(url, '_blank');
+        }
+
+        function checkConsole() {
+            alert('检查浏览器控制台:\n\n1. 打开开发者工具 (F12)\n2. 查看Console标签页\n3. 确认没有 "getDate() is not a function" 错误\n4. 确认日历正常显示日期数字');
+        }
+
+        // 页面加载提示
+        window.addEventListener('load', () => {
+            console.log('日历修复测试页面加载完成');
+            console.log('预约页面测试链接已准备就绪');
+        });
+    </script>
+</body>
+</html>

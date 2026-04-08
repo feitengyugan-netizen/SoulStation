@@ -62,9 +62,9 @@
 
                 <el-form-item label="性别" prop="gender">
                   <el-radio-group v-model="formData.gender">
-                    <el-radio label="male">男</el-radio>
-                    <el-radio label="female">女</el-radio>
-                    <el-radio label="secret">保密</el-radio>
+                    <el-radio value="male">男</el-radio>
+                    <el-radio value="female">女</el-radio>
+                    <el-radio value="secret">保密</el-radio>
                   </el-radio-group>
                 </el-form-item>
 
@@ -134,27 +134,27 @@
 
                 <el-form-item label="擅长领域" prop="specialties" required>
                   <el-checkbox-group v-model="formData.specialties">
-                    <el-checkbox label="情绪管理">情绪管理</el-checkbox>
-                    <el-checkbox label="焦虑抑郁">焦虑抑郁</el-checkbox>
-                    <el-checkbox label="婚恋家庭">婚恋家庭</el-checkbox>
-                    <el-checkbox label="亲子教育">亲子教育</el-checkbox>
-                    <el-checkbox label="职业规划">职业规划</el-checkbox>
-                    <el-checkbox label="个人成长">个人成长</el-checkbox>
-                    <el-checkbox label="人际关系">人际关系</el-checkbox>
-                    <el-checkbox label="睡眠障碍">睡眠障碍</el-checkbox>
-                    <el-checkbox label="创伤疗愈">创伤疗愈</el-checkbox>
-                    <el-checkbox label="青少年心理">青少年心理</el-checkbox>
-                    <el-checkbox label="性心理">性心理</el-checkbox>
-                    <el-checkbox label="其他">其他</el-checkbox>
+                    <el-checkbox value="情绪管理">情绪管理</el-checkbox>
+                    <el-checkbox value="焦虑抑郁">焦虑抑郁</el-checkbox>
+                    <el-checkbox value="婚恋家庭">婚恋家庭</el-checkbox>
+                    <el-checkbox value="亲子教育">亲子教育</el-checkbox>
+                    <el-checkbox value="职业规划">职业规划</el-checkbox>
+                    <el-checkbox value="个人成长">个人成长</el-checkbox>
+                    <el-checkbox value="人际关系">人际关系</el-checkbox>
+                    <el-checkbox value="睡眠障碍">睡眠障碍</el-checkbox>
+                    <el-checkbox value="创伤疗愈">创伤疗愈</el-checkbox>
+                    <el-checkbox value="青少年心理">青少年心理</el-checkbox>
+                    <el-checkbox value="性心理">性心理</el-checkbox>
+                    <el-checkbox value="其他">其他</el-checkbox>
                   </el-checkbox-group>
                   <div class="form-tip-text">请至少选择一个擅长领域</div>
                 </el-form-item>
 
                 <el-form-item label="咨询方式" prop="consultation_types" required>
                   <el-checkbox-group v-model="formData.consultation_types">
-                    <el-checkbox label="video">视频咨询</el-checkbox>
-                    <el-checkbox label="voice">语音咨询</el-checkbox>
-                    <el-checkbox label="offline">线下咨询</el-checkbox>
+                    <el-checkbox value="video">视频咨询</el-checkbox>
+                    <el-checkbox value="voice">语音咨询</el-checkbox>
+                    <el-checkbox value="offline">线下咨询</el-checkbox>
                   </el-checkbox-group>
                   <div class="form-tip-text">请至少选择一种咨询方式</div>
                 </el-form-item>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咨询师工作台测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #303133;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #409eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .status {
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #f0f9ff;
+            color: #409eff;
+            border-left: 4px solid #409eff;
+        }
+
+        .status.error {
+            background: #fef2f2;
+            color: #f56c6c;
+            border-left: 4px solid #f56c6c;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #606266;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .output {
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .output h3 {
+            margin-bottom: 10px;
+            color: #303133;
+        }
+
+        .output pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #606266;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #606266;
+        }
+
+        .orders-list {
+            margin-top: 20px;
+        }
+
+        .order-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-no {
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .order-status.pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .order-status.confirmed {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .order-status.completed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .order-status.cancelled {
+            background: #fff1f0;
+            color: #f5222d;
+        }
+
+        .order-detail {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #606266;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔍 咨询师工作台问题诊断</h1>
+            <div id="loginSection">
+                <h2>1. 登录测试</h2>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="email" value="teacher_wang@example.com" placeholder="teacher_wang@example.com">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="password" value="123456" placeholder="123456">
+                </div>
+                <button class="btn btn-primary" onclick="testLogin()">1. 测试登录</button>
+                <button class="btn btn-secondary" onclick="testWithToken()">2. 测试API调用</button>
+                <button class="btn btn-secondary" onclick="loadDashboardData()">3. 加载工作台数据</button>
+            </div>
+
+            <div id="output" class="output hidden">
+                <h3>测试结果：</h3>
+                <pre id="result"></pre>
+            </div>
+
+            <div id="statsSection" class="hidden">
+                <h2>📊 工作台数据</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalOrders">0</div>
+                        <div class="stat-label">总订单数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingOrders">0</div>
+                        <div class="stat-label">待处理</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="confirmedOrders">0</div>
+                        <div class="stat-label">已确认</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedOrders">0</div>
+                        <div class="stat-label">已完成</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ordersSection" class="hidden">
+                <h2>📋 最近预约</h2>
+                <div id="ordersList" class="orders-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentToken = null;
+        let counselorInfo = null;
+
+        function showOutput(text) {
+            document.getElementById('output').classList.remove('hidden');
+            document.getElementById('result').textContent = text;
+        }
+
+        function clearOutput() {
+            document.getElementById('result').textContent = '';
+        }
+
+        async function testLogin() {
+            clearOutput();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            showOutput('正在测试登录...\n');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    currentToken = result.data.token;
+                    counselorInfo = result.data.userInfo;
+
+                    showOutput(`✅ 登录成功！\n\n` +
+                        `用户信息：\n` +
+                        `- ID: ${counselorInfo.id}\n` +
+                        `- 昵称: ${counselorInfo.nickname}\n` +
+                        `- 邮箱: ${counselorInfo.email}\n` +
+                        `- 角色: ${counselorInfo.role}\n` +
+                        `- Token: ${currentToken.substring(0, 50)}...\n\n` +
+                        `✅ Token已保存，可以继续测试API调用`);
+
+                    // 保存到localStorage
+                    localStorage.setItem('token', currentToken);
+                    localStorage.setItem('userInfo', JSON.stringify(counselorInfo));
+                } else {
+                    showOutput(`❌ 登录失败：\n${JSON.stringify(result, null, 2)}`);
+                }
+            } catch (error) {
+                showOutput(`❌ 请求失败：\n${error.message}`);
+            }
+        }
+
+        async function testWithToken() {
+            if (!currentToken) {
+                showOutput('❌ 请先登录！');
+                return;
+            }
+
+            clearOutput();
+            showOutput('正在测试API调用...\n\n');
+
+            try {
+                // 测试申请状态
+                showOutput(document.getElementById('result').textContent + '1. 测试申请状态...\n');
+                const statusResponse = await fetch(`${API_BASE}/counselor/application/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                const statusResult = await statusResponse.json();
+
+                showOutput(document.getElementById('result').textContent +
+                    `✅ 申请状态：\n${JSON.stringify(statusResult, null, 2)}\n\n`);
+
+                // 测试订单列表
+                showOutput(document.getElementById('result').textContent + '2. 测试订单列表...\n');
+                const ordersResponse = await fetch(`${API_BASE}/consultation/counselor/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                const ordersResult = await ordersResponse.json();
+
+                showOutput(document.getElementById('result').textContent +
+                    `✅ 订单列表：\n${JSON.stringify(ordersResult, null, 2)}\n\n` +
+                    `✅ 所有API调用成功！可以继续加载工作台数据`);
+
+            } catch (error) {
+                showOutput(`❌ API调用失败：\n${error.message}`);
+            }
+        }
+
+        async function loadDashboardData() {
+            if (!currentToken) {
+                showOutput('❌ 请先登录！');
+                return;
+            }
+
+            clearOutput();
+            showOutput('正在加载工作台数据...\n\n');
+
+            try {
+                // 加载订单列表
+                const response = await fetch(`${API_BASE}/consultation/counselor/orders`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    const orders = result.data.items;
+                    const total = result.data.total;
+
+                    // 计算统计
+                    const pending = orders.filter(o => o.status === 'pending').length;
+                    const confirmed = orders.filter(o => o.status === 'confirmed').length;
+                    const completed = orders.filter(o => o.status === 'completed').length;
+
+                    // 显示统计数据
+                    document.getElementById('statsSection').classList.remove('hidden');
+                    document.getElementById('totalOrders').textContent = total;
+                    document.getElementById('pendingOrders').textContent = pending;
+                    document.getElementById('confirmedOrders').textContent = confirmed;
+                    document.getElementById('completedOrders').textContent = completed;
+
+                    // 显示订单列表
+                    document.getElementById('ordersSection').classList.remove('hidden');
+                    const ordersList = document.getElementById('ordersList');
+                    ordersList.innerHTML = '';
+
+                    orders.slice(0, 5).forEach(order => {
+                        const statusMap = {
+                            pending: '待确认',
+                            confirmed: '已确认',
+                            completed: '已完成',
+                            cancelled: '已取消'
+                        };
+
+                        const typeMap = {
+                            video: '视频',
+                            voice: '语音',
+                            offline: '线下'
+                        };
+
+                        const orderItem = document.createElement('div');
+                        orderItem.className = 'order-item';
+                        orderItem.innerHTML = `
+                            <div class="order-header">
+                                <div class="order-no">${order.appointment_no}</div>
+                                <div class="order-status ${order.status}">${statusMap[order.status]}</div>
+                            </div>
+                            <div class="order-detail">
+                                <span>👤 ${order.user_name || '未知用户'}</span>
+                                <span>📞 ${typeMap[order.consultation_type]}</span>
+                                <span>📅 ${new Date(order.appointment_date).toLocaleDateString()}</span>
+                            </div>
+                        `;
+                        ordersList.appendChild(orderItem);
+                    });
+
+                    showOutput(`✅ 工作台数据加载成功！\n\n` +
+                        `📊 统计数据：\n` +
+                        `- 总订单数: ${total}\n` +
+                        `- 待处理: ${pending}\n` +
+                        `- 已确认: ${confirmed}\n` +
+                        `- 已完成: ${completed}\n\n` +
+                        `✅ 前端应该能正常显示这些数据！`);
+
+                } else {
+                    showOutput(`❌ 加载失败：\n${JSON.stringify(result, null, 2)}`);
+                }
+
+            } catch (error) {
+                showOutput(`❌ 加载失败：\n${error.message}`);
+            }
+        }
+
+        // 页面加载时检查localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('token');
+            const savedUserInfo = localStorage.getItem('userInfo');
+
+            if (savedToken && savedUserInfo) {
+                currentToken = savedToken;
+                counselorInfo = JSON.parse(savedUserInfo);
+                showOutput(`✅ 发现已保存的登录信息：\n\n` +
+                    `用户: ${counselorInfo.nickname}\n` +
+                    `角色: ${counselorInfo.role}\n\n` +
+                    `可以直接点击 "2. 测试API调用" 或 "3. 加载工作台数据"`);
+            }
+        });
+    </script>
+</body>
+</html>

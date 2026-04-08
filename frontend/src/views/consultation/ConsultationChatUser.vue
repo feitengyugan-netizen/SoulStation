@@ -1,87 +1,179 @@
 <template>
-  <div class="consultation-chat-user">
-    <PageHeader />
-    <div v-loading="loading" class="chat-container">
-      <!-- 聊天头部 -->
-      <div class="chat-header">
-        <div class="header-info">
-          <el-avatar :size="50" :src="appointment?.counselorAvatar" />
-          <div class="info-text">
-            <h3>{{ appointment?.counselorName }}</h3>
-            <p class="status" :class="{ online: isOnline }">
-              {{ isOnline ? '在线咨询中' : '暂不在线' }}
-            </p>
+  <div class="modern-chat-container user">
+    <!-- 聊天头部 -->
+    <div class="chat-header">
+      <div class="header-left">
+        <el-button circle @click="goBack" class="back-btn">
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+        <div class="user-info">
+          <el-avatar :size="45" :src="appointment?.counselorAvatar" class="user-avatar">
+            <el-icon><User /></el-icon>
+          </el-avatar>
+          <div class="user-details">
+            <h3 class="user-name">{{ appointment?.counselorName || '咨询师' }}</h3>
+            <div class="status-info">
+              <span class="online-dot" :class="{ offline: !isOnline }"></span>
+              <span class="status-text">{{ isOnline ? '在线' : '离线' }}</span>
+            </div>
           </div>
-        </div>
-        <div class="header-actions">
-          <div class="timer">
-            <el-icon><Timer /></el-icon>
-            <span>{{ formatDuration(elapsedTime) }}</span>
-          </div>
-          <el-button type="danger" plain @click="handleEndConsultation">结束咨询</el-button>
         </div>
       </div>
+      <div class="header-actions">
+        <div class="chat-info">
+          <el-icon><Timer /></el-icon>
+          <span>{{ formatDuration(elapsedTime) }}</span>
+        </div>
+        <el-dropdown @command="handleMenuCommand" trigger="click">
+          <el-button circle>
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="info">
+                <el-icon><User /></el-icon> 咨询师信息
+              </el-dropdown-item>
+              <el-dropdown-item command="end" divided>
+                <el-icon><SwitchButton /></el-icon> 结束咨询
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </div>
 
-      <!-- 消息区域 -->
-      <div ref="messagesContainer" class="messages-area">
+    <!-- 咨询师信息面板（可展开） -->
+    <el-collapse-transition>
+      <div v-show="showCounselorInfo" class="counselor-info-panel">
+        <el-card>
+          <template #header>
+            <div class="panel-header">
+              <span>咨询师详细信息</span>
+              <el-button text @click="showCounselorInfo = false">
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
+          </template>
+          <div class="info-content">
+            <div class="info-item">
+              <span class="label">咨询状态：</span>
+              <el-tag :type="appointment?.status === 'in_progress' ? 'primary' : 'info'">
+                {{ getStatusText(appointment?.status) }}
+              </el-tag>
+            </div>
+            <div class="info-item">
+              <span class="label">咨询方式：</span>
+              <el-tag>{{ getTypeText(appointment?.type) }}</el-tag>
+            </div>
+            <div class="info-item">
+              <span class="label">咨询时长：</span>
+              <span>{{ appointment?.duration || 60 }}分钟</span>
+            </div>
+          </div>
+        </el-card>
+      </div>
+    </el-collapse-transition>
+
+    <!-- 消息区域 -->
+    <div ref="messagesContainer" class="messages-container">
+      <div v-loading="loading" class="messages-content">
         <div
           v-for="msg in messages"
           :key="msg.id"
-          class="message"
-          :class="{ 'message-self': msg.senderId === currentUserId }"
+          class="message-wrapper"
+          :class="{ 'message-self': msg.senderType === 'user' }"
         >
-          <el-avatar :size="40" :src="msg.senderId === currentUserId ? currentUserAvatar : appointment?.counselorAvatar" />
-          <div class="message-content">
-            <div class="message-sender">{{ msg.senderId === currentUserId ? '我' : appointment?.counselorName }}</div>
-            <div v-if="msg.type === 'text'" class="message-bubble">{{ msg.content }}</div>
+          <div class="message-bubble">
+            <div v-if="msg.type === 'text'" class="message-text">
+              {{ msg.content }}
+            </div>
             <div v-else-if="msg.type === 'image'" class="message-image">
               <el-image :src="msg.content" fit="cover" :preview-src-list="[msg.content]" />
             </div>
             <div v-else-if="msg.type === 'file'" class="message-file">
               <el-icon><Document /></el-icon>
-              <span>{{ getFileName(msg.content) }}</span>
-              <el-button type="primary" link @click="downloadFile(msg.content)">下载</el-button>
+              <span class="file-name">{{ getFileName(msg.content) }}</span>
+              <el-button type="primary" text @click="downloadFile(msg.content)">
+                <el-icon><Download /></el-icon> 下载
+              </el-button>
             </div>
-            <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
+            <div class="message-time">
+              {{ formatTime(msg.createdAt) }}
+            </div>
           </div>
         </div>
 
+        <!-- 正在输入指示器 -->
         <div v-if="isTyping" class="typing-indicator">
-          <span>对方正在输入...</span>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span>咨询师正在输入...</span>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-if="!loading && messages.length === 0" class="empty-messages">
+          <el-empty description="暂无消息，开始对话吧">
+            <template #image>
+              <el-icon :size="80"><ChatDotRound /></el-icon>
+            </template>
+          </el-empty>
         </div>
       </div>
+    </div>
 
-      <!-- 输入区域 -->
-      <div class="input-area">
-        <div class="toolbar">
+    <!-- 输入区域 -->
+    <div class="input-container">
+      <!-- 工具栏 -->
+      <div class="input-toolbar">
+        <div class="toolbar-left">
           <el-upload
             :show-file-list="false"
             :before-upload="handleUploadImage"
             accept="image/*"
           >
-            <el-button :icon="Picture" circle />
+            <el-button circle>
+              <el-icon><Picture /></el-icon>
+            </el-button>
           </el-upload>
           <el-upload
             :show-file-list="false"
             :before-upload="handleUploadFile"
           >
-            <el-button :icon="Folder" circle />
+            <el-button circle>
+              <el-icon><Folder /></el-icon>
+            </el-button>
           </el-upload>
-          <el-button :icon="Microphone" circle @click="toggleVoiceRecording" :type="isRecording ? 'danger' : ''" />
         </div>
-
-        <div class="input-box">
-          <el-input
-            v-model="inputContent"
-            type="textarea"
-            :rows="3"
-            placeholder="输入消息内容..."
-            @keydown.enter.ctrl="sendMessage"
-          />
-          <el-button type="primary" :loading="sending" @click="sendMessage">
-            发送 (Ctrl+Enter)
+        <div class="toolbar-right">
+          <el-button circle @click="toggleVoiceRecording" :type="isRecording ? 'danger' : ''">
+            <el-icon><Microphone /></el-icon>
           </el-button>
         </div>
+      </div>
+
+      <!-- 输入框 -->
+      <div class="input-area">
+        <el-input
+          v-model="inputContent"
+          type="textarea"
+          :rows="2"
+          placeholder="输入消息... (Ctrl+Enter 发送)"
+          @keydown.ctrl.enter="sendMessage"
+          class="message-input"
+        />
+        <el-button
+          type="primary"
+          :loading="sending"
+          @click="sendMessage"
+          class="send-btn"
+          :disabled="!inputContent.trim()"
+        >
+          <el-icon v-if="!sending"><Promotion /></el-icon>
+          {{ sending ? '发送中' : '发送' }}
+        </el-button>
       </div>
     </div>
   </div>
@@ -91,8 +183,10 @@
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Timer, Picture, Folder, Microphone, Document } from '@element-plus/icons-vue'
-import PageHeader from '@/components/PageHeader.vue'
+import {
+  Timer, User, ArrowLeft, MoreFilled, SwitchButton, Close, Picture,
+  Folder, Microphone, ChatDotRound, Document, Download, Promotion
+} from '@element-plus/icons-vue'
 import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation } from '@/api/consultation'
 import { useUserStore } from '@/stores/user'
 
@@ -110,6 +204,7 @@ const elapsedTime = ref(0)
 const inputContent = ref('')
 const messages = ref([])
 const appointment = ref({})
+const showCounselorInfo = ref(false)
 const messagesContainer = ref(null)
 
 const currentUserId = computed(() => userStore.user?.id)
@@ -118,24 +213,69 @@ const currentUserAvatar = computed(() => userStore.user?.avatar)
 let pollingTimer = null
 let durationTimer = null
 
+const goBack = () => {
+  router.push('/counselor/orders')
+}
+
 const loadAppointment = async () => {
-  // 加载预约信息
-  appointment.value = {
-    counselorName: '张老师',
-    counselorAvatar: '',
-    status: 'inprogress'
+  try {
+    // 从用户订单API获取当前用户的所有订单，找到对应的订单
+    const { getUserAppointments } = await import('@/api/counselor')
+    const res = await getUserAppointments({ page: 1, pageSize: 100 })
+
+    if (res.code === 200 && res.data) {
+      const orders = res.data.items || res.data.list || []
+      const currentOrder = orders.find(o => o.id === parseInt(appointmentId))
+
+      if (currentOrder) {
+        appointment.value = {
+          counselorName: currentOrder.counselorName || '咨询师',
+          counselorAvatar: currentOrder.counselorAvatar || '',
+          type: currentOrder.consultationType,
+          status: currentOrder.status,
+          duration: currentOrder.duration
+        }
+      } else {
+        ElMessage.error('未找到该订单')
+        goBack()
+      }
+    }
+  } catch (error) {
+    console.error('加载订单信息失败', error)
   }
 }
 
 const loadMessages = async (lastId = null) => {
   try {
     const res = await getMessages(appointmentId, { lastId })
-    const newMessages = res.data.list || []
+    console.log('获取消息API响应:', res)
+
+    const newMessages = res.data.items || res.data.list || []
+    const processedMessages = newMessages.map(msg => {
+      const processed = {
+        ...msg,
+        type: msg.message_type || msg.type,
+        senderId: msg.sender_id,
+        senderType: msg.sender_type,
+        createdAt: msg.created_at
+      }
+      console.log('消息详情:', {
+        id: msg.id,
+        sender_id: msg.sender_id,
+        sender_type: msg.sender_type,
+        content: msg.content,
+        isSelf: msg.sender_type === 'user'
+      })
+      return processed
+    })
+
+    console.log('当前用户ID:', currentUserId.value)
+    console.log('处理后的消息数量:', processedMessages.length)
 
     if (lastId === null) {
-      messages.value = newMessages
+      messages.value = processedMessages
     } else {
-      messages.value = [...messages.value, ...newMessages]
+      messages.value = [...messages.value, ...processedMessages]
     }
 
     scrollToBottom()
@@ -149,13 +289,16 @@ const sendMessage = async () => {
 
   try {
     sending.value = true
-    await sendMessageApi(appointmentId, {
+    const res = await sendMessageApi(appointmentId, {
       content: inputContent.value,
       type: 'text'
     })
+
     inputContent.value = ''
     await loadMessages()
+    ElMessage.success('发送成功')
   } catch (error) {
+    console.error('发送失败:', error)
     ElMessage.error('发送失败')
   } finally {
     sending.value = false
@@ -195,12 +338,23 @@ const toggleVoiceRecording = () => {
   ElMessage.info(isRecording.value ? '开始录音' : '停止录音')
 }
 
+const handleMenuCommand = async (command) => {
+  switch (command) {
+    case 'info':
+      showCounselorInfo.value = !showCounselorInfo.value
+      break
+    case 'end':
+      await handleEndConsultation()
+      break
+  }
+}
+
 const handleEndConsultation = async () => {
   try {
     await ElMessageBox.confirm('确定要结束本次咨询吗？', '提示', { type: 'warning' })
     await endConsultation(appointmentId)
     ElMessage.success('咨询已结束')
-    router.push('/counselor/orders')
+    goBack()
   } catch (error) {
     if (error !== 'cancel') ElMessage.error('操作失败')
   }
@@ -213,6 +367,14 @@ const scrollToBottom = () => {
     }
   })
 }
+
+const getTypeText = (type) => ({ video: '视频', voice: '语音', offline: '线下' }[type] || type)
+
+const getStatusText = (status) => ({
+  confirmed: '已确认',
+  in_progress: '咨询中',
+  completed: '已完成'
+}[status] || status)
 
 const formatTime = (time) => {
   const date = new Date(time)
@@ -253,6 +415,7 @@ onMounted(async () => {
     startTimer()
   } catch (error) {
     ElMessage.error('加载失败')
+    goBack()
   }
 })
 
@@ -263,34 +426,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@use '@/styles/variables.scss' as *;
-.consultation-chat-user { height: 100vh; display: flex; flex-direction: column; background: $bg-color; }
-.chat-container { flex: 1; display: flex; flex-direction: column; max-width: 1000px; margin: 0 auto; width: 100%; background: white; box-shadow: $shadow; }
+/* 使用与咨询师端相同的样式，但添加用户特有的样式 */
+@import url('./ConsultationChatCounselor.vue');
 
-.chat-header { padding: $spacing-lg; border-bottom: 1px solid $border-color; display: flex; justify-content: space-between; align-items: center; }
-.header-info { display: flex; align-items: center; gap: $spacing-md; }
-.header-info h3 { margin: 0 0 $spacing-xs; }
-.header-info .status { font-size: 12px; color: $text-secondary; }
-.header-info .status.online { color: $success-color; }
-.header-actions { display: flex; align-items: center; gap: $spacing-lg; }
-.timer { display: flex; align-items: center; gap: $spacing-xs; color: $primary-color; font-weight: 500; }
+.modern-chat-container.user .message-wrapper:not(.message-self) .message-bubble {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-left-radius: 2px;
+}
 
-.messages-area { flex: 1; padding: $spacing-lg; overflow-y: auto; background: #f5f7fa; }
-.message { display: flex; gap: $spacing-md; margin-bottom: $spacing-lg; }
-.message.message-self { flex-direction: row-reverse; }
-.message-content { max-width: 60%; }
-.message-sender { font-size: 12px; color: $text-secondary; margin-bottom: $spacing-xs; }
-.message-bubble { padding: $spacing-md; background: white; border-radius: $border-radius; word-break: break-word; }
-.message.message-self .message-bubble { background: $primary-color; color: white; }
-.message-image :deep(.el-image) { max-width: 200px; border-radius: $border-radius; }
-.message-file { display: flex; align-items: center; gap: $spacing-sm; padding: $spacing-md; background: white; border-radius: $border-radius; }
-.message-time { font-size: 12px; color: $text-secondary; margin-top: $spacing-xs; }
-.message.message-self .message-time { text-align: right; }
+.modern-chat-container.user .message-wrapper.message-self .message-bubble {
+  background: white;
+  color: #303133;
+  border-bottom-right-radius: 2px;
+  border: 1px solid #e4e7ed;
+}
 
-.typing-indicator { text-align: center; color: $text-secondary; font-size: 12px; padding: $spacing-md; }
-
-.input-area { border-top: 1px solid $border-color; padding: $spacing-lg; background: white; }
-.toolbar { display: flex; gap: $spacing-sm; margin-bottom: $spacing-md; }
-.input-box { display: flex; gap: $spacing-md; align-items: flex-end; }
-.input-box .el-textarea { flex: 1; }
+.modern-chat-container.user .online-dot.offline {
+  background: #909399;
+}
 </style>

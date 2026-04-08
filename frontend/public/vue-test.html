@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue渲染测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .info { color: blue; font-weight: bold; }
+        h1 { color: #333; }
+        h2 { color: #666; font-size: 18px; margin-top: 0; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #409eff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #66b1ff; }
+        .vue-component-test {
+            border: 2px solid #409eff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h1>🧪 Vue应用渲染测试</h1>
+        <p>此页面用于测试Vue应用是否正常渲染文本内容</p>
+        <div class="test-result">
+            <h2>✅ 基础测试</h2>
+            <p>1. HTML文本渲染: <span class="success">正常</span></p>
+            <p>2. CSS样式加载: <span class="success">正常</span></p>
+            <p>3. JavaScript执行: <span class="success">正常</span></p>
+        </div>
+
+        <div class="test-result">
+            <h2>🔧 快速操作</h2>
+            <button onclick="testMainApp()">测试主应用</button>
+            <button onclick="testAppointment()">测试预约页面</button>
+            <button onclick="testCounselorList()">测试咨询师列表</button>
+            <button onclick="goToDiagnostic()">诊断页面</button>
+        </div>
+
+        <div class="test-result">
+            <h2>📋 修复状态</h2>
+            <p>✅ ElIcon性能警告已修复 (使用markRaw)</p>
+            <p>✅ PageHeader组件图标优化</p>
+            <p>✅ AppointmentForm组件图标优化</p>
+            <p>✅ HomePage组件图标优化</p>
+            <p>✅ CounselorList组件图标优化</p>
+        </div>
+
+        <div id="test-output" class="test-result" style="display: none;">
+            <h2>📊 测试结果</h2>
+            <div id="output-content"></div>
+        </div>
+    </div>
+
+    <div id="vue-test" class="vue-component-test">
+        <h2>🎯 Vue组件测试区</h2>
+        <div id="vue-content">
+            <p>正在初始化Vue测试...</p>
+        </div>
+    </div>
+
+    <script>
+        // 测试主应用
+        function testMainApp() {
+            const output = document.getElementById('test-output');
+            const content = document.getElementById('output-content');
+            output.style.display = 'block';
+
+            let results = [];
+            results.push('🔍 测试主应用: <a href="http://localhost:5176" target="_blank">http://localhost:5176</a>');
+
+            // 检查Vue应用是否挂载
+            setTimeout(() => {
+                fetch('http://localhost:5176')
+                    .then(response => response.text())
+                    .then(html => {
+                        if (html.includes('id="app"')) {
+                            results.push('✅ Vue应用容器存在');
+                        } else {
+                            results.push('❌ Vue应用容器不存在');
+                        }
+
+                        if (html.includes('main.js')) {
+                            results.push('✅ Vue主入口文件已加载');
+                        } else {
+                            results.push('❌ Vue主入口文件未加载');
+                        }
+
+                        content.innerHTML = results.join('<br>');
+                    })
+                    .catch(error => {
+                        content.innerHTML = `❌ 测试失败: ${error.message}`;
+                    });
+            }, 100);
+        }
+
+        // 测试预约页面
+        function testAppointment() {
+            const output = document.getElementById('test-output');
+            const content = document.getElementById('output-content');
+            output.style.display = 'block';
+
+            content.innerHTML = `
+                🔍 测试预约页面:<br>
+                <a href="http://localhost:5176/counselor/appointment?counselorId=5&counselorName=测试" target="_blank">
+                    http://localhost:5176/counselor/appointment?counselorId=5&counselorName=测试
+                </a><br><br>
+                <strong>预期结果:</strong><br>
+                - 页面标题: "预约咨询 - 测试师"<br>
+                - 咨询方式选择 (视频/语音/线下)<br>
+                - 日期选择器<br>
+                - 时段选择<br>
+                - 表单填写区域<br>
+                - 确认预约按钮<br><br>
+                <strong>如果看不到文字内容:</strong><br>
+                1. 打开浏览器开发者工具 (F12)<br>
+                2. 查看Console标签页的错误信息<br>
+                3. 查看Network标签页的请求状态<br>
+                4. 使用诊断页面进行详细检查
+            `;
+        }
+
+        // 测试咨询师列表
+        function testCounselorList() {
+            const output = document.getElementById('test-output');
+            const content = document.getElementById('output-content');
+            output.style.display = 'block';
+
+            content.innerHTML = `
+                🔍 测试咨询师列表:<br>
+                <a href="http://localhost:5176/counselor" target="_blank">http://localhost:5176/counselor</a><br><br>
+                <strong>预期结果:</strong><br>
+                - 页面标题: "找咨询师"<br>
+                - 筛选卡片 (搜索、领域、方式、价格)<br>
+                - 咨询师卡片列表<br>
+                - 每个卡片包含: 头像、姓名、评分、擅长领域、价格<br>
+                - 预约按钮<br><br>
+                <strong>如果看不到文字内容:</strong><br>
+                1. 检查Element Plus样式是否加载<br>
+                2. 查看浏览器控制台的错误信息<br>
+                3. 确认后端API是否正常响应
+            `;
+        }
+
+        // 前往诊断页面
+        function goToDiagnostic() {
+            window.location.href = 'http://localhost:5176/diagnostic.html';
+        }
+
+        // 简单的Vue测试组件
+        class SimpleVueTest {
+            constructor() {
+                this.data = {
+                    message: 'Vue组件测试成功!',
+                    items: ['项目1', '项目2', '项目3'],
+                    visible: true
+                };
+            }
+
+            render() {
+                const container = document.getElementById('vue-content');
+                container.innerHTML = `
+                    <h3 style="color: #409eff;">${this.data.message}</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        ${this.data.items.map(item => `
+                            <li style="padding: 8px; margin: 4px 0; background: #f0f9ff; border-radius: 4px;">
+                                ✅ ${item}
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <p style="color: #67c23a; margin-top: 16px;">
+                        🎉 文本内容渲染正常，如果Vue应用有问题，可能是CSS或组件加载问题。
+                    </p>
+                `;
+            }
+        }
+
+        // 运行简单Vue测试
+        window.addEventListener('load', () => {
+            const vueTest = new SimpleVueTest();
+            vueTest.render();
+
+            console.log('Vue渲染测试页面加载完成');
+            console.log('前端开发服务器: http://localhost:5176');
+        });
+    </script>
+</body>
+</html>

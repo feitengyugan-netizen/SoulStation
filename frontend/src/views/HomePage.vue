@@ -91,7 +91,7 @@
           >
             <div class="counselor-avatar">
               <el-avatar :size="80" :src="counselor.avatar">
-                <el-icon><User /></el-icon>
+                <el-icon><component :is="icons.User" /></el-icon>
               </el-avatar>
             </div>
             <h3>{{ counselor.name }}</h3>
@@ -161,10 +161,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, ChatDotSquare, Document, Calendar, DataAnalysis, TrendCharts } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
+
+// Mark icon components as raw to prevent reactivity warnings
+const icons = markRaw({
+  User,
+  ChatDotSquare,
+  Document,
+  Calendar,
+  DataAnalysis,
+  TrendCharts
+})
 
 const router = useRouter()
 
@@ -200,7 +210,7 @@ const features = ref([
     id: 1,
     title: '智能问答',
     description: '24h在线，AI心理咨询助手',
-    icon: ChatDotSquare,
+    icon: icons.ChatDotSquare,
     color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     path: '/chat'
   },
@@ -208,7 +218,7 @@ const features = ref([
     id: 2,
     title: '心理测试',
     description: '专业评估，科学分析',
-    icon: Document,
+    icon: icons.Document,
     color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     path: '/test'
   },
@@ -216,7 +226,7 @@ const features = ref([
     id: 3,
     title: '预约咨询',
     description: '专家团队，贴心服务',
-    icon: Calendar,
+    icon: icons.Calendar,
     color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     path: '/counselor'
   },
@@ -224,7 +234,7 @@ const features = ref([
     id: 4,
     title: '心理知识',
     description: '科普文章，助您成长',
-    icon: DataAnalysis,
+    icon: icons.DataAnalysis,
     color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     path: '/knowledge'
   }
@@ -300,10 +310,10 @@ const recommendedCounselors = ref([
 
 // 平台数据
 const platformStats = ref([
-  { id: 1, label: '用户数', value: 1234, icon: User, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-  { id: 2, label: '咨询师', value: 89, icon: Calendar, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-  { id: 3, label: '服务次数', value: 2567, icon: TrendCharts, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-  { id: 4, label: '满意度', value: 98, icon: DataAnalysis, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', suffix: '%' }
+  { id: 1, label: '用户数', value: 1234, icon: icons.User, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+  { id: 2, label: '咨询师', value: 89, icon: icons.Calendar, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+  { id: 3, label: '服务次数', value: 2567, icon: icons.TrendCharts, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+  { id: 4, label: '满意度', value: 98, icon: icons.DataAnalysis, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', suffix: '%' }
 ])
 
 // 格式化数字

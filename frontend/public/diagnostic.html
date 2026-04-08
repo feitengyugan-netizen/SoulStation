@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue应用诊断</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .diagnostic {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        h1 { color: #333; }
+        h2 { color: #666; font-size: 18px; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="diagnostic">
+        <h1>🔍 SoulStation Vue应用诊断</h1>
+
+        <div class="test-result">
+            <h2>1. 页面加载状态</h2>
+            <p id="page-status">检查中...</p>
+        </div>
+
+        <div class="test-result">
+            <h2>2. JavaScript状态</h2>
+            <p id="js-status">检查中...</p>
+        </div>
+
+        <div class="test-result">
+            <h2>3. Vue应用状态</h2>
+            <p id="vue-status">检查中...</p>
+        </div>
+
+        <div class="test-result">
+            <h2>4. DOM渲染状态</h2>
+            <p id="dom-status">检查中...</p>
+        </div>
+
+        <div class="test-result">
+            <h2>5. 路由状态</h2>
+            <p id="router-status">检查中...</p>
+        </div>
+
+        <div class="test-result">
+            <h2>6. 快速操作</h2>
+            <button onclick="clearCache()" style="padding: 10px 20px; margin: 5px;">清除缓存并刷新</button>
+            <button onclick="testVue()" style="padding: 10px 20px; margin: 5px;">测试Vue</button>
+            <button onclick="gotoHome()" style="padding: 10px 20px; margin: 5px;">返回首页</button>
+            <button onclick="gotoLogin()" style="padding: 10px 20px; margin: 5px;">去登录</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. 页面加载状态
+        document.getElementById('page-status').innerHTML = '<span class="success">✓ 页面加载正常</span>';
+
+        // 2. JavaScript状态
+        try {
+            document.getElementById('js-status').innerHTML = '<span class="success">✓ JavaScript运行正常</span>';
+        } catch (e) {
+            document.getElementById('js-status').innerHTML = '<span class="error">✗ JavaScript错误: ' + e.message + '</span>';
+        }
+
+        // 3. Vue应用状态
+        setTimeout(() => {
+            const app = document.getElementById('app');
+            if (app) {
+                const content = app.innerHTML || app.textContent;
+                if (content && content.trim().length > 0) {
+                    document.getElementById('vue-status').innerHTML = '<span class="success">✓ Vue应用已挂载</span>';
+                    document.getElementById('dom-status').innerHTML = '<span class="success">✓ DOM有内容 (' + content.length + ' 字符)</span>';
+                } else {
+                    document.getElementById('vue-status').innerHTML = '<span class="error">✗ Vue应用未挂载内容</span>';
+                    document.getElementById('dom-status').innerHTML = '<span class="error">✗ DOM为空</span>';
+                }
+            } else {
+                document.getElementById('vue-status').innerHTML = '<span class="error">✗ 找不到#app元素</span>';
+                document.getElementById('dom-status').innerHTML = '<span class="error">✗ DOM没有#app容器</span>';
+            }
+
+            // 4. 路由状态
+            if (window.location.pathname.includes('/appointment')) {
+                document.getElementById('router-status').innerHTML = '<span class="success">✓ 当前在预约页面</span>';
+            } else if (window.location.pathname.includes('/login')) {
+                document.getElementById('router-status').innerHTML = '<span class="success">✓ 当前在登录页面</span>';
+            } else {
+                document.getElementById('router-status').innerHTML = '<span class="warning">⚠ 当前在: ' + window.location.pathname + '</span>';
+            }
+        }, 1000);
+
+        // 功能函数
+        function clearCache() {
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                    alert('缓存已清除，页面将刷新...');
+                    location.reload(true);
+                });
+            } else {
+                location.reload(true);
+            }
+        }
+
+        function testVue() {
+            if (window.Vue || window.__VUE__) {
+                alert('Vue已加载: ' + (window.Vue ? 'Vue 2/3 global' : 'Composition API'));
+            } else {
+                alert('Vue未检测到，可能使用ES模块构建');
+            }
+        }
+
+        function gotoHome() {
+            window.location.href = '/';
+        }
+
+        function gotoLogin() {
+            window.location.href = '/login';
+        }
+
+        // 自动检查错误
+        window.onerror = function(msg, url, line) {
+            console.error('JavaScript错误:', msg, 'at', url, 'line', line);
+        };
+
+        console.log('诊断页面加载完成');
+    </script>
+</body>
+</html>

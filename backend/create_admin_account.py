@@ -20,7 +20,7 @@ def create_admin_account():
             logger.info(f"管理员账号已存在: {existing_admin.username}")
             logger.info(f"邮箱: {existing_admin.email}")
             logger.info(f"角色: {existing_admin.role}")
-            logger.info(f"状态: {'激活' if existing_admin.is_active else '禁用'}")
+            logger.info(f"状态: {existing_admin.status}")
             return existing_admin
 
         # 创建新管理员
@@ -30,7 +30,7 @@ def create_admin_account():
             real_name="系统管理员",
             email="admin@soulstation.com",
             role="super_admin",
-            is_active=True
+            status="active"
         )
 
         db.add(admin)

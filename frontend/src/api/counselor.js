@@ -208,3 +208,42 @@ export function reviewApplication(counselorId, action, reason) {
     params: { action, reason }
   })
 }
+
+/**
+ * 获取咨询师订单列表
+ * @param {Object} params
+ * @param {string} params.status - 订单状态筛选
+ * @param {number} params.page - 页码
+ * @param {number} params.pageSize - 每页数量
+ */
+export function getCounselorAppointments(params) {
+  return request({
+    url: '/consultation/counselor/orders',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取咨询师统计数据
+ */
+export function getCounselorStatistics() {
+  return request({
+    url: '/consultation/counselor/statistics',
+    method: 'get'
+  })
+}
+
+/**
+ * 更新订单状态
+ * @param {string} appointmentId - 订单ID
+ * @param {string} status - 新状态
+ * @param {string} reason - 原因（可选）
+ */
+export function updateAppointmentStatus(appointmentId, status, reason) {
+  return request({
+    url: `/consultation/order/${appointmentId}/handle`,
+    method: 'post',
+    data: { action: status, reason }
+  })
+}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>心理知识 API 测试</h1>
+
+    <div class="section">
+        <h2>1. 登录测试</h2>
+        <button onclick="testLogin()">测试登录</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. 知识列表测试</h2>
+        <button onclick="testKnowledgeList()">获取知识列表</button>
+        <div id="knowledgeResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. 本地存储检查</h2>
+        <button onclick="checkLocalStorage()">检查Token</button>
+        <div id="storageResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let authToken = '';
+
+        function testLogin() {
+            const result = document.getElementById('loginResult');
+            result.className = 'result';
+            result.textContent = '正在登录...';
+
+            fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: 'xiaoming@example.com',
+                    password: '123456'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                result.className = 'result success';
+                result.textContent = `登录成功！\n${JSON.stringify(data, null, 2)}`;
+
+                // 保存token
+                if (data.data && data.data.token) {
+                    authToken = data.data.token;
+                    localStorage.setItem('token', authToken);
+                    result.textContent += '\n\nToken已保存到localStorage';
+                }
+            })
+            .catch(error => {
+                result.className = 'result error';
+                result.textContent = `登录失败：${error.message}`;
+            });
+        }
+
+        function testKnowledgeList() {
+            const result = document.getElementById('knowledgeResult');
+            result.className = 'result';
+            result.textContent = '正在获取知识列表...';
+
+            const token = authToken || localStorage.getItem('token');
+            if (!token) {
+                result.className = 'result error';
+                result.textContent = '错误：未找到Token，请先登录';
+                return;
+            }
+
+            fetch(`${API_BASE}/knowledge/list?page=1&page_size=5`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                result.className = 'result success';
+                result.textContent = `获取成功！\n${JSON.stringify(data, null, 2)}`;
+
+                if (data.data && data.data.items) {
+                    result.textContent += `\n\n共 ${data.data.items.length} 篇文章`;
+                }
+            })
+            .catch(error => {
+                result.className = 'result error';
+                result.textContent = `获取失败：${error.message}`;
+            });
+        }
+
+        function checkLocalStorage() {
+            const result = document.getElementById('storageResult');
+            result.className = 'result';
+
+            const token = localStorage.getItem('token');
+            const userInfo = localStorage.getItem('userInfo');
+
+            if (token) {
+                result.className = 'result success';
+                result.textContent = `Token: ${token.substring(0, 30)}...\n用户信息: ${userInfo || '未设置'}`;
+            } else {
+                result.className = 'result error';
+                result.textContent = '未找到Token，用户可能未登录';
+            }
+        }
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkLocalStorage();
+            // 如果有token，直接获取知识列表
+            if (localStorage.getItem('token')) {
+                testKnowledgeList();
+            }
+        };
+    </script>
+</body>
+</html>

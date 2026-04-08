@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # 数据库配置
-    DATABASE_URL: str = "mysql+pymysql://root:123456@localhost:3306/soulstation"
+    DATABASE_URL: str = "mysql+pymysql://root:123456@localhost:3307/soulstation"
 
     # JWT 配置
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     DOUBAO_MODEL: str = "doubao-1-5-pro-32k-250115"
 
     # Redis 配置
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = "redis://:redis123456@localhost:6380/0"
     REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
+    REDIS_PORT: int = 6380
     REDIS_DB: int = 0
     REDIS_PASSWORD: str = "redis123456"
     REDIS_ENABLED: bool = True

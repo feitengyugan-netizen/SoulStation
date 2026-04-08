@@ -825,6 +825,7 @@ class ConsultationService:
         appointment_id: int,
         user_id: int,
         user_type: str,
+        counselor_id: Optional[int] = None,
         last_id: Optional[int] = None,
         limit: int = 50
     ) -> Dict[str, Any]:
@@ -841,8 +842,14 @@ class ConsultationService:
         # 验证权限
         if user_type == 'user' and appointment.user_id != user_id:
             raise ValueError("无权访问此对话")
-        if user_type == 'counselor' and appointment.counselor_id != user_id:
-            raise ValueError("无权访问此对话")
+        if user_type == 'counselor':
+            # 对于咨询师，使用counselor_id进行比较
+            if counselor_id is None:
+                raise ValueError("咨询师ID不能为空")
+            # 添加调试日志
+            logger.info(f"Counselor permission check: appointment.counselor_id={appointment.counselor_id}, counselor_id={counselor_id}")
+            if appointment.counselor_id != counselor_id:
+                raise ValueError(f"无权访问此对话: appointment.counselor_id={appointment.counselor_id} != counselor_id={counselor_id}")
 
         # 构建查询
         q = db.query(ConsultationMessage).filter(
@@ -884,7 +891,8 @@ class ConsultationService:
         appointment_id: int,
         sender_id: int,
         sender_type: str,
-        message_data: SendMessageRequest
+        message_data: SendMessageRequest,
+        counselor_id: Optional[int] = None
     ) -> MessageResponse:
         """发送消息"""
         from app.models.counselor import ConsultationMessage
@@ -899,8 +907,12 @@ class ConsultationService:
         # 验证权限
         if sender_type == 'user' and appointment.user_id != sender_id:
             raise ValueError("无权发送消息")
-        if sender_type == 'counselor' and appointment.counselor_id != sender_id:
-            raise ValueError("无权发送消息")
+        if sender_type == 'counselor':
+            # 对于咨询师，使用counselor_id进行比较
+            if counselor_id is None:
+                raise ValueError("咨询师ID不能为空")
+            if appointment.counselor_id != counselor_id:
+                raise ValueError("无权发送消息")
 
         # 验证状态
         if appointment.status not in ['confirmed', 'in_progress']:
@@ -971,7 +983,8 @@ class ConsultationService:
         db: Session,
         appointment_id: int,
         user_id: int,
-        user_type: str
+        user_type: str,
+        counselor_id: Optional[int] = None
     ) -> bool:
         """结束咨询"""
         # 验证预约
@@ -984,8 +997,12 @@ class ConsultationService:
         # 验证权限
         if user_type == 'user' and appointment.user_id != user_id:
             raise ValueError("无权操作")
-        if user_type == 'counselor' and appointment.counselor_id != user_id:
-            raise ValueError("无权操作")
+        if user_type == 'counselor':
+            # 对于咨询师，使用counselor_id进行比较
+            if counselor_id is None:
+                raise ValueError("咨询师ID不能为空")
+            if appointment.counselor_id != counselor_id:
+                raise ValueError("无权操作")
 
         # 验证状态
         if appointment.status != 'in_progress':

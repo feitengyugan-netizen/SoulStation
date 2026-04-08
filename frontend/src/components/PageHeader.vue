@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="logo" @click="goHome">
           <el-icon :size="32" color="#409EFF">
-            <ChatLineSquare />
+            <component :is="icons.ChatLineSquare" />
           </el-icon>
           <span class="logo-text">心理咨询平台</span>
         </div>
@@ -49,38 +49,38 @@
           <template v-else>
             <!-- 通知 -->
             <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
-              <el-button circle :icon="Bell" @click="showNotifications" />
+              <el-button circle :icon="icons.Bell" @click="showNotifications" />
             </el-badge>
 
             <!-- 用户下拉菜单 -->
             <el-dropdown @command="handleCommand">
               <div class="user-info">
                 <el-avatar :size="36" :src="userInfo?.avatar">
-                  <el-icon><User /></el-icon>
+                  <el-icon><component :is="icons.User" /></el-icon>
                 </el-avatar>
                 <span class="username">{{ userInfo?.nickname || '用户' }}</span>
-                <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+                <el-icon class="dropdown-icon"><component :is="icons.ArrowDown" /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="profile">
-                    <el-icon><User /></el-icon>
+                    <el-icon><component :is="icons.User" /></el-icon>
                     个人中心
                   </el-dropdown-item>
                   <el-dropdown-item command="orders" v-if="!isCounselor">
-                    <el-icon><Calendar /></el-icon>
+                    <el-icon><component :is="icons.Calendar" /></el-icon>
                     我的预约
                   </el-dropdown-item>
                   <el-dropdown-item command="counselor-orders" v-if="isCounselor">
-                    <el-icon><Calendar /></el-icon>
+                    <el-icon><component :is="icons.Calendar" /></el-icon>
                     工作台
                   </el-dropdown-item>
                   <el-dropdown-item command="admin" v-if="isAdmin">
-                    <el-icon><Setting /></el-icon>
+                    <el-icon><component :is="icons.Setting" /></el-icon>
                     后台管理
                   </el-dropdown-item>
                   <el-dropdown-item divided command="logout">
-                    <el-icon><SwitchButton /></el-icon>
+                    <el-icon><component :is="icons.SwitchButton" /></el-icon>
                     退出登录
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, markRaw } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   ChatLineSquare,
@@ -107,6 +107,17 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
+
+// Mark icon components as raw to prevent unnecessary reactivity
+const icons = markRaw({
+  ChatLineSquare,
+  Bell,
+  User,
+  ArrowDown,
+  Calendar,
+  Setting,
+  SwitchButton
+})
 
 const router = useRouter()
 const route = useRoute()

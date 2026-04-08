@@ -183,8 +183,24 @@ async def get_messages(
     自动标记对方消息为已读
     """
     try:
+        # 如果是咨询师，需要获取对应的counselor_id
+        counselor_id = user_id
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if not counselor:
+                logger.error(f"Counselor not found for user_id: {user_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="咨询师记录不存在"
+                )
+            counselor_id = counselor.id
+            logger.info(f"Counselor access: user_id={user_id}, counselor_id={counselor_id}")
+
         result = ConsultationService.get_messages(
-            db, appointment_id, user_id, user_type, last_id, limit
+            db, appointment_id, user_id, user_type, counselor_id, last_id, limit
         )
         return {
             "code": 200,
@@ -192,6 +208,7 @@ async def get_messages(
             "data": result
         }
     except ValueError as e:
+        logger.error(f"获取消息失败(ValueError): {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -223,8 +240,22 @@ async def send_message(
     只能在已确认或进行中的预约中发送消息
     """
     try:
+        # 如果是咨询师，需要获取对应的counselor_id
+        counselor_id = None
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if not counselor:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="咨询师记录不存在"
+                )
+            counselor_id = counselor.id
+
         message = ConsultationService.send_message(
-            db, appointment_id, user_id, user_type, message_data
+            db, appointment_id, user_id, user_type, message_data, counselor_id
         )
         return {
             "code": 200,
@@ -304,8 +335,22 @@ async def end_consultation(
     只能结束状态为"进行中"的咨询
     """
     try:
+        # 如果是咨询师，需要获取对应的counselor_id
+        counselor_id = None
+        if user_type == 'counselor':
+            counselor = db.query(Counselor).filter(
+                Counselor.user_id == user_id,
+                Counselor.is_deleted == False
+            ).first()
+            if not counselor:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="咨询师记录不存在"
+                )
+            counselor_id = counselor.id
+
         ConsultationService.end_consultation(
-            db, appointment_id, user_id, user_type
+            db, appointment_id, user_id, user_type, counselor_id
         )
         return {
             "code": 200,

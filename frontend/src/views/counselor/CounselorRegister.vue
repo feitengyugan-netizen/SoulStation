@@ -34,9 +34,9 @@
           <el-col :span="12">
             <el-form-item label="性别" prop="gender">
               <el-radio-group v-model="formData.gender">
-                <el-radio label="male">男</el-radio>
-                <el-radio label="female">女</el-radio>
-                <el-radio label="secret">保密</el-radio>
+                <el-radio value="male">男</el-radio>
+                <el-radio value="female">女</el-radio>
+                <el-radio value="secret">保密</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -57,22 +57,22 @@
 
         <el-form-item label="擅长领域" prop="specialties" required>
           <el-checkbox-group v-model="formData.specialties">
-            <el-checkbox label="anxiety">焦虑情绪</el-checkbox>
-            <el-checkbox label="depression">抑郁情绪</el-checkbox>
-            <el-checkbox label="emotion">情绪管理</el-checkbox>
-            <el-checkbox label="career">职业发展</el-checkbox>
-            <el-checkbox label="family">家庭关系</el-checkbox>
-            <el-checkbox label="marriage">婚姻情感</el-checkbox>
-            <el-checkbox label="adolescent">青少年心理</el-checkbox>
-            <el-checkbox label="growth">个人成长</el-checkbox>
+            <el-checkbox value="anxiety">焦虑情绪</el-checkbox>
+            <el-checkbox value="depression">抑郁情绪</el-checkbox>
+            <el-checkbox value="emotion">情绪管理</el-checkbox>
+            <el-checkbox value="career">职业发展</el-checkbox>
+            <el-checkbox value="family">家庭关系</el-checkbox>
+            <el-checkbox value="marriage">婚姻情感</el-checkbox>
+            <el-checkbox value="adolescent">青少年心理</el-checkbox>
+            <el-checkbox value="growth">个人成长</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
         <el-form-item label="咨询方式" prop="consultation_types" required>
           <el-checkbox-group v-model="formData.consultation_types">
-            <el-checkbox label="video">视频咨询</el-checkbox>
-            <el-checkbox label="voice">语音咨询</el-checkbox>
-            <el-checkbox label="offline">线下咨询</el-checkbox>
+            <el-checkbox value="video">视频咨询</el-checkbox>
+            <el-checkbox value="voice">语音咨询</el-checkbox>
+            <el-checkbox value="offline">线下咨询</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 

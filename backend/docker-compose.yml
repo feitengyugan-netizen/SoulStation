@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0
+    image: mariadb:10.11
+    platform: linux/amd64
     container_name: soulstation-mysql
     restart: always
     environment:
@@ -12,15 +13,9 @@ services:
       MYSQL_PASSWORD: soulstation123
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --default-authentication-plugin=mysql_native_password
-      - --skip-character-set-client-handshake
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
       interval: 10s
@@ -30,16 +25,19 @@ services:
       - soulstation-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
+    platform: linux/amd64
     container_name: soulstation-redis
     restart: always
+    environment:
+      REDIS_PASSWORD: redis123456
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes --requirepass "redis123456"
+    command: redis-server --requirepass "redis123456"
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-a", "redis123456", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
