@@ -10,6 +10,9 @@ export const useUserStore = defineStore('user', {
   }),
 
   getters: {
+    // 用户信息（为了兼容性）
+    user: (state) => state.userInfo,
+
     // 用户角色
     userRole: (state) => state.userInfo?.role || 'user',
 
@@ -56,12 +59,6 @@ export const useUserStore = defineStore('user', {
         const res = await login(loginData)
         this.setToken(res.data.token)
         this.setUserInfo(res.data.userInfo)
-
-        // 根据后端返回的redirect路径跳转
-        if (res.data.redirect) {
-          window.location.href = res.data.redirect
-        }
-
         return res
       } catch (error) {
         throw error

@@ -445,20 +445,31 @@ async def ban_user(
 
 @router.get("/orders", summary="获取订单列表")
 async def get_orders(
-    status_filter: Optional[str] = Query(None, description="订单状态"),
+    status_filter: Optional[str] = Query(None, description="订单状态", alias="status"),
+    keyword: Optional[str] = Query(None, description="搜索关键词（订单号/用户/咨询师）"),
+    start_date: Optional[str] = Query(None, description="开始日期 YYYY-MM-DD", alias="startDate"),
+    end_date: Optional[str] = Query(None, description="结束日期 YYYY-MM-DD", alias="endDate"),
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量", alias="pageSize"),
     current_admin: Admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """
     获取订单列表（后台管理）
 
-    支持按状态筛选
-    包含用户和咨询师信息
+    支持按状态筛选、关键词搜索、日期范围过滤
+    返回统计数据和订单详情
     """
     try:
-        result = AdminService.get_orders(db, status_filter, page, page_size)
+        result = AdminService.get_orders(
+            db,
+            status_filter=status_filter,
+            keyword=keyword,
+            start_date=start_date,
+            end_date=end_date,
+            page=page,
+            page_size=page_size
+        )
         return {
             "code": 200,
             "message": "获取成功",

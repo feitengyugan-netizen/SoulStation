@@ -123,18 +123,32 @@ class TestService:
             TestQuestion.test_id == test_id
         ).order_by(TestQuestion.question_number).all()
 
-        # 转换为 Schema
-        question_schemas = [
-            QuestionSchema(
-                id=q.id,
-                question_number=q.question_number,
-                question_text=q.question_text,
-                options=q.options,
-                dimension=q.dimension,
-                is_reverse=q.is_reverse
-            )
-            for q in questions
-        ]
+        # 处理题目数据
+        import json
+        question_list = []
+        for q in questions:
+            # 解析 options JSON 字符串
+            try:
+                options_dict = json.loads(q.options) if isinstance(q.options, str) else q.options
+            except:
+                options_dict = {"A": "选项A", "B": "选项B", "C": "选项C", "D": "选项D"}
+
+            # 转换为前端需要的格式
+            options = []
+            for i, (key, label) in enumerate(options_dict.items()):
+                options.append({
+                    "value": i,
+                    "label": label
+                })
+
+            question_list.append({
+                "id": q.id,
+                "question_number": q.question_number,
+                "question_text": q.question_text,
+                "options": options,
+                "dimension": q.dimension,
+                "is_reverse": bool(q.is_reverse)
+            })
 
         return {
             "test_id": test.id,
@@ -142,7 +156,7 @@ class TestService:
             "title": test.title,
             "intro_text": test.intro_text,
             "option_type": test.option_type,
-            "questions": question_schemas
+            "questions": question_list
         }
 
     @staticmethod

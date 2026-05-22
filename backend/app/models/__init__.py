@@ -2,7 +2,7 @@ from .user import User
 from .admin import Admin
 from .test import PsychologicalTest, TestQuestion, TestResult, TestProgress
 from .chat import ChatDialogue, ChatMessage, ChatTag, ChatDialogueTag
-from .counselor import Counselor, Appointment, ConsultationReview, ConsultationMessage
+from .counselor import Counselor, Appointment, ConsultationReview, ConsultationMessage, Notification
 from .knowledge import KnowledgeArticle, KnowledgeComment, KnowledgeFavorite, KnowledgeLike
 
 __all__ = [
@@ -10,6 +10,6 @@ __all__ = [
     "Admin",
     "PsychologicalTest", "TestQuestion", "TestResult", "TestProgress",
     "ChatDialogue", "ChatMessage", "ChatTag", "ChatDialogueTag",
-    "Counselor", "Appointment", "ConsultationReview", "ConsultationMessage",
+    "Counselor", "Appointment", "ConsultationReview", "ConsultationMessage", "Notification",
     "KnowledgeArticle", "KnowledgeComment", "KnowledgeFavorite", "KnowledgeLike"
 ]

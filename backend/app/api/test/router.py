@@ -9,7 +9,7 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.security import get_current_user, get_current_user_optional
 from app.models.user import User
-from app.models.test import TestResult, PsychologicalTest
+from app.models.test import TestResult, PsychologicalTest, TestQuestion
 from app.schemas.test import (
     TestListQuery, StartTestRequest, SaveProgressRequest, SubmitTestRequest,
     FavoriteResultRequest, GetTrendRequest,
@@ -137,30 +137,57 @@ async def get_test_detail(
     )
 
 
-@router.post("/{test_id}/start", response_model=ApiResponse)
-async def start_test(
-    test_id: int,
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional)
-):
-    """
-    开始测试
+@router.post("/{test_id}/start")
+async def start_test(test_id: int, db: Session = Depends(get_db)):
+    """开始测试"""
+    # 检查测试是否存在
+    test = db.query(PsychologicalTest).filter(
+        PsychologicalTest.id == test_id,
+        PsychologicalTest.is_active == True
+    ).first()
 
-    返回测试题目列表
-    """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    result = TestService.start_test(db, test_id, current_user.id)
-
-    if not result:
+    if not test:
         raise HTTPException(status_code=404, detail="测试不存在")
 
-    return ApiResponse(
-        code=200,
-        message="成功",
-        data=result
-    )
+    # 获取题目
+    questions = db.query(TestQuestion).filter(
+        TestQuestion.test_id == test_id
+    ).order_by(TestQuestion.question_number).all()
+
+    # 处理题目数据
+    import json
+    question_list = []
+    for q in questions:
+        # 解析 options
+        try:
+            options_dict = json.loads(q.options) if isinstance(q.options, str) else q.options
+        except:
+            options_dict = {"A": "没有或很少时间", "B": "小部分时间", "C": "相当多时间", "D": "绝大部分时间"}
+
+        # 转换为前端格式
+        options = []
+        for i, (key, label) in enumerate(options_dict.items()):
+            options.append({"value": i, "label": label})
+
+        question_list.append({
+            "id": q.id,
+            "question_number": q.question_number,
+            "question_text": q.question_text,
+            "options": options,
+            "dimension": q.dimension,
+            "is_reverse": bool(q.is_reverse)
+        })
+
+    return {
+        "code": 200,
+        "message": "成功",
+        "data": {
+            "test_id": test.id,
+            "test_code": test.test_code,
+            "title": test.title,
+            "questions": question_list
+        }
+    }
 
 
 @router.post("/{test_id}/progress", response_model=ApiResponse)

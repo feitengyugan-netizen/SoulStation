@@ -22,20 +22,13 @@
             <el-option label="职业发展" value="career" />
             <el-option label="家庭婚姻" value="family" />
             <el-option label="个人成长" value="growth" />
+            <el-option label="情绪管理" value="emotion" />
+            <el-option label="心理咨询" value="counseling" />
+            <el-option label="正念冥想" value="meditation" />
+            <el-option label="压力管理" value="stress" />
+            <el-option label="睡眠健康" value="health" />
+            <el-option label="创伤治疗" value="depression" />
           </el-select>
-        </el-form-item>
-
-        <el-form-item label="封面图片">
-          <el-upload
-            class="cover-uploader"
-            :show-file-list="false"
-            :before-upload="handleUploadCover"
-            accept="image/*"
-          >
-            <img v-if="form.cover" :src="form.cover" class="cover-image" />
-            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-          <div class="cover-tip">建议尺寸：800x450，支持 jpg、png 格式</div>
         </el-form-item>
 
         <el-form-item label="文章摘要">
@@ -55,24 +48,14 @@
               <el-button-group>
                 <el-button size="small" @click="insertFormat('bold')"><b>B</b></el-button>
                 <el-button size="small" @click="insertFormat('italic')"><i>I</i></el-button>
-                <el-button size="small" @click="insertFormat('underline')"><u>U</u></el-button>
               </el-button-group>
               <el-button-group style="margin-left: 10px">
                 <el-button size="small" @click="insertFormat('h2')">H2</el-button>
                 <el-button size="small" @click="insertFormat('h3')">H3</el-button>
               </el-button-group>
               <el-button-group style="margin-left: 10px">
-                <el-button size="small" @click="insertList('ul')">• 列表</el-button>
-                <el-button size="small" @click="insertList('ol')">1. 列表</el-button>
+                <el-button size="small" @click="insertList('ul')">列表</el-button>
               </el-button-group>
-              <el-upload
-                :show-file-list="false"
-                :before-upload="handleUploadImage"
-                accept="image/*"
-                style="margin-left: 10px"
-              >
-                <el-button size="small">插入图片</el-button>
-              </el-upload>
             </div>
             <el-input
               ref="editorRef"
@@ -86,7 +69,6 @@
 
         <el-form-item label="发布设置">
           <el-checkbox v-model="form.published">立即发布</el-checkbox>
-          <el-checkbox v-model="form.top" style="margin-left: 20px">设为置顶</el-checkbox>
         </el-form-item>
       </el-form>
     </el-card>
@@ -97,10 +79,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Plus } from '@element-plus/icons-vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { saveKnowledgeArticle } from '@/api/admin'
 import { getKnowledgeDetail } from '@/api/knowledge'
-import { uploadFile } from '@/api/consultation'
 
 const route = useRoute()
 const router = useRouter()
@@ -115,7 +96,6 @@ const form = reactive({
   id: route.params.id || '',
   title: '',
   category: '',
-  cover: '',
   summary: '',
   content: '',
   published: true,
@@ -137,29 +117,6 @@ const loadArticle = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const handleUploadCover = async (file) => {
-  try {
-    const res = await uploadFile(file)
-    form.cover = res.data.url
-    ElMessage.success('上传成功')
-  } catch (error) {
-    ElMessage.error('上传失败')
-  }
-  return false
-}
-
-const handleUploadImage = async (file) => {
-  try {
-    const res = await uploadFile(file)
-    const markdown = `![图片](${res.data.url})`
-    insertText(markdown)
-    ElMessage.success('上传成功')
-  } catch (error) {
-    ElMessage.error('上传失败')
-  }
-  return false
 }
 
 const insertFormat = (type) => {
@@ -199,11 +156,24 @@ const saveArticle = async () => {
   try {
     await formRef.value.validate()
     saving.value = true
-    await saveKnowledgeArticle(form)
+
+    // 转换表单数据以匹配后端 API
+    const articleData = {
+      id: form.id || undefined,
+      title: form.title,
+      category: form.category,
+      content: form.content,
+      summary: form.summary || undefined,
+      content_type: 'markdown',
+      status: form.published ? 'published' : 'draft'
+    }
+
+    await saveKnowledgeArticle(articleData)
     ElMessage.success(isEdit ? '更新成功' : '创建成功')
     goBack()
   } catch (error) {
-    ElMessage.error('保存失败')
+    console.error('保存失败:', error)
+    ElMessage.error('保存失败: ' + (error.response?.data?.detail || error.message))
   } finally {
     saving.value = false
   }
@@ -222,12 +192,6 @@ onMounted(() => loadArticle())
 .page-header { display: flex; align-items: center; gap: $spacing-lg; margin-bottom: $spacing-lg; }
 .page-header h2 { flex: 1; margin: 0; }
 .header-actions { display: flex; gap: $spacing-sm; }
-
-.cover-uploader { display: inline-block; }
-.cover-image { width: 300px; height: 170px; object-fit: cover; border-radius: $border-radius; }
-.cover-uploader-icon { width: 300px; height: 170px; border: 1px dashed $border-color; border-radius: $border-radius; display: flex; align-items: center; justify-content: center; font-size: 28px; color: $text-secondary; cursor: pointer; }
-.cover-uploader-icon:hover { border-color: $primary-color; color: $primary-color; }
-.cover-tip { font-size: 12px; color: $text-secondary; margin-top: $spacing-sm; }
 
 .editor-container { width: 100%; }
 .editor-toolbar { display: flex; align-items: center; padding: $spacing-sm; background: #f5f7fa; border: 1px solid $border-color; border-bottom: none; border-radius: $border-radius $border-radius 0 0; }

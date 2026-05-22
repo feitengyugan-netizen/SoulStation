@@ -18,6 +18,32 @@
             </div>
           </div>
         </div>
+<<<<<<< Updated upstream
+=======
+        <div class="header-actions">
+          <VideoCallButton
+            :appointment-id="Number(appointmentId)"
+            :can-call="canStartCall"
+            @call-started="handleCallStarted"
+          />
+          <div class="timer">
+            <el-icon><Timer /></el-icon>
+            <span>{{ formatDuration(elapsedTime) }}</span>
+          </div>
+          <el-dropdown @command="handleMenuCommand">
+            <el-button type="primary" plain>
+              更多操作 <el-icon><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="note">添加备注</el-dropdown-item>
+                <el-dropdown-item command="history">历史记录</el-dropdown-item>
+                <el-dropdown-item command="end" divided>结束咨询</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+>>>>>>> Stashed changes
       </div>
       <div class="header-actions">
         <div class="chat-info">
@@ -219,11 +245,29 @@
         <el-button type="primary" @click="saveNote">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 视频通话对话框 -->
+    <el-dialog
+      v-model="callDialogVisible"
+      title="视频通话"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="handleCallEnded"
+    >
+      <VideoCallRoom
+        v-if="callDialogVisible"
+        :appointment-id="Number(appointmentId)"
+        :session-id="currentCallSessionId"
+        :is-initiator="true"
+        @close="callDialogVisible = false"
+        @call-ended="handleCallEnded"
+      />
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -233,6 +277,8 @@ import {
 } from '@element-plus/icons-vue'
 import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation, addConsultationNote, getCounselorOrders } from '@/api/consultation'
 import { useUserStore } from '@/stores/user'
+import VideoCallButton from '@/components/VideoCall/VideoCallButton.vue'
+import VideoCallRoom from '@/components/VideoCall/VideoCallRoom.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -254,6 +300,7 @@ const noteDialogVisible = ref(false)
 const noteContent = ref('')
 const messagesContainer = ref(null)
 
+<<<<<<< Updated upstream
 // 咨询师端：当前登录的用户ID需要通过counselor表获取对应的counselor_id
 const currentUserId = ref(null)
 const currentAvatar = ref(userStore.user?.avatar)
@@ -271,6 +318,14 @@ const getCurrentCounselorId = async () => {
     console.error('获取咨询师ID失败:', error)
   }
 }
+=======
+// 视频通话相关
+const callDialogVisible = ref(false)
+const currentCallSessionId = ref(null)
+
+const currentUserId = userStore.user?.id
+const currentAvatar = userStore.user?.avatar
+>>>>>>> Stashed changes
 
 const quickReplies = [
   '您好，我已准备好，请开始讲述您的情况。',
@@ -448,6 +503,23 @@ const handleEndConsultation = async () => {
   } catch (error) {
     if (error !== 'cancel') ElMessage.error('操作失败')
   }
+}
+
+// 视频通话相关方法
+const canStartCall = computed(() => {
+  // 只有 confirmed 或 in_progress 状态的预约才能发起通话
+  return appointment.value?.status === 'confirmed' || appointment.value?.status === 'in_progress'
+})
+
+const handleCallStarted = ({ sessionId, callType }) => {
+  currentCallSessionId.value = sessionId
+  callDialogVisible.value = true
+}
+
+const handleCallEnded = () => {
+  callDialogVisible.value = false
+  currentCallSessionId.value = null
+  ElMessage.success('通话已结束')
 }
 
 const scrollToBottom = () => {

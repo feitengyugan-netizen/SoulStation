@@ -28,6 +28,7 @@
             </el-tag>
           </div>
 
+<<<<<<< Updated upstream
           <div class="order-content">
             <div class="counselor-section">
               <el-avatar :size="60" :src="order.counselorAvatar">
@@ -62,6 +63,53 @@
                 <span class="label">问题描述:</span>
                 <span class="description">{{ order.problemDescription }}</span>
               </div>
+=======
+            <!-- 信息行 -->
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">预约编号</span>
+                <span class="info-value mono">{{ order.appointment_no }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">咨询师</span>
+                <span class="info-value highlight">{{ order.counselor?.name || '咨询师' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">咨询方式</span>
+                <span class="info-value">
+                  <span class="type-badge">{{ getTypeLabel(order.consultation_type) }}</span>
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">咨询费用</span>
+                <span class="info-value price">¥{{ order.price }}</span>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="card-actions">
+              <el-button
+                v-if="order.status === 'pending'"
+                type="danger"
+                size="small"
+                round
+                @click="cancelOrder(order.id)"
+              >取消预约</el-button>
+              <el-button
+                v-if="order.status === 'in_progress'"
+                type="primary"
+                size="small"
+                round
+                @click="enterConsultation(order.id)"
+              >进入咨询</el-button>
+              <el-button
+                v-if="order.status === 'completed'"
+                type="info"
+                size="small"
+                round
+                disabled
+              >已完成</el-button>
+>>>>>>> Stashed changes
             </div>
           </div>
 
@@ -112,24 +160,39 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+<<<<<<< Updated upstream
 import { User } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { getUserAppointments, cancelAppointment } from '@/api/counselor'
+=======
+import { getUserOrders } from '@/api/consultation'
+import { cancelAppointment } from '@/api/counselor'
+>>>>>>> Stashed changes
 
 const router = useRouter()
 const loading = ref(false)
-const activeTab = ref('all')
+const activeTab = ref('pending')
 const orders = ref([])
 const total = ref(0)
 
+<<<<<<< Updated upstream
 const pagination = reactive({
   page: 1,
   pageSize: 10
 })
+=======
+const tabs = [
+  { label: '待处理', value: 'pending' },
+  { label: '已确认', value: 'confirmed' },
+  { label: '进行中', value: 'in_progress' },
+  { label: '已完成', value: 'completed' },
+]
+>>>>>>> Stashed changes
 
 const loadOrders = async () => {
   try {
     loading.value = true
+<<<<<<< Updated upstream
     const params = {
       status: activeTab.value === 'all' ? '' : activeTab.value,
       page: pagination.page,
@@ -171,8 +234,26 @@ const loadOrders = async () => {
     ElMessage.error('加载预约列表失败')
     orders.value = []
     total.value = 0
+=======
+    const res = await getUserOrders({ status_filter: activeTab.value })
+    orders.value = res.data.items || res.data.list || []
+>>>>>>> Stashed changes
   } finally {
     loading.value = false
+  }
+}
+
+const cancelOrder = async (id) => {
+  try {
+    await ElMessageBox.confirm('确定要取消这个预约吗？', '提示', { type: 'warning' })
+    await cancelAppointment(id)
+    ElMessage.success('预约已取消')
+    loadOrders()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('取消预约失败')
+      console.error(error)
+    }
   }
 }
 
@@ -180,6 +261,7 @@ const getStatusType = (status) => {
   const types = {
     pending: 'warning',
     confirmed: 'primary',
+<<<<<<< Updated upstream
     in_progress: 'info',
     completed: 'success',
     cancelled: 'danger'
@@ -190,13 +272,30 @@ const getStatusType = (status) => {
 const getStatusText = (status) => {
   const texts = {
     pending: '待确认',
+=======
+    in_progress: 'success',
+    completed: 'info',
+    cancelled: 'danger',
+    refunded: 'danger'
+  }
+  return types[status] || ''
+}
+
+const getStatusLabel = (status) => {
+  const labels = {
+    pending: '待处理',
+>>>>>>> Stashed changes
     confirmed: '已确认',
     in_progress: '进行中',
     completed: '已完成',
     cancelled: '已取消',
     refunded: '已退款'
   }
+<<<<<<< Updated upstream
   return texts[status] || status
+=======
+  return labels[status] || status
+>>>>>>> Stashed changes
 }
 
 const getConsultationTypeText = (type) => {
@@ -220,6 +319,7 @@ const formatDateTime = (dateStr) => {
   })
 }
 
+<<<<<<< Updated upstream
 const cancelOrder = async (id) => {
   try {
     await ElMessageBox.confirm(
@@ -281,6 +381,10 @@ const viewReview = (order) => {
 
 const goToBook = () => {
   router.push('/counselor')
+=======
+const enterConsultation = (id) => {
+  router.push(`/consultation/user/${id}`)
+>>>>>>> Stashed changes
 }
 
 onMounted(() => loadOrders())

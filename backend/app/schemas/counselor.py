@@ -246,3 +246,26 @@ class FileUploadResponse(BaseModel):
     file_url: str
     file_name: str
     file_size: int
+
+
+# ==================== 通知相关 ====================
+
+class NotificationResponse(BaseModel):
+    """通知响应"""
+    id: int
+    type: str
+    title: str
+    content: str
+    related_id: Optional[int] = None
+    is_read: bool
+    created_at: datetime
+    read_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationListResponse(BaseModel):
+    """通知列表响应"""
+    total: int
+    unread_count: int
+    items: List[NotificationResponse]

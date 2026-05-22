@@ -15,11 +15,12 @@
           placeholder="搜索订单号、用户、咨询师"
           style="width: 250px"
           clearable
+          @clear="loadOrders"
         />
-        <el-select v-model="filters.status" placeholder="全部状态" style="width: 150px" clearable>
+        <el-select v-model="filters.status" placeholder="全部状态" style="width: 150px" clearable @change="loadOrders">
           <el-option label="待确认" value="pending" />
           <el-option label="已确认" value="confirmed" />
-          <el-option label="进行中" value="inprogress" />
+          <el-option label="进行中" value="in_progress" />
           <el-option label="已完成" value="completed" />
           <el-option label="已取消" value="cancelled" />
         </el-select>
@@ -28,6 +29,7 @@
           type="daterange"
           placeholder="选择日期范围"
           style="width: 250px"
+          value-format="YYYY-MM-DD"
         />
         <el-button type="primary" @click="loadOrders">查询</el-button>
         <el-button @click="resetFilters">重置</el-button>
@@ -55,18 +57,17 @@
 
       <!-- 订单表格 -->
       <el-table v-loading="loading" :data="orders" stripe>
-        <el-table-column prop="id" label="订单号" width="100">
+        <el-table-column prop="appointmentNo" label="订单号" width="180">
           <template #default="{ row }">
-            #{{ row.id }}
+            {{ row.appointmentNo }}
           </template>
         </el-table-column>
         <el-table-column prop="userName" label="用户" width="120" />
         <el-table-column prop="counselorName" label="咨询师" width="120" />
-        <el-table-column prop="date" label="预约日期" width="120" />
-        <el-table-column prop="timeSlot" label="时间段" width="120" />
-        <el-table-column prop="type" label="方式" width="80">
+        <el-table-column prop="appointmentDate" label="预约时间" width="160" />
+        <el-table-column prop="consultationType" label="方式" width="80">
           <template #default="{ row }">
-            {{ getTypeText(row.type) }}
+            {{ getTypeText(row.consultationType) }}
           </template>
         </el-table-column>
         <el-table-column prop="price" label="费用" width="80">
@@ -106,40 +107,25 @@
     <el-dialog v-model="detailVisible" title="订单详情" width="600px">
       <div v-if="currentOrder" class="detail-content">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="订单号">#{{ currentOrder.id }}</el-descriptions-item>
+          <el-descriptions-item label="订单号">{{ currentOrder.appointmentNo }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusType(currentOrder.status)">
               {{ getStatusText(currentOrder.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="用户">{{ currentOrder.userName }}</el-descriptions-item>
+          <el-descriptions-item label="用户ID">{{ currentOrder.userId }}</el-descriptions-item>
+          <el-descriptions-item label="用户姓名">{{ currentOrder.userName }}</el-descriptions-item>
           <el-descriptions-item label="咨询师">{{ currentOrder.counselorName }}</el-descriptions-item>
-          <el-descriptions-item label="预约日期">{{ currentOrder.date }}</el-descriptions-item>
-          <el-descriptions-item label="时间段">{{ currentOrder.timeSlot }}</el-descriptions-item>
-          <el-descriptions-item label="咨询方式">{{ getTypeText(currentOrder.type) }}</el-descriptions-item>
+          <el-descriptions-item label="咨询方式">{{ getTypeText(currentOrder.consultationType) }}</el-descriptions-item>
+          <el-descriptions-item label="预约时间">{{ currentOrder.appointmentDate }}</el-descriptions-item>
+          <el-descriptions-item label="联系方式">{{ currentOrder.userContact || '-' }}</el-descriptions-item>
           <el-descriptions-item label="费用">¥{{ currentOrder.price }}</el-descriptions-item>
+          <el-descriptions-item label="已付金额">¥{{ currentOrder.paidAmount }}</el-descriptions-item>
           <el-descriptions-item label="创建时间" :span="2">{{ currentOrder.createdAt }}</el-descriptions-item>
           <el-descriptions-item label="问题描述" :span="2">
-            {{ currentOrder.description }}
+            {{ currentOrder.problemDescription || '无' }}
           </el-descriptions-item>
         </el-descriptions>
-
-        <template v-if="currentOrder.status === 'completed'">
-          <el-divider />
-          <h4>评价信息</h4>
-          <div class="review-info">
-            <div class="rating">
-              <el-rate v-model="currentOrder.rating" disabled />
-              <span>{{ currentOrder.rating }} 星</span>
-            </div>
-            <p class="review-content">{{ currentOrder.review || '无文字评价' }}</p>
-            <div v-if="currentOrder.tags?.length" class="review-tags">
-              <el-tag v-for="tag in currentOrder.tags" :key="tag" size="small">
-                {{ tag }}
-              </el-tag>
-            </div>
-          </div>
-        </template>
       </div>
     </el-dialog>
   </div>
@@ -176,16 +162,19 @@ const currentOrder = ref(null)
 const loadOrders = async () => {
   try {
     loading.value = true
-    const res = await getAdminOrders({
-      keyword: filters.keyword,
-      status: filters.status,
-      startDate: filters.dateRange?.[0],
-      endDate: filters.dateRange?.[1],
+    const params = {
       page: currentPage.value,
       pageSize: pageSize.value
-    })
+    }
+    if (filters.keyword) params.keyword = filters.keyword
+    if (filters.status) params.status = filters.status
+    if (filters.dateRange?.length === 2) {
+      params.startDate = filters.dateRange[0]
+      params.endDate = filters.dateRange[1]
+    }
+    const res = await getAdminOrders(params)
     orders.value = res.data.list || []
-    stats.value = res.data.stats || {}
+    stats.value = res.data.stats || { total: 0, revenue: 0, completionRate: 0, avgPrice: 0 }
     total.value = res.data.total || 0
   } finally {
     loading.value = false
@@ -206,7 +195,7 @@ const getStatusText = (status) => {
   const map = {
     pending: '待确认',
     confirmed: '已确认',
-    inprogress: '进行中',
+    in_progress: '进行中',
     completed: '已完成',
     cancelled: '已取消'
   }
@@ -214,7 +203,7 @@ const getStatusText = (status) => {
 }
 
 const getStatusType = (status) => {
-  const types = { pending: 'warning', confirmed: 'primary', inprogress: 'info', completed: 'success', cancelled: 'danger' }
+  const types = { pending: 'warning', confirmed: 'primary', in_progress: 'info', completed: 'success', cancelled: 'danger' }
   return types[status] || ''
 }
 
@@ -227,13 +216,15 @@ const exportData = async () => {
   try {
     ElMessage.info('正在导出...')
     const res = await exportOrders()
-    const url = window.URL.createObjectURL(new Blob([res]))
+    const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `orders_${Date.now()}.xlsx`)
+    link.setAttribute('download', `orders_${Date.now()}.csv`)
     document.body.appendChild(link)
     link.click()
     link.remove()
+    window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
   } catch (error) {
     ElMessage.error('导出失败')

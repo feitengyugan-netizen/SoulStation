@@ -43,6 +43,7 @@ class DashboardStats(BaseModel):
     counselor_count: int = 0
     order_count: int = 0
     article_count: int = 0
+    test_count: int = 0
     today_user_count: int = 0
     today_order_count: int = 0
     total_revenue: float = 0

@@ -292,6 +292,26 @@ class KnowledgeService:
         offset = (page - 1) * page_size
         comments = q.offset(offset).limit(page_size).all()
 
+        # 收集所有评论ID用于查询回复
+        comment_ids = [c.id for c in comments]
+
+        # 查询所有子回复
+        replies_map: dict = {}
+        if comment_ids:
+            replies = db.query(KnowledgeComment).filter(
+                KnowledgeComment.parent_id.in_(comment_ids),
+                KnowledgeComment.is_visible == True,
+                KnowledgeComment.is_deleted == False
+            ).order_by(KnowledgeComment.created_at).all()
+
+            for reply in replies:
+                reply_data = CommentResponse.model_validate(reply)
+                user = db.query(User).filter(User.id == reply.user_id).first()
+                if user:
+                    reply_data.user_name = user.nickname or user.email.split('@')[0]
+                    reply_data.user_avatar = user.avatar
+                replies_map.setdefault(reply.parent_id, []).append(reply_data)
+
         # 转换为响应格式
         items = []
         for comment in comments:
@@ -302,6 +322,9 @@ class KnowledgeService:
             if user:
                 comment_data.user_name = user.nickname or user.email.split('@')[0]
                 comment_data.user_avatar = user.avatar
+
+            # 附加子回复
+            comment_data.replies = replies_map.get(comment.id, [])
 
             items.append(comment_data)
 

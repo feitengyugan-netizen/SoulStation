@@ -15,7 +15,7 @@ from app.schemas.counselor import (
     AppointmentResponse, MessageResponse, MessageListResponse,
     SendMessageRequest, HandleOrderRequest, AddNoteRequest, FileUploadResponse
 )
-from app.services.counselor_service import ConsultationService
+from app.services.counselor_service import ConsultationService, AppointmentService
 
 router = APIRouter(prefix="/consultation", tags=["咨询对话"])
 security = HTTPBearer()
@@ -99,6 +99,8 @@ async def get_counselor_orders(
             "message": "获取成功",
             "data": result
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -151,6 +153,8 @@ async def handle_order(
                 "action": handle_data.action
             }
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -162,6 +166,50 @@ async def handle_order(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"处理订单失败: {str(e)}"
+        )
+
+
+# ==================== 用户端接口 ====================
+
+@router.get("/user/orders", summary="获取用户预约列表")
+async def get_user_orders(
+    status_filter: Optional[str] = Query(None, description="状态筛选"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """
+    获取用户的预约订单列表
+
+    支持状态筛选：
+    - **pending**: 待确认
+    - **confirmed**: 已确认
+    - **in_progress**: 进行中
+    - **completed**: 已完成
+    - **cancelled**: 已取消
+    """
+    try:
+        result = AppointmentService.get_user_appointments(
+            db, user_id, status_filter, page, page_size
+        )
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"获取用户预约列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取预约列表失败: {str(e)}"
         )
 
 
@@ -207,6 +255,8 @@ async def get_messages(
             "message": "获取成功",
             "data": result
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         logger.error(f"获取消息失败(ValueError): {str(e)}")
         raise HTTPException(
@@ -262,6 +312,8 @@ async def send_message(
             "message": "发送成功",
             "data": message
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -308,6 +360,8 @@ async def upload_file(
             "message": "上传成功",
             "data": file_info
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -360,6 +414,8 @@ async def end_consultation(
                 "ended": True
             }
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -410,6 +466,8 @@ async def add_consultation_note(
                 "note_added": True
             }
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -421,4 +479,101 @@ async def add_consultation_note(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"添加备注失败: {str(e)}"
+        )
+
+
+# ==================== 通知接口 ====================
+
+@router.get("/notifications", summary="获取用户通知列表")
+async def get_notifications(
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户的通知列表（含未读计数）"""
+    try:
+        result = ConsultationService.get_notifications(db, user_id, page, page_size)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取通知列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取通知列表失败: {str(e)}"
+        )
+
+
+@router.get("/notifications/unread-count", summary="获取未读通知数量")
+async def get_unread_count(
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户的未读通知数量"""
+    try:
+        count = ConsultationService.get_unread_count(db, user_id)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": {"unread_count": count}
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取未读通知数量失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取未读通知数量失败: {str(e)}"
+        )
+
+
+@router.post("/notifications/{notification_id}/read", summary="标记通知已读")
+async def mark_notification_read(
+    notification_id: int,
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """标记指定通知为已读"""
+    try:
+        ConsultationService.mark_notification_read(db, notification_id, user_id)
+        return {
+            "code": 200,
+            "message": "标记成功",
+            "data": None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"标记通知失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"标记通知失败: {str(e)}"
+        )
+
+
+@router.post("/notifications/read-all", summary="标记全部已读")
+async def mark_all_read(
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """标记当前用户所有通知为已读"""
+    try:
+        count = ConsultationService.mark_all_notifications_read(db, user_id)
+        return {
+            "code": 200,
+            "message": f"已标记{count}条通知为已读",
+            "data": {"marked_count": count}
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"标记全部通知失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"标记全部通知失败: {str(e)}"
         )

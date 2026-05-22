@@ -88,11 +88,15 @@ class AdminService:
             KnowledgeArticle.is_deleted == False
         ).count()
 
+        # 测试完成数
+        test_count = db.query(TestResult).count()
+
         return DashboardStats(
             user_count=user_count,
             counselor_count=counselor_count,
             order_count=order_count,
             article_count=article_count,
+            test_count=test_count,
             today_user_count=today_user_count,
             today_order_count=today_order_count,
             total_revenue=float(total_revenue),
@@ -401,21 +405,68 @@ class AdminService:
     def get_orders(
         db: Session,
         status_filter: Optional[str] = None,
+        keyword: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         page: int = 1,
         page_size: int = 10
     ) -> Dict[str, Any]:
-        """获取订单列表"""
+        """获取订单列表（含统计）"""
+        from app.models.user import User
+
         q = db.query(Appointment)
 
         # 状态筛选
         if status_filter:
             q = q.filter(Appointment.status == status_filter)
 
+        # 关键词搜索（预约编号 / 咨询师姓名 / 用户姓名）
+        if keyword:
+            q = q.outerjoin(User, Appointment.user_id == User.id)
+            q = q.outerjoin(Counselor, Appointment.counselor_id == Counselor.id)
+            q = q.filter(
+                Appointment.appointment_no.contains(keyword) |
+                Counselor.name.contains(keyword) |
+                User.nickname.contains(keyword) |
+                Appointment.user_name.contains(keyword)
+            )
+
+        # 日期范围筛选
+        if start_date:
+            try:
+                sd = datetime.strptime(start_date, "%Y-%m-%d")
+                q = q.filter(func.date(Appointment.appointment_date) >= sd.date())
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                ed = datetime.strptime(end_date, "%Y-%m-%d")
+                q = q.filter(func.date(Appointment.appointment_date) <= ed.date())
+            except ValueError:
+                pass
+
         # 按创建时间倒序
         q = q.order_by(desc(Appointment.created_at))
+        q = q.distinct() if keyword else q
+
+        # ── 统计：基于全部订单的聚合查询 ──
+        stats_total = db.query(func.count(Appointment.id)).scalar() or 0
+        stats_completed = db.query(func.count(Appointment.id)).filter(
+            Appointment.status == 'completed'
+        ).scalar() or 0
+        stats_revenue = float(db.query(func.coalesce(func.sum(Appointment.paid_amount), 0)).scalar() or 0)
+        stats_avg = round(stats_revenue / stats_total, 2) if stats_total > 0 else 0
+        stats_completion = round(stats_completed / stats_total * 100, 1) if stats_total > 0 else 0
+
+        stats = {
+            "total": stats_total,
+            "revenue": stats_revenue,
+            "completionRate": stats_completion,
+            "avgPrice": stats_avg
+        }
 
         # 总数
-        total = q.count()
+        total = q.count() if not keyword else len(q.all())
 
         # 分页
         offset = (page - 1) * page_size
@@ -424,24 +475,34 @@ class AdminService:
         # 转换为响应格式
         items = []
         for order in orders:
-            order_data = AdminOrderResponse.model_validate(order)
-
-            # 添加用户和咨询师信息
             user = db.query(User).filter(User.id == order.user_id).first()
-            if user:
-                order_data.user_name = order_data.user_name or user.nickname
-
             counselor = db.query(Counselor).filter(Counselor.id == order.counselor_id).first()
-            if counselor:
-                order_data.counselor_name = counselor.name
 
-            items.append(order_data)
+            items.append({
+                "id": order.id,
+                "appointmentNo": order.appointment_no,
+                "userId": order.user_id,
+                "userName": order.user_name or (user.nickname if user else "") or "用户",
+                "userContact": order.user_contact or "",
+                "counselorId": order.counselor_id,
+                "counselorName": counselor.name if counselor else "",
+                "consultationType": order.consultation_type,
+                "appointmentDate": order.appointment_date.strftime("%Y-%m-%d %H:%M") if order.appointment_date else "",
+                "price": float(order.price) if order.price else 0,
+                "paidAmount": float(order.paid_amount) if order.paid_amount else 0,
+                "status": order.status,
+                "problemDescription": order.problem_description or "",
+                "createdAt": order.created_at.strftime("%Y-%m-%d %H:%M:%S") if order.created_at else "",
+                "completedAt": order.completed_at.strftime("%Y-%m-%d %H:%M:%S") if order.completed_at else "",
+                "cancelledAt": order.cancelled_at.strftime("%Y-%m-%d %H:%M:%S") if order.cancelled_at else "",
+            })
 
         return {
             "total": total,
-            "items": items,
+            "list": items,
+            "stats": stats,
             "page": page,
-            "page_size": page_size
+            "pageSize": page_size
         }
 
     @staticmethod

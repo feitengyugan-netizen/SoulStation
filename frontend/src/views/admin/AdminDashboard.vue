@@ -15,11 +15,11 @@
           <el-icon :size="24"><component :is="stat.icon" /></el-icon>
         </div>
         <div class="stat-content">
-          <p class="stat-value">{{ stat.value }}</p>
+          <p class="stat-value">{{ stat.value.toLocaleString() }}</p>
           <p class="stat-label">{{ stat.label }}</p>
-          <p class="stat-trend" :class="{ up: stat.trend > 0, down: stat.trend < 0 }">
-            <el-icon><component :is="stat.trend > 0 ? ArrowUp : ArrowDown" /></el-icon>
-            {{ Math.abs(stat.trend) }}% 较上周
+          <p v-if="stat.trend > 0" class="stat-trend up">
+            <el-icon><ArrowUp /></el-icon>
+            {{ stat.trend }} 待处理
           </p>
         </div>
       </div>
@@ -96,25 +96,24 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { User, ShoppingCart, Money, Document, ArrowUp, ArrowDown, Warning, UserFilled } from '@element-plus/icons-vue'
+import { User, ShoppingCart, Money, Document, ArrowUp, ArrowDown, Warning, UserFilled, Bell } from '@element-plus/icons-vue'
 import { getDashboardStats, getChartData } from '@/api/admin'
 
 const router = useRouter()
+const loading = ref(false)
 const dateRange = ref([])
 const userChartPeriod = ref('week')
 
 const stats = ref([
-  { key: 'users', label: '用户总数', value: '1,234', trend: 12.5, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', icon: User },
-  { key: 'orders', label: '订单总数', value: '856', trend: 8.3, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', icon: ShoppingCart },
-  { key: 'revenue', label: '总收入', value: '¥45,678', trend: 23.1, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', icon: Money },
-  { key: 'articles', label: '知识文章', value: '342', trend: 5.6, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', icon: Document }
+  { key: 'users', label: '用户总数', value: 0, trend: 0, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', icon: User },
+  { key: 'orders', label: '预约总数', value: 0, trend: 0, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', icon: ShoppingCart },
+  { key: 'revenue', label: '总收入(元)', value: 0, trend: 0, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', icon: Money },
+  { key: 'articles', label: '知识文章', value: 0, trend: 0, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', icon: Document }
 ])
 
-const pendingItems = ref([
-  { id: 1, title: '待审核咨询师', desc: '3 位咨询师申请待审核', icon: UserFilled, color: '#f56c6c', action: () => router.push('/admin/counselors') },
-  { id: 2, title: '待处理投诉', desc: '2 条用户投诉待处理', icon: Warning, color: '#e6a23c', action: () => {} }
-])
+const pendingItems = ref([])
 
 const userChartRef = ref(null)
 const orderChartRef = ref(null)
@@ -125,6 +124,60 @@ let userChart = null
 let orderChart = null
 let revenueChart = null
 let testChart = null
+
+// 加载统计数据
+const loadStats = async () => {
+  try {
+    loading.value = true
+    const res = await getDashboardStats()
+    const data = res.data
+
+    stats.value = [
+      { key: 'users', label: '用户总数', value: data.user_count || 0, trend: data.today_user_count || 0, color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', icon: User },
+      { key: 'counselors', label: '咨询师总数', value: data.counselor_count || 0, trend: data.pending_counselor_count || 0, color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', icon: UserFilled },
+      { key: 'orders', label: '预约总数', value: data.order_count || 0, trend: data.today_order_count || 0, color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', icon: ShoppingCart },
+      { key: 'revenue', label: '总收入(元)', value: data.total_revenue || 0, trend: 0, color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', icon: Money },
+      { key: 'articles', label: '知识文章', value: data.article_count || 0, trend: 0, color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', icon: Document }
+    ]
+
+    // 待处理事项
+    pendingItems.value = []
+    if (data.pending_counselor_count > 0) {
+      pendingItems.value.push({
+        id: 1,
+        title: '待审核咨询师',
+        desc: `${data.pending_counselor_count} 位咨询师申请待审核`,
+        icon: UserFilled,
+        color: '#f56c6c',
+        action: () => router.push('/admin/counselors')
+      })
+    }
+    if (data.today_order_count > 0) {
+      pendingItems.value.push({
+        id: 2,
+        title: '今日新预约',
+        desc: `${data.today_order_count} 个新预约待处理`,
+        icon: Bell,
+        color: '#409eff',
+        action: () => router.push('/admin/orders')
+      })
+    }
+    if (pendingItems.value.length === 0) {
+      pendingItems.value.push({
+        id: 0,
+        title: '暂无待处理事项',
+        desc: '所有业务都已处理完毕',
+        icon: Document,
+        color: '#67c23a',
+        action: () => {}
+      })
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const initUserChart = () => {
   if (!userChartRef.value) return
@@ -188,7 +241,7 @@ const initTestChart = () => {
 }
 
 const refreshData = async () => {
-  // 重新加载数据
+  await loadStats()
   ElMessage.success('数据已刷新')
 }
 
@@ -197,6 +250,7 @@ const loadUserChart = async () => {
 }
 
 onMounted(() => {
+  loadStats()
   initUserChart()
   initOrderChart()
   initRevenueChart()
@@ -225,7 +279,7 @@ onUnmounted(() => {
 .dashboard-header h2 { margin: 0; }
 .header-actions { display: flex; gap: $spacing-md; }
 
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: $spacing-lg; margin-bottom: $spacing-xl; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: $spacing-lg; margin-bottom: $spacing-xl; }
 .stat-card { display: flex; align-items: center; gap: $spacing-lg; padding: $spacing-lg; background: white; border-radius: $border-radius; box-shadow: $shadow; }
 .stat-icon { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: white; }
 .stat-content { flex: 1; }

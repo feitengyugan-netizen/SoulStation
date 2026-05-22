@@ -18,6 +18,21 @@
             </div>
           </div>
         </div>
+<<<<<<< Updated upstream
+=======
+        <div class="header-actions">
+          <VideoCallButton
+            :appointment-id="Number(appointmentId)"
+            :can-call="canStartCall"
+            @call-started="handleCallStarted"
+          />
+          <div class="timer">
+            <el-icon><Timer /></el-icon>
+            <span>{{ formatDuration(elapsedTime) }}</span>
+          </div>
+          <el-button type="danger" plain @click="handleEndConsultation">结束咨询</el-button>
+        </div>
+>>>>>>> Stashed changes
       </div>
       <div class="header-actions">
         <div class="chat-info">
@@ -176,6 +191,59 @@
         </el-button>
       </div>
     </div>
+
+    <!-- 视频通话对话框 -->
+    <el-dialog
+      v-model="callDialogVisible"
+      title="视频通话"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="handleCallEnded"
+    >
+      <VideoCallRoom
+        v-if="callDialogVisible"
+        :appointment-id="Number(appointmentId)"
+        :session-id="currentCallSessionId"
+        :is-initiator="true"
+        :call-type-prop="currentCallType"
+        @close="callDialogVisible = false"
+        @call-ended="handleCallEnded"
+      />
+    </el-dialog>
+
+    <!-- 接听前设备检测 -->
+    <DeviceCheck
+      v-if="showDeviceCheckForAnswer"
+      v-model="showDeviceCheckForAnswer"
+      :call-type="pendingAnswerCallType"
+      @start="handleDeviceCheckConfirmed"
+      @cancel="handleDeviceCheckCancelled"
+    />
+
+    <!-- 来电提示对话框 -->
+    <el-dialog
+      v-model="incomingCallDialogVisible"
+      :title="incomingCall?.call_type === 'video' ? '视频通话' : '语音通话'"
+      width="400px"
+      :close-on-click-modal="false"
+      :show-close="false"
+    >
+      <div class="incoming-call-dialog">
+        <el-avatar :size="80" :src="appointment?.counselorAvatar" />
+        <h3>{{ appointment?.counselorName }}</h3>
+        <p>正在向您发起{{ incomingCall?.call_type === 'video' ? '视频' : '语音' }}通话...</p>
+        <div class="call-actions">
+          <el-button type="danger" size="large" @click="handleRejectIncomingCall">
+            <el-icon><PhoneFilled /></el-icon>
+            拒绝
+          </el-button>
+          <el-button type="primary" size="large" @click="handleAcceptIncomingCall">
+            <el-icon><Phone /></el-icon>
+            接听
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -183,12 +251,22 @@
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+<<<<<<< Updated upstream
 import {
   Timer, User, ArrowLeft, MoreFilled, SwitchButton, Close, Picture,
   Folder, Microphone, ChatDotRound, Document, Download, Promotion
 } from '@element-plus/icons-vue'
 import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation } from '@/api/consultation'
+=======
+import { Timer, Picture, Folder, Microphone, Document, Phone, PhoneFilled } from '@element-plus/icons-vue'
+import { getMessages, sendMessage as sendMessageApi, uploadFile, endConsultation } from '@/api/consultation'
+import { getUserAppointments } from '@/api/counselor'
+import { getActiveCall, joinCall } from '@/api/videoCall'
+>>>>>>> Stashed changes
 import { useUserStore } from '@/stores/user'
+import VideoCallButton from '@/components/VideoCall/VideoCallButton.vue'
+import VideoCallRoom from '@/components/VideoCall/VideoCallRoom.vue'
+import DeviceCheck from '@/components/VideoCall/DeviceCheck.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -207,11 +285,21 @@ const appointment = ref({})
 const showCounselorInfo = ref(false)
 const messagesContainer = ref(null)
 
+// 视频通话相关
+const callDialogVisible = ref(false)
+const currentCallSessionId = ref(null)
+const currentCallType = ref('video')
+const incomingCall = ref(null)
+const incomingCallDialogVisible = ref(false)
+const showDeviceCheckForAnswer = ref(false)
+const pendingAnswerCallType = ref('video')
+
 const currentUserId = computed(() => userStore.user?.id)
 const currentUserAvatar = computed(() => userStore.user?.avatar)
 
 let pollingTimer = null
 let durationTimer = null
+let callCheckTimer = null
 
 const goBack = () => {
   router.push('/counselor/orders')
@@ -360,6 +448,24 @@ const handleEndConsultation = async () => {
   }
 }
 
+// 视频通话相关方法
+const canStartCall = computed(() => {
+  // 只有 confirmed 或 in_progress 状态的预约才能发起通话
+  return appointment.value?.status === 'confirmed' || appointment.value?.status === 'in_progress'
+})
+
+const handleCallStarted = ({ sessionId, callType }) => {
+  currentCallSessionId.value = sessionId
+  currentCallType.value = callType || 'video'
+  callDialogVisible.value = true
+}
+
+const handleCallEnded = () => {
+  callDialogVisible.value = false
+  currentCallSessionId.value = null
+  ElMessage.success('通话已结束')
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -398,6 +504,88 @@ const downloadFile = (url) => {
 
 const startPolling = () => {
   pollingTimer = setInterval(() => loadMessages(), 3000)
+  startIncomingCallCheck()
+}
+
+const startIncomingCallCheck = () => {
+  // 每5秒检查一次来电
+  callCheckTimer = setInterval(checkIncomingCall, 5000)
+}
+
+const checkIncomingCall = async () => {
+  // 如果已经在通话中或正在通话，不检查来电
+  if (callDialogVisible.value || incomingCallDialogVisible.value) {
+    return
+  }
+
+  try {
+    const response = await getActiveCall(Number(appointmentId))
+    const activeCall = response.data
+
+    if (activeCall && activeCall.caller_id !== currentUserId.value) {
+      // 有来电且不是自己发起的
+      incomingCall.value = activeCall
+      incomingCallDialogVisible.value = true
+      // 播放来电提示音
+      playIncomingCallSound()
+    }
+  } catch (error) {
+    console.error('检查来电失败:', error)
+  }
+}
+
+const playIncomingCallSound = () => {
+  try {
+    const audio = new Audio('/sounds/incoming-call.mp3')
+    audio.loop = true
+    audio.play().catch(() => {
+      // 自动播放被浏览器拦截，显示视觉提示作为后备
+      console.log('无法播放提示音，需要用户交互后解锁音频')
+    })
+    window.incomingCallAudio = audio
+  } catch (error) {
+    console.error('播放提示音失败:', error)
+  }
+}
+
+const stopIncomingCallSound = () => {
+  if (window.incomingCallAudio) {
+    window.incomingCallAudio.pause()
+    window.incomingCallAudio = null
+  }
+}
+
+const handleAcceptIncomingCall = () => {
+  // 先显示设备检测，通过后再真正加入通话
+  stopIncomingCallSound()
+  incomingCallDialogVisible.value = false
+  pendingAnswerCallType.value = incomingCall.value?.call_type === 'voice' ? 'voice' : 'video'
+  showDeviceCheckForAnswer.value = true
+}
+
+const handleDeviceCheckConfirmed = async () => {
+  showDeviceCheckForAnswer.value = false
+  try {
+    currentCallType.value = pendingAnswerCallType.value
+    const response = await joinCall(incomingCall.value.session_id)
+    currentCallSessionId.value = response.data.session_id
+    callDialogVisible.value = true
+  } catch (error) {
+    console.error('接听通话失败:', error)
+    ElMessage.error('接听通话失败')
+  }
+}
+
+const handleDeviceCheckCancelled = () => {
+  showDeviceCheckForAnswer.value = false
+  ElMessage.info('已取消接听')
+}
+
+const handleRejectIncomingCall = () => {
+  stopIncomingCallSound()
+  incomingCallDialogVisible.value = false
+  incomingCall.value = null
+  ElMessage.info('已拒绝通话')
 }
 
 const startTimer = () => {
@@ -406,7 +594,30 @@ const startTimer = () => {
   }, 1000)
 }
 
+// 在首次用户交互时解锁音频自动播放
+let audioUnlocked = false
+const unlockAudio = () => {
+  if (audioUnlocked) return
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const buf = ctx.createBuffer(1, 1, 22050)
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.connect(ctx.destination)
+    src.start()
+    ctx.resume()
+    audioUnlocked = true
+  } catch (e) { /* ignore */ }
+  document.removeEventListener('click', unlockAudio)
+  document.removeEventListener('touchstart', unlockAudio)
+  document.removeEventListener('keydown', unlockAudio)
+}
+
 onMounted(async () => {
+  // 监听首次用户交互以解锁音频（点击、触摸、键盘输入）
+  document.addEventListener('click', unlockAudio)
+  document.addEventListener('touchstart', unlockAudio)
+  document.addEventListener('keydown', unlockAudio, { once: true })
   try {
     await loadAppointment()
     await loadMessages()
@@ -422,6 +633,8 @@ onMounted(async () => {
 onUnmounted(() => {
   if (pollingTimer) clearInterval(pollingTimer)
   if (durationTimer) clearInterval(durationTimer)
+  if (callCheckTimer) clearInterval(callCheckTimer)
+  stopIncomingCallSound()
 })
 </script>
 
@@ -445,4 +658,139 @@ onUnmounted(() => {
 .modern-chat-container.user .online-dot.offline {
   background: #909399;
 }
+<<<<<<< Updated upstream
 </style>
+=======
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  h3 { margin: 0 0 2px; font-weight: 700; color: $text-primary; }
+  .status { font-size: 12px; color: $text-secondary; }
+  .status.online { color: #52c41a; }
+  .appointment-info { font-size: 12px; color: $text-secondary; }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: $primary-color;
+  font-weight: 600;
+  background: rgba(232,132,90,0.1);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.messages-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: $bg-page;
+}
+
+.message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  &.message-self {
+    flex-direction: row-reverse;
+
+    .message-bubble {
+      background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%);
+      color: white;
+      border-radius: 18px 4px 18px 18px;
+    }
+
+    .message-time { text-align: right; }
+  }
+}
+
+.message-content { max-width: 60%; }
+.message-sender { font-size: 12px; color: $text-secondary; margin-bottom: 4px; }
+
+.message-bubble {
+  padding: 12px 16px;
+  background: $bg-white;
+  border-radius: 4px 18px 18px 18px;
+  word-break: break-word;
+  border: 1px solid $border-lighter;
+  box-shadow: 0 2px 8px rgba(107,82,68,0.06);
+  line-height: 1.65;
+}
+
+.message-image :deep(.el-image) { max-width: 200px; border-radius: 12px; }
+
+.message-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: $bg-white;
+  border-radius: 12px;
+  border: 1px solid $border-lighter;
+}
+
+.message-time { font-size: 11px; color: $text-secondary; margin-top: 4px; }
+
+.typing-indicator {
+  text-align: center;
+  color: $text-secondary;
+  font-size: 12px;
+  padding: 12px;
+}
+
+.input-area {
+  border-top: 1px solid $border-lighter;
+  padding: 16px 24px;
+  background: $bg-white;
+}
+
+.toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.input-box {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+
+  :deep(.el-textarea) { flex: 1; }
+}
+
+.incoming-call-dialog {
+  text-align: center;
+  padding: 20px 0;
+
+  h3 {
+    margin: 16px 0 8px;
+    font-size: 24px;
+    color: #333;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 24px;
+  }
+
+  .call-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+
+    .el-button {
+      min-width: 120px;
+    }
+  }
+}
+
+</style>
+>>>>>>> Stashed changes

@@ -15,6 +15,19 @@ export function getCounselorOrders(params) {
 }
 
 /**
+ * 获取用户预约列表
+ * @param {Object} params
+ * @param {string} params.status_filter - 订单状态筛选
+ */
+export function getUserOrders(params) {
+  return request({
+    url: '/consultation/user/orders',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 处理预约订单
  * @param {string} id - 订单ID
  * @param {Object} data
@@ -95,5 +108,48 @@ export function addConsultationNote(appointmentId, data) {
     url: `/consultation/${appointmentId}/note`,
     method: 'post',
     data
+  })
+}
+
+/**
+ * 获取通知列表
+ * @param {Object} params
+ */
+export function getNotifications(params) {
+  return request({
+    url: '/consultation/notifications',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取未读通知数量
+ */
+export function getUnreadCount() {
+  return request({
+    url: '/consultation/notifications/unread-count',
+    method: 'get'
+  })
+}
+
+/**
+ * 标记通知已读
+ * @param {string} id - 通知ID
+ */
+export function markNotificationRead(id) {
+  return request({
+    url: `/consultation/notifications/${id}/read`,
+    method: 'post'
+  })
+}
+
+/**
+ * 标记所有通知已读
+ */
+export function markAllNotificationsRead() {
+  return request({
+    url: '/consultation/notifications/read-all',
+    method: 'post'
   })
 }

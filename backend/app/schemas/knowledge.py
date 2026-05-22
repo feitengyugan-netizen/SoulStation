@@ -70,6 +70,9 @@ class CommentResponse(BaseModel):
     user_name: Optional[str] = None
     user_avatar: Optional[str] = None
 
+    # 子回复（仅顶级评论有）
+    replies: Optional[List['CommentResponse']] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 

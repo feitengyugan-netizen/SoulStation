@@ -20,6 +20,12 @@
           <el-option label="职业发展" value="career" />
           <el-option label="家庭婚姻" value="family" />
           <el-option label="个人成长" value="growth" />
+          <el-option label="情绪管理" value="emotion" />
+          <el-option label="心理咨询" value="counseling" />
+          <el-option label="正念冥想" value="meditation" />
+          <el-option label="压力管理" value="stress" />
+          <el-option label="睡眠健康" value="health" />
+          <el-option label="创伤治疗" value="depression" />
         </el-select>
         <el-button type="primary" @click="loadArticles">查询</el-button>
         <el-button @click="resetFilters">重置</el-button>
@@ -27,25 +33,22 @@
 
       <!-- 文章列表 -->
       <el-table v-loading="loading" :data="articles" stripe>
-        <el-table-column prop="cover" label="封面" width="120">
-          <template #default="{ row }">
-            <el-image
-              :src="row.cover"
-              fit="cover"
-              style="width: 80px; height: 60px; border-radius: 4px"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="title" label="标题" min-width="200" />
+        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
         <el-table-column prop="category" label="分类" width="120">
           <template #default="{ row }">
             {{ getCategoryText(row.category) }}
           </template>
         </el-table-column>
         <el-table-column prop="author" label="作者" width="120" />
-        <el-table-column prop="views" label="浏览量" width="100" />
-        <el-table-column prop="likes" label="点赞数" width="100" />
-        <el-table-column prop="favorites" label="收藏数" width="100" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'published' ? 'success' : 'info'" size="small">
+              {{ row.status === 'published' ? '已发布' : '草稿' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="views" label="浏览量" width="100" sortable />
+        <el-table-column prop="likes" label="点赞数" width="100" sortable />
         <el-table-column prop="createdAt" label="发布时间" width="180" />
         <el-table-column label="操作" fixed="right" width="180">
           <template #default="{ row }">
@@ -98,7 +101,20 @@ const loadArticles = async () => {
       page: currentPage.value,
       pageSize: pageSize.value
     })
-    articles.value = res.data.list || []
+    // 映射后端字段到前端显示 (API返回items，前端用list)
+    articles.value = (res.data.items || res.data.list || []).map(item => ({
+      id: item.id,
+      title: item.title,
+      cover: item.cover_image || '',
+      category: item.category,
+      author: item.author_name || '',
+      views: item.view_count || 0,
+      likes: item.like_count || 0,
+      favorites: item.favorite_count || 0,
+      createdAt: item.published_at || item.created_at || '',
+      status: item.status || 'draft',
+      content: item.content || ''
+    }))
     total.value = res.data.total || 0
   } finally {
     loading.value = false
@@ -118,7 +134,13 @@ const getCategoryText = (category) => {
     relationship: '人际关系',
     career: '职业发展',
     family: '家庭婚姻',
-    growth: '个人成长'
+    growth: '个人成长',
+    emotion: '情绪管理',
+    counseling: '心理咨询',
+    meditation: '正念冥想',
+    stress: '压力管理',
+    health: '睡眠健康',
+    depression: '创伤治疗'
   }
   return map[category] || category
 }

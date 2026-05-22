@@ -13,6 +13,7 @@
 - 📝 **心理测试** - 9套专业心理测试量表（159题）
 - 👨‍⚕️ **在线咨询** - 专业咨询师预约与实时对话
 - 📚 **心理知识** - 心理健康文章与科普
+- 🎥 **视频通话** - 实时音视频通信，支持视频和语音两种模式
 - 🔐 **安全认证** - JWT Token + 邮箱验证
 
 ## 技术栈
@@ -26,6 +27,7 @@
 - **图表**: ECharts 5.4.3 + vue-echarts 6.6.4
 - **工具**: Day.js 1.11.10
 - **样式**: Sass 1.70.0
+- **实时通信**: WebRTC API + WebSocket客户端
 
 ### 后端
 - **框架**: FastAPI 0.109.0 + Uvicorn 0.27.0
@@ -33,6 +35,7 @@
 - **缓存**: Redis 5.0.1
 - **认证**: JWT (python-jose) + Passlib + Bcrypt
 - **邮件**: FastAPI Mail 1.4.1
+- **实时通信**: WebSocket + WebRTC信令服务器
 - **AI服务**:
   - 豆包录音文件识别模型2.0 (volc.seedasr.auc)
   - OpenAI API (用于RAG)
@@ -72,11 +75,17 @@ SoulStation/
 │   │   │   ├── test/          # 心理测试组件
 │   │   │   ├── profile/       # 个人中心组件
 │   │   │   ├── consultation/  # 咨询预约组件
+│   │   │   │   ├── ConsultationChatUser.vue      # 用户端咨询聊天
+│   │   │   │   └── ConsultationChatCounselor.vue  # 咨询师端咨询聊天
 │   │   │   ├── dialogue/      # 咨询对话组件
 │   │   │   ├── admin/         # 后台管理组件
 │   │   │   ├── counselor/     # 咨询师相关组件
 │   │   │   ├── public/        # 公共信息组件
 │   │   │   ├── common/        # 通用组件
+│   │   │   ├── VideoCall/      # 视频通话组件 🆕
+│   │   │   │   ├── VideoCallRoom.vue           # 通话房间主组件
+│   │   │   │   ├── CallControls.vue           # 通话控制组件
+│   │   │   │   └── VideoCallButton.vue         # 通话启动按钮
 │   │   │   └── right-sidebar/ # 右侧边栏组件
 │   │   ├── router/            # 路由配置
 │   │   ├── stores/            # Pinia 状态管理
@@ -107,6 +116,9 @@ SoulStation/
 │   │   │   ├── consultation/  # 咨询预约接口
 │   │   │   ├── counselor/     # 咨询师接口
 │   │   │   ├── knowledge/     # 知识库接口
+│   │   │   ├── video_call/    # 视频通话接口 🆕
+│   │   │   │   ├── __init__.py                 # REST API路由
+│   │   │   │   └── websocket.py              # WebSocket信令服务器
 │   │   │   ├── user/          # 用户接口
 │   │   │   └── admin/         # 后台管理接口
 │   │   ├── core/              # 核心配置
@@ -115,8 +127,13 @@ SoulStation/
 │   │   │   ├── deps.py        # 依赖注入
 │   │   │   └── database.py    # 数据库连接
 │   │   ├── models/            # 数据库模型
+│   │   │   └── video_call.py   # 视频通话模型 🆕
 │   │   ├── schemas/           # Pydantic 模型
+│   │   │   └── video_call.py   # 视频通话Schemas 🆕
 │   │   ├── services/          # 业务逻辑
+│   │   │   └── video_call_service.py  # 视频通话服务 🆕
+│   │   ├── core/              # 核心配置
+│   │   │   └── webrtc.py      # WebRTC配置 🆕
 │   │   │   ├── auth_service.py        # 认证服务
 │   │   │   ├── email_service.py       # 邮件服务
 │   │   │   ├── speech_service.py      # 语音识别服务
@@ -189,6 +206,10 @@ SoulStation/
 - `appointments` - 预约订单表
 - `consultation_reviews` - 咨询评价表
 - `consultation_messages` - 咨询对话消息表
+
+### 视频通话相关
+- `video_call_sessions` - 视频通话会话表（通话记录、状态、时长）
+- `video_call_events` - 视频通话事件日志表（信令事件记录）
 
 ### 知识库相关
 - `knowledge_articles` - 知识文章表
@@ -265,10 +286,17 @@ SoulStation/
 - 知识搜索与分类
 
 ### 咨询对话模块 (dialogue)
-- 实时对话
-- 消息轮询
-- 对话历史记录
+- 实时文字对话
+- 消息轮询与历史记录
+- 🎥 **视频通话子模块** - 实时音视频通信功能
+  - 支持视频通话和语音通话两种模式
+  - 基于WebRTC的点对点音视频通信
+  - WebSocket信令服务器实现连接建立
+  - 通话控制功能（静音、开关视频、挂断）
+  - 通话状态管理（pending→ringing→in_progress→ended）
+  - 通话时长统计与历史记录
 - 咨询结束处理
+- 咨询备注功能
 
 ### 后台管理模块 (admin)
 - 咨询师资质审核
@@ -282,6 +310,61 @@ SoulStation/
 - 隐私设置
 - 数据统计汇总
 - 个人中心
+
+## 视频通话功能 🎥
+
+### 功能概述
+系统现已支持实时音视频通话功能，为心理咨询提供更直观的沟通方式。
+
+**技术特点：**
+- 基于 WebRTC 的浏览器原生点对点音视频通信
+- WebSocket 信令服务器实现连接建立
+- 支持视频通话和语音通话两种模式
+- 无需第三方插件，完全基于浏览器原生API
+
+**使用流程：**
+1. 用户/咨询师创建并确认预约
+2. 进入咨询聊天界面
+3. 点击"开始通话"按钮
+4. 允许浏览器访问摄像头/麦克风
+5. 等待对方接听
+6. 开始实时通话
+
+**通话控制：**
+- 静音/取消静音
+- 开启/关闭视频（仅视频通话）
+- 挂断通话
+
+### 技术架构
+
+**前端组件：**
+- `VideoCallRoom.vue` - 通话房间主组件
+- `CallControls.vue` - 通话控制组件
+- `VideoCallButton.vue` - 通话启动按钮
+- `useWebRTC.js` - WebRTC 核心逻辑封装
+- `videoCall.js` - 通话状态管理（Pinia Store）
+
+**后端API：**
+- `GET /api/video-call/config` - 获取WebRTC配置
+- `POST /api/video-call/call/initiate` - 发起通话
+- `POST /api/video-call/call/{session_id}/join` - 加入通话
+- `POST /api/video-call/call/{session_id}/end` - 结束通话
+- `GET /api/video-call/call/{session_id}/status` - 获取通话状态
+- `WebSocket /api/video-call/ws/video-call/{token}` - 信令服务器
+
+**数据库表：**
+- `video_call_sessions` - 通话会话记录
+- `video_call_events` - 通话事件日志
+
+### 测试方法
+
+1. 确保有已确认的预约订单
+2. 分别以用户和咨询师身份登录
+3. 双方进入咨询聊天界面
+4. 一方发起通话，另一方接听
+5. 测试各种控制功能
+
+详见：[视频通话测试检查清单](视频通话测试检查清单.md)
 
 ## 快速开始
 

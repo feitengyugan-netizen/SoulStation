@@ -110,6 +110,7 @@ const getStatusText = (status) => {
 const loadOrders = async () => {
   loading.value = true
   try {
+<<<<<<< Updated upstream
     console.log('开始加载订单数据，状态:', activeTab.value)
 
     // 根据标签页状态获取相应的订单
@@ -117,6 +118,18 @@ const loadOrders = async () => {
     let params = {
       page: 1,
       pageSize: 10
+=======
+    const res = await getCounselorOrders({ status_filter: statusMap[activeTab.value] || activeTab.value })
+    orders.value = res.data.items || []
+    // 加载各状态数量
+    const countRes = await getCounselorOrders({ page_size: 100 })
+    const all = countRes.data.items || []
+    counts.value = {
+      pending: all.filter(o => o.status === 'pending').length,
+      confirmed: all.filter(o => o.status === 'confirmed').length,
+      inprogress: all.filter(o => o.status === 'in_progress').length,
+      completed: all.filter(o => o.status === 'completed').length
+>>>>>>> Stashed changes
     }
 
     // 对于"咨询中"标签，需要同时获取confirmed和in_progress状态的订单

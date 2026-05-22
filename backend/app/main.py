@@ -104,6 +104,10 @@ app.include_router(appointment_router, prefix="/api")
 from app.api.consultation import router as consultation_router
 app.include_router(consultation_router, prefix="/api")
 
+# 视频通话路由
+from app.api.video_call import router as video_call_router
+app.include_router(video_call_router, prefix="/api")
+
 # 心理知识路由
 from app.api.knowledge import router as knowledge_router
 app.include_router(knowledge_router, prefix="/api")
@@ -130,3 +134,4 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

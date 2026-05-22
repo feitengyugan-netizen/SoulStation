@@ -628,6 +628,19 @@ class AppointmentService:
 
         db.commit()
 
+        # 发送通知给咨询师
+        if appointment.counselor:
+            from app.models.counselor import Notification
+            notification = Notification(
+                user_id=appointment.counselor.user_id,
+                type='appointment_cancelled',
+                title='预约已被取消',
+                content=f"用户已取消预约，预约时间：{appointment.appointment_date.strftime('%Y-%m-%d %H:%M')}",
+                related_id=appointment_id
+            )
+            db.add(notification)
+            db.commit()
+
         # 发送取消通知邮件
         try:
             from app.services.email_service import EmailService
@@ -803,6 +816,14 @@ class ConsultationService:
                 db, appointment_id,
                 f"咨询师已确认您的预约，咨询时间：{appointment.appointment_date.strftime('%Y-%m-%d %H:%M')}"
             )
+            # 发送通知
+            ConsultationService._send_notification(
+                db, appointment.user_id,
+                'appointment_confirmed',
+                '预约已确认',
+                f"咨询师已确认您的预约，咨询时间：{appointment.appointment_date.strftime('%Y-%m-%d %H:%M')}",
+                appointment_id
+            )
         elif action == 'reject':
             appointment.status = 'cancelled'
             appointment.cancel_reason = reason
@@ -812,6 +833,14 @@ class ConsultationService:
             ConsultationService._send_system_message(
                 db, appointment_id,
                 f"抱歉，咨询师拒绝了您的预约。原因：{reason or '暂无'}"
+            )
+            # 发送通知
+            ConsultationService._send_notification(
+                db, appointment.user_id,
+                'appointment_rejected',
+                '预约已被拒绝',
+                f"抱歉，咨询师拒绝了您的预约。原因：{reason or '暂无'}",
+                appointment_id
             )
         else:
             raise ValueError("无效的操作")
@@ -919,7 +948,8 @@ class ConsultationService:
             raise ValueError("预约状态不允许发送消息")
 
         # 如果是第一条消息，更新预约状态为进行中
-        if appointment.status == 'confirmed':
+        is_first_message = appointment.status == 'confirmed'
+        if is_first_message:
             appointment.status = 'in_progress'
 
         # 创建消息
@@ -935,6 +965,41 @@ class ConsultationService:
         db.add(message)
         db.commit()
         db.refresh(message)
+
+        # 咨询开始通知
+        if is_first_message:
+            ConsultationService._send_notification(
+                db, appointment.user_id,
+                'consultation_started',
+                '咨询已开始',
+                f"您与咨询师的咨询已开始",
+                appointment_id
+            )
+            db.commit()
+
+        # 新消息通知对方（同一次咨询的未读消息只保留一条通知）
+        recipient_id = appointment.user_id if sender_type == 'counselor' else None
+        if sender_type == 'user' and appointment.counselor:
+            recipient_id = appointment.counselor.user_id
+
+        if recipient_id:
+            from app.models.counselor import Notification
+            existing = db.query(Notification).filter(
+                Notification.user_id == recipient_id,
+                Notification.type == 'new_message',
+                Notification.related_id == appointment_id,
+                Notification.is_read == False
+            ).first()
+            if not existing:
+                sender_name = '咨询师' if sender_type == 'counselor' else '用户'
+                ConsultationService._send_notification(
+                    db, recipient_id,
+                    'new_message',
+                    '新消息',
+                    f"您在咨询中有来自{sender_name}的新消息",
+                    appointment_id
+                )
+                db.commit()
 
         return MessageResponse.model_validate(message)
 
@@ -1019,6 +1084,17 @@ class ConsultationService:
         )
 
         db.commit()
+
+        # 发送通知给用户
+        ConsultationService._send_notification(
+            db, appointment.user_id,
+            'consultation_ended',
+            '咨询已结束',
+            '您的咨询已结束，感谢您的使用！可前往评价本次咨询服务。',
+            appointment_id
+        )
+        db.commit()
+
         return True
 
     @staticmethod
@@ -1056,4 +1132,109 @@ class ConsultationService:
             content=content
         )
         db.add(message)
+
+    # ==================== 通知相关 ====================
+
+    @staticmethod
+    def _send_notification(
+        db: Session,
+        user_id: int,
+        n_type: str,
+        title: str,
+        content: str,
+        related_id: Optional[int] = None
+    ):
+        """发送通知"""
+        from app.models.counselor import Notification
+        notification = Notification(
+            user_id=user_id,
+            type=n_type,
+            title=title,
+            content=content,
+            related_id=related_id
+        )
+        db.add(notification)
+
+    @staticmethod
+    def get_notifications(
+        db: Session,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """获取用户通知列表"""
+        from app.models.counselor import Notification
+
+        q = db.query(Notification).filter(
+            Notification.user_id == user_id
+        ).order_by(Notification.created_at.desc())
+
+        total = q.count()
+        unread_count = q.filter(Notification.is_read == False).count()
+
+        offset = (page - 1) * page_size
+        notifications = q.offset(offset).limit(page_size).all()
+
+        items = []
+        for n in notifications:
+            items.append({
+                "id": n.id,
+                "type": n.type,
+                "title": n.title,
+                "content": n.content,
+                "related_id": n.related_id,
+                "is_read": n.is_read,
+                "created_at": n.created_at,
+                "read_at": n.read_at
+            })
+
+        return {
+            "total": total,
+            "unread_count": unread_count,
+            "items": items
+        }
+
+    @staticmethod
+    def mark_notification_read(db: Session, notification_id: int, user_id: int) -> bool:
+        """标记通知为已读"""
+        from app.models.counselor import Notification
+        from datetime import datetime
+
+        notification = db.query(Notification).filter(
+            Notification.id == notification_id,
+            Notification.user_id == user_id
+        ).first()
+
+        if notification and not notification.is_read:
+            notification.is_read = True
+            notification.read_at = datetime.now()
+            db.commit()
+
+        return True
+
+    @staticmethod
+    def mark_all_notifications_read(db: Session, user_id: int) -> int:
+        """标记所有通知为已读，返回标记数量"""
+        from app.models.counselor import Notification
+        from datetime import datetime
+
+        count = db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        ).update({
+            "is_read": True,
+            "read_at": datetime.now()
+        })
+        db.commit()
+        return count
+
+    @staticmethod
+    def get_unread_count(db: Session, user_id: int) -> int:
+        """获取未读通知数量"""
+        from app.models.counselor import Notification
+
+        return db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        ).count()
 

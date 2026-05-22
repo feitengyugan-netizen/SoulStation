@@ -209,6 +209,9 @@ const currentAnswer = computed({
 
 // 进度百分比
 const progressPercentage = computed(() => {
+  if (!questions.value || questions.value.length === 0) {
+    return 0
+  }
   const answeredCount = answers.value.filter(a => a !== null).length
   return Math.round((answeredCount / questions.value.length) * 100)
 })

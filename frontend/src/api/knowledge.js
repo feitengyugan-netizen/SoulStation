@@ -74,6 +74,30 @@ export function likeKnowledge(id) {
 }
 
 /**
+ * 取消点赞知识
+ * @param {string} id - 知识ID
+ */
+export function unlikeKnowledge(id) {
+  return request({
+    url: `/knowledge/${id}/like`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 获取文章评论
+ * @param {string} id - 文章ID
+ * @param {Object} params
+ */
+export function getComments(id, params) {
+  return request({
+    url: `/knowledge/${id}/comments`,
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 提交评论
  * @param {string} id - 知识ID
  * @param {Object} data
