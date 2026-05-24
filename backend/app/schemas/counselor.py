@@ -229,9 +229,11 @@ class MessageListResponse(BaseModel):
 
 class SendMessageRequest(BaseModel):
     """发送消息请求"""
-    content: Optional[str] = Field(None, max_length=5000, description="消息内容")
-    message_type: str = Field("text", pattern=r'^(text|image|file)$', description="消息类型")
+    content: Optional[str] = Field(None, max_length=20000, description="消息内容")
+    message_type: str = Field("text", pattern=r'^(text|image|file|system|webrtc_offer|webrtc_answer|webrtc_ice|webrtc_hangup)$', description="消息类型")
     file_url: Optional[str] = Field(None, description="文件URL")
+    file_name: Optional[str] = Field(None, max_length=255, description="文件名")
+    file_size: Optional[int] = Field(None, description="文件大小（字节）")
 
 
 class HandleOrderRequest(BaseModel):

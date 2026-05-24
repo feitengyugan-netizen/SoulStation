@@ -657,6 +657,19 @@ class AppointmentService:
         except Exception as e:
             logger.error(f"发送预约邮件时出错: {e}")
 
+        # 通知咨询师有新预约
+        try:
+            from app.services.notification_service import NotificationService
+            counselor_user = db.query(User).filter(User.id == counselor.user_id).first()
+            if counselor_user:
+                NotificationService.notify_new_appointment(
+                    db, counselor.user_id, appointment.id,
+                    appointment_data.user_name or "用户",
+                    appt_datetime.strftime('%Y-%m-%d %H:%M')
+                )
+        except Exception as e:
+            logger.error(f"发送新预约通知失败: {e}")
+
         return AppointmentService.get_appointment_detail(db, appointment.id)
 
     @staticmethod
@@ -848,6 +861,25 @@ class AppointmentService:
         except Exception as e:
             logger.error(f"发送取消邮件时出错: {e}")
 
+        # 发送通知
+        try:
+            from app.services.notification_service import NotificationService
+            user = db.query(User).filter(User.id == user_id).first()
+            user_name = user.nickname if user else "用户"
+            # 通知咨询师
+            if appointment.counselor:
+                counselor_user = db.query(User).filter(User.id == appointment.counselor.user_id).first()
+                if counselor_user:
+                    NotificationService.notify_appointment_cancelled(
+                        db, counselor_user.id, appointment_id, user_name
+                    )
+            # 通知用户（确认取消）
+            NotificationService.notify_appointment_cancelled(
+                db, user_id, appointment_id, "您"
+            )
+        except Exception as e:
+            logger.error(f"发送取消通知失败: {e}")
+
         return True
 
     @staticmethod
@@ -1017,6 +1049,14 @@ class ConsultationService:
                 db, appointment_id,
                 f"咨询师已确认您的预约，咨询时间：{appointment.appointment_date.strftime('%Y-%m-%d %H:%M')}"
             )
+            # 发送通知
+            from app.services.notification_service import NotificationService
+            counselor = db.query(Counselor).filter(Counselor.id == counselor_id).first()
+            NotificationService.notify_appointment_confirmed(
+                db, appointment.user_id, appointment_id,
+                counselor.name if counselor else "咨询师",
+                appointment.appointment_date.strftime('%Y-%m-%d %H:%M')
+            )
         elif action == 'reject':
             appointment.status = 'cancelled'
             appointment.cancel_reason = reason
@@ -1026,6 +1066,13 @@ class ConsultationService:
             ConsultationService._send_system_message(
                 db, appointment_id,
                 f"抱歉，咨询师拒绝了您的预约。原因：{reason or '暂无'}"
+            )
+            # 发送通知
+            from app.services.notification_service import NotificationService
+            counselor = db.query(Counselor).filter(Counselor.id == counselor_id).first()
+            NotificationService.notify_appointment_rejected(
+                db, appointment.user_id, appointment_id,
+                counselor.name if counselor else "咨询师", reason
             )
         else:
             raise ValueError("无效的操作")
@@ -1131,12 +1178,39 @@ class ConsultationService:
             sender_type=sender_type,
             message_type=message_data.message_type,
             content=message_data.content,
-            file_url=message_data.file_url
+            file_url=message_data.file_url,
+            file_name=message_data.file_name,
+            file_size=message_data.file_size
         )
 
         db.add(message)
         db.commit()
         db.refresh(message)
+
+        # 通知对方有新消息
+        try:
+            from app.services.notification_service import NotificationService
+            from app.models.user import User
+            if sender_type == 'user':
+                # 用户发消息 → 通知咨询师，发送者名为用户昵称
+                sender_user = db.query(User).filter(User.id == sender_id).first()
+                sender_name = sender_user.nickname if sender_user else "用户"
+                counselor = db.query(Counselor).filter(Counselor.id == appointment.counselor_id).first()
+                if counselor:
+                    NotificationService.notify_new_message(
+                        db, counselor.user_id, appointment_id,
+                        sender_name, message_data.content or "[文件]"
+                    )
+            else:
+                # 咨询师发消息 → 通知用户，发送者名为咨询师姓名
+                counselor = db.query(Counselor).filter(Counselor.id == sender_id).first()
+                sender_name = counselor.name if counselor else "咨询师"
+                NotificationService.notify_new_message(
+                    db, appointment.user_id, appointment_id,
+                    sender_name, message_data.content or "[文件]"
+                )
+        except Exception as e:
+            logger.error(f"发送消息通知失败: {e}")
 
         return MessageResponse.model_validate(message)
 
@@ -1214,6 +1288,17 @@ class ConsultationService:
             db, appointment_id,
             "咨询已结束，感谢您的使用！"
         )
+
+        # 通知用户咨询已完成
+        try:
+            from app.services.notification_service import NotificationService
+            counselor = db.query(Counselor).filter(Counselor.id == appointment.counselor_id).first()
+            NotificationService.notify_appointment_completed(
+                db, appointment.user_id, appointment_id,
+                counselor.name if counselor else "咨询师"
+            )
+        except Exception as e:
+            logger.error(f"发送咨询完成通知失败: {e}")
 
         db.commit()
         return True

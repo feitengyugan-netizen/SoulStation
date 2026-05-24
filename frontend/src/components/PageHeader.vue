@@ -46,9 +46,44 @@
           <!-- 已登录状态 -->
           <template v-else>
             <!-- 通知 -->
-            <el-badge :value="notificationCount" :hidden="notificationCount === 0" class="notification-badge">
-              <el-button circle :icon="Bell" @click="showNotifications" />
-            </el-badge>
+            <el-popover
+              placement="bottom-end"
+              :width="360"
+              trigger="click"
+              @show="loadNotificationsForPopover"
+            >
+              <template #reference>
+                <el-badge :value="notifStore.unreadCount" :hidden="notifStore.unreadCount === 0" class="notification-badge">
+                  <el-button circle :icon="Bell" />
+                </el-badge>
+              </template>
+              <div class="notification-popover">
+                <div class="popover-header">
+                  <span class="popover-title">消息通知</span>
+                  <el-button v-if="notifStore.unreadCount > 0" type="primary" link size="small" @click="handleMarkAllRead">全部已读</el-button>
+                </div>
+                <div class="popover-list">
+                  <div
+                    v-for="item in popoverNotifications"
+                    :key="item.id"
+                    class="popover-item"
+                    :class="{ unread: !item.is_read }"
+                    @click="handleNotificationClick(item)"
+                  >
+                    <div class="item-dot" v-if="!item.is_read" />
+                    <div class="item-content">
+                      <div class="item-title">{{ item.title }}</div>
+                      <div class="item-text">{{ item.content }}</div>
+                      <div class="item-time">{{ formatTime(item.created_at) }}</div>
+                    </div>
+                  </div>
+                  <el-empty v-if="popoverNotifications.length === 0" description="暂无通知" :image-size="60" />
+                </div>
+                <div class="popover-footer">
+                  <el-button type="primary" link @click="goToNotifications">查看全部通知</el-button>
+                </div>
+              </div>
+            </el-popover>
 
             <!-- 用户下拉菜单 -->
             <el-dropdown @command="handleCommand" :key="userInfo?.role">
@@ -92,10 +127,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
-  ChatLineSquare,
   Bell,
   User,
   ArrowDown,
@@ -104,17 +138,18 @@ import {
   SwitchButton
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import { useNotificationStore } from '@/stores/notification'
+import { ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const notifStore = useNotificationStore()
 
 // 搜索关键词
 const searchKeyword = ref('')
 
-// 通知数量
-const notificationCount = ref(0)
+const popoverNotifications = ref([])
 
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
@@ -139,7 +174,6 @@ const goHome = () => {
 // 搜索处理
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
-    // 跳转到搜索结果页
     router.push({
       path: '/search',
       query: { keyword: searchKeyword.value }
@@ -147,9 +181,41 @@ const handleSearch = () => {
   }
 }
 
-// 显示通知
-const showNotifications = () => {
-  ElMessage.info('暂无新通知')
+// —— 通知相关 ——
+const loadNotificationsForPopover = async () => {
+  await notifStore.fetchList(1, 5)
+  popoverNotifications.value = notifStore.notifications
+}
+
+const handleNotificationClick = async (item) => {
+  if (!item.is_read) await notifStore.markRead(item.id)
+  if (item.related_id && (item.type?.startsWith('appointment') || item.type === 'new_message')) {
+    const role = sessionStorage.getItem('userRole')
+    const prefix = role === 'counselor' ? '/consultation/counselor' : '/consultation/user'
+    router.push(`${prefix}/${item.related_id}`)
+  } else if (item.type?.startsWith('counselor')) {
+    router.push('/counselor/dashboard')
+  }
+}
+
+const handleMarkAllRead = async () => {
+  await notifStore.markAllRead()
+  popoverNotifications.value.forEach(n => { n.is_read = true })
+}
+
+const goToNotifications = () => {
+  router.push('/notifications')
+}
+
+const formatTime = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diff = now - d
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  return `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 // 下拉菜单命令处理
@@ -191,6 +257,16 @@ const goToLogin = () => {
 const goToRegister = () => {
   router.push('/register')
 }
+
+// 启动通知轮询
+watch(isLoggedIn, (val) => {
+  if (val) notifStore.startPolling()
+  else notifStore.stopPolling()
+}, { immediate: true })
+
+onUnmounted(() => {
+  notifStore.stopPolling()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -392,5 +468,85 @@ const goToRegister = () => {
   .header-content { padding: 0 $spacing-md; }
   .search-box { display: none !important; }
   .logo-text { display: none; }
+}
+
+/* 通知弹窗样式 */
+.notification-popover {
+  .popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border-lighter;
+    margin-bottom: 8px;
+
+    .popover-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+  }
+
+  .popover-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .popover-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover { background: $bg-subtle; }
+
+    &.unread { background: rgba(232, 132, 90, 0.04); }
+
+    .item-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: $primary-color;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: 4px;
+    }
+
+    .item-text {
+      font-size: 13px;
+      color: $text-secondary;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .item-time {
+      font-size: 11px;
+      color: $text-placeholder;
+    }
+  }
+
+  .popover-footer {
+    padding-top: 12px;
+    border-top: 1px solid $border-lighter;
+    text-align: center;
+    margin-top: 8px;
+  }
 }
 </style>

@@ -11,6 +11,7 @@ import logging
 from app.core.database import get_db
 from app.core.security import create_access_token
 from app.models.admin import Admin
+from app.models.chat import ChatDialogue
 from app.schemas.admin import (
     AdminLoginRequest, AdminResponse, AdminTokenResponse, DashboardStats, ChartResponse,
     CounselorReviewResponse, ReviewCounselorRequest,
@@ -591,6 +592,99 @@ async def export_orders(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"导出订单数据失败: {str(e)}"
+        )
+
+
+# ==================== 对话管理接口 ====================
+
+@router.get("/dialogues", summary="获取对话列表")
+async def get_dialogues(
+    user_id: Optional[int] = Query(None, description="用户ID"),
+    tag: Optional[str] = Query(None, description="标签名称"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取对话列表（后台管理）
+
+    支持按用户ID和标签筛选
+    展示所有用户的AI对话记录
+    """
+    try:
+        result = AdminService.get_dialogues(db, user_id, tag, page, page_size)
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except Exception as e:
+        logger.error(f"获取对话列表失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取对话列表失败: {str(e)}"
+        )
+
+
+@router.get("/dialogue/{dialogue_id}", summary="获取对话详情")
+async def get_dialogue_detail(
+    dialogue_id: int,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    获取对话详情（后台管理）
+
+    返回对话的完整消息记录
+    """
+    try:
+        result = AdminService.get_dialogue_detail(db, dialogue_id)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="对话不存在"
+            )
+        return {
+            "code": 200,
+            "message": "获取成功",
+            "data": result
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取对话详情失败: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取对话详情失败: {str(e)}"
+        )
+
+
+@router.delete("/dialogue/{dialogue_id}", summary="删除对话")
+async def delete_dialogue(
+    dialogue_id: int,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """删除对话（软删除）"""
+    try:
+        dialogue = db.query(ChatDialogue).filter(
+            ChatDialogue.id == dialogue_id,
+            ChatDialogue.is_deleted == False
+        ).first()
+        if not dialogue:
+            raise ValueError("对话不存在")
+        dialogue.is_deleted = True
+        db.commit()
+        return {"code": 200, "message": "删除成功"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error(f"删除对话失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除对话失败: {str(e)}"
         )
 
 

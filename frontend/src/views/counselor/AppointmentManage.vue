@@ -13,8 +13,11 @@
           :key="tab.value"
           class="tab-btn"
           :class="{ active: activeTab === tab.value }"
-          @click="activeTab = tab.value; loadOrders()"
-        >{{ tab.label }}</button>
+          @click="switchTab(tab.value)"
+        >
+          {{ tab.label }}
+          <span v-if="tabCounts[tab.value] !== undefined" class="tab-count">{{ tabCounts[tab.value] }}</span>
+        </button>
       </div>
 
       <div v-loading="loading" class="order-list">
@@ -99,23 +102,57 @@ import { getUserAppointments, cancelAppointment } from '@/api/counselor'
 const router = useRouter()
 const loading = ref(false)
 const activeTab = ref('all')
-const orders = ref([])
 
+// 状态 → 中文标签映射
+const STATUS_LABELS = {
+  pending: '待确认',
+  confirmed: '已确认',
+  in_progress: '进行中',
+  completed: '已完成',
+  cancelled: '已取消',
+  refunded: '已退款'
+}
+
+const orders = ref([])
+const tabCounts = ref({})
+
+// 显示全部状态标签（始终展示所有状态供筛选）
 const tabs = [
   { label: '全部', value: 'all' },
-  { label: '待确认', value: 'pending' },
-  { label: '已确认', value: 'confirmed' },
-  { label: '已完成', value: 'completed' },
+  ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ label, value }))
 ]
+
+const switchTab = (tab) => {
+  activeTab.value = tab
+  loadOrders()
+}
 
 const loadOrders = async () => {
   try {
     loading.value = true
-    const res = await getUserAppointments({ status: activeTab.value === 'all' ? '' : activeTab.value })
+    const status = activeTab.value === 'all' ? '' : activeTab.value
+    const res = await getUserAppointments({ status, page: 1, page_size: 100 })
     orders.value = res.data.items || []
+    await loadCounts()
   } finally {
     loading.value = false
   }
+}
+
+/** 并行查询各状态数量用于标签角标 */
+const loadCounts = async () => {
+  const statuses = ['', ...Object.keys(STATUS_LABELS)]
+  const queries = statuses.map(s => getUserAppointments({ status: s, page: 1, page_size: 1 }))
+  try {
+    const results = await Promise.allSettled(queries)
+    const counts = {}
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        counts[statuses[i] || 'all'] = r.value.data?.total || 0
+      }
+    })
+    tabCounts.value = counts
+  } catch { /* 获取数量失败不影响主流程 */ }
 }
 
 const getStatusType = (status) => {

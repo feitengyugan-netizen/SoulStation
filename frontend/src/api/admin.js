@@ -258,3 +258,43 @@ export function getTestQuestions(testId) {
     method: 'get'
   })
 }
+
+// ==================== 对话管理 ====================
+
+/**
+ * 获取对话列表（管理后台）
+ * @param {Object} params
+ * @param {number} params.user_id - 用户ID
+ * @param {string} params.tag - 标签名
+ * @param {number} params.page - 页码
+ * @param {number} params.pageSize - 每页数量
+ */
+export function getAdminDialogues(params) {
+  return request({
+    url: '/admin/dialogues',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取对话详情（管理后台）
+ * @param {number} id - 对话ID
+ */
+export function getAdminDialogueDetail(id) {
+  return request({
+    url: `/admin/dialogue/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 删除对话（管理后台）
+ * @param {number} id - 对话ID
+ */
+export function deleteAdminDialogue(id) {
+  return request({
+    url: `/admin/dialogue/${id}`,
+    method: 'delete'
+  })
+}

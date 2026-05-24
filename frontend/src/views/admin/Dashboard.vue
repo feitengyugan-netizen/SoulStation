@@ -46,9 +46,9 @@
 
       <div class="chart-card">
         <div class="chart-header">
-          <h3>热门心理测试</h3>
+          <h3>用户增长趋势</h3>
         </div>
-        <div ref="testChartRef" class="chart-container"></div>
+        <div ref="userChartRef" class="chart-container"></div>
       </div>
     </div>
 
@@ -80,6 +80,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, UserFilled, List, Notebook } from '@element-plus/icons-vue'
+import { getDashboardStats, getChartData, getAdminTestList } from '@/api/admin'
 import * as echarts from 'echarts'
 
 // 统计数据
@@ -90,146 +91,109 @@ const stats = ref({
   tests: 0
 })
 
-// 公告列表
-const announcements = ref([
-  {
-    id: 1,
-    title: '系统维护通知',
-    content: '系统将于本周六晚上22:00进行维护，预计维护时间为2小时。',
-    date: '2026-04-01 10:00:00'
-  },
-  {
-    id: 2,
-    title: '新功能上线通知',
-    content: 'AI智能问答功能已上线，欢迎用户体验。',
-    date: '2026-03-28 15:30:00'
-  }
-])
+// 公告列表（后端暂无公告 API，保留占位）
+const announcements = ref([])
 
 const orderChartRef = ref(null)
-const testChartRef = ref(null)
+const userChartRef = ref(null)
 
 let orderChart = null
-let testChart = null
+let userChart = null
 
-// 初始化订单统计图表
-const initOrderChart = () => {
-  if (!orderChartRef.value) return
-
-  orderChart = echarts.init(orderChartRef.value)
-
-  // 生成最近7天的日期
+// 生成最近N天的日期数组
+const getRecentDates = (days) => {
   const dates = []
   const today = new Date()
-  for (let i = 6; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     dates.push(`${date.getMonth() + 1}-${date.getDate()}`)
   }
+  return dates
+}
 
+// 初始化订单统计图表（先用空数据，数据加载后更新）
+const initOrderChart = () => {
+  if (!orderChartRef.value) return
+  orderChart = echarts.init(orderChartRef.value)
   orderChart.setOption({
-    tooltip: {
-      trigger: 'axis'
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: dates
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        name: '订单数',
-        type: 'line',
-        smooth: true,
-        data: [12, 18, 15, 23, 20, 28, 25],
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-            { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
-          ])
-        },
-        lineStyle: {
-          color: '#3b82f6',
-          width: 2
-        },
-        itemStyle: {
-          color: '#3b82f6'
-        }
-      }
-    ]
+    tooltip: { trigger: 'axis' },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', boundaryGap: false, data: getRecentDates(7) },
+    yAxis: { type: 'value' },
+    series: [{
+      name: '订单数', type: 'line', smooth: true, data: [],
+      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+        { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+      ])},
+      lineStyle: { color: '#3b82f6', width: 2 },
+      itemStyle: { color: '#3b82f6' }
+    }]
   })
 }
 
-// 初始化测试统计图表
-const initTestChart = () => {
-  if (!testChartRef.value) return
-
-  testChart = echarts.init(testChartRef.value)
-
-  testChart.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
-    },
-    legend: {
-      bottom: '5%',
-      left: 'center'
-    },
-    series: [
-      {
-        name: '测试类型',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 18,
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: [
-          { value: 234, name: '焦虑自评量表', itemStyle: { color: '#3b82f6' } },
-          { value: 187, name: '抑郁自评量表', itemStyle: { color: '#ef4444' } },
-          { value: 156, name: '大五人格量表', itemStyle: { color: '#06b6d4' } },
-          { value: 123, name: '工作压力量表', itemStyle: { color: '#f59e0b' } },
-          { value: 89, name: '其他测试', itemStyle: { color: '#8b5cf6' } }
-        ]
-      }
-    ]
+// 初始化用户增长图表（空数据，加载后更新）
+const initUserChart = () => {
+  if (!userChartRef.value) return
+  userChart = echarts.init(userChartRef.value)
+  userChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', boundaryGap: false, data: getRecentDates(30) },
+    yAxis: { type: 'value' },
+    series: [{
+      name: '新增用户', type: 'line', smooth: true, data: [],
+      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: 'rgba(6, 182, 212, 0.3)' },
+        { offset: 1, color: 'rgba(6, 182, 212, 0.05)' }
+      ])},
+      lineStyle: { color: '#06b6d4', width: 2 },
+      itemStyle: { color: '#06b6d4' }
+    }]
   })
+}
+
+// 更新订单图表数据（最近7天活动趋势）
+const updateOrderChart = async () => {
+  try {
+    const res = await getChartData('trend')
+    const points = res.data?.data || []
+    orderChart?.setOption({
+      xAxis: { data: points.map(p => p.date) },
+      series: [{ data: points.map(p => p.value) }]
+    })
+  } catch { /* 图表数据加载失败不影响主面板 */ }
+}
+
+// 更新用户增长图表数据（最近30天）
+const updateUserChart = async () => {
+  try {
+    const res = await getChartData('user')
+    const points = res.data?.data || []
+    userChart?.setOption({
+      xAxis: { data: points.map(p => p.date) },
+      series: [{ data: points.map(p => p.value) }]
+    })
+  } catch { /* 图表数据加载失败不影响主面板 */ }
 }
 
 // 加载统计数据
 const loadStats = async () => {
-  // 这里应该调用实际的API
-  // 模拟数据
-  stats.value = {
-    users: 1234,
-    counselors: 56,
-    orders: 856,
-    tests: 2345
+  try {
+    const [statsRes, testRes] = await Promise.all([
+      getDashboardStats(),
+      getAdminTestList({ page: 1, pageSize: 1 })
+    ])
+    const data = statsRes.data || {}
+    stats.value = {
+      users: data.user_count || 0,
+      counselors: data.counselor_count || 0,
+      orders: data.order_count || 0,
+      tests: testRes.data?.total || 0
+    }
+  } catch {
+    // 加载失败保持默认值 0
   }
 }
 
@@ -246,21 +210,23 @@ const handleDeleteAnnouncement = (item) => {
   ElMessage.info('删除公告功能开发中...')
 }
 
-onMounted(() => {
-  loadStats()
+onMounted(async () => {
   initOrderChart()
-  initTestChart()
+  initUserChart()
+  await loadStats()
+  // 图表数据异步加载（不阻塞首屏）
+  updateOrderChart()
+  updateUserChart()
 
-  // 监听窗口大小变化
   window.addEventListener('resize', () => {
     orderChart?.resize()
-    testChart?.resize()
+    userChart?.resize()
   })
 })
 
 onUnmounted(() => {
   orderChart?.dispose()
-  testChart?.dispose()
+  userChart?.dispose()
 })
 </script>
 

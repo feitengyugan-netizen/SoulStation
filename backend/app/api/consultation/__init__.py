@@ -10,7 +10,7 @@ import logging
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
-from app.models.counselor import Counselor
+from app.models.counselor import Counselor, ConsultationMessage
 from app.schemas.counselor import (
     AppointmentResponse, MessageResponse, MessageListResponse,
     SendMessageRequest, HandleOrderRequest, AddNoteRequest, FileUploadResponse
@@ -171,7 +171,7 @@ async def handle_order(
 async def get_messages(
     appointment_id: int,
     last_id: Optional[int] = Query(None, description="最后一条消息ID"),
-    limit: int = Query(50, ge=1, le=100, description="获取数量"),
+    limit: int = Query(50, ge=1, le=2000, description="获取数量"),
     user_id: int = Depends(get_current_user_info),
     user_type: str = Depends(get_current_user_role),
     db: Session = Depends(get_db)
@@ -407,3 +407,20 @@ async def add_consultation_note(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"添加备注失败: {str(e)}"
         )
+
+
+@router.delete("/{appointment_id}/signals", summary="清除信令消息")
+async def clear_signal_messages(
+    appointment_id: int,
+    user_id: int = Depends(get_current_user_info),
+    db: Session = Depends(get_db)
+):
+    """清除指定预约的所有 WebRTC 信令消息，避免旧信令重复触发"""
+    db.query(ConsultationMessage).filter(
+        ConsultationMessage.appointment_id == appointment_id,
+        ConsultationMessage.message_type.in_(
+            ['webrtc_offer', 'webrtc_answer', 'webrtc_ice', 'webrtc_hangup']
+        )
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {"code": 200, "message": "清除成功"}

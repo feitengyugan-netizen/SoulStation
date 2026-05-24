@@ -19,7 +19,7 @@
         <el-select v-model="filters.status" placeholder="全部状态" style="width: 150px" clearable>
           <el-option label="待确认" value="pending" />
           <el-option label="已确认" value="confirmed" />
-          <el-option label="进行中" value="inprogress" />
+          <el-option label="进行中" value="in_progress" />
           <el-option label="已完成" value="completed" />
           <el-option label="已取消" value="cancelled" />
         </el-select>
@@ -55,18 +55,17 @@
 
       <!-- 订单表格 -->
       <el-table v-loading="loading" :data="orders" stripe>
-        <el-table-column prop="id" label="订单号" width="100">
+        <el-table-column prop="appointment_no" label="预约编号" width="140" />
+        <el-table-column prop="user_name" label="用户" width="120" />
+        <el-table-column prop="counselor_name" label="咨询师" width="120" />
+        <el-table-column prop="appointment_date" label="预约日期" width="120">
           <template #default="{ row }">
-            #{{ row.id }}
+            {{ formatDate(row.appointment_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="userName" label="用户" width="120" />
-        <el-table-column prop="counselorName" label="咨询师" width="120" />
-        <el-table-column prop="date" label="预约日期" width="120" />
-        <el-table-column prop="timeSlot" label="时间段" width="120" />
-        <el-table-column prop="type" label="方式" width="80">
+        <el-table-column prop="consultation_type" label="方式" width="80">
           <template #default="{ row }">
-            {{ getTypeText(row.type) }}
+            {{ getTypeText(row.consultation_type) }}
           </template>
         </el-table-column>
         <el-table-column prop="price" label="费用" width="80">
@@ -81,7 +80,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="created_at" label="创建时间" width="180" />
         <el-table-column label="操作" fixed="right" width="120">
           <template #default="{ row }">
             <el-button type="primary" link @click="viewDetail(row)">详情</el-button>
@@ -106,22 +105,18 @@
     <el-dialog v-model="detailVisible" title="订单详情" width="600px">
       <div v-if="currentOrder" class="detail-content">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="订单号">#{{ currentOrder.id }}</el-descriptions-item>
+          <el-descriptions-item label="预约编号">{{ currentOrder.appointment_no }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusType(currentOrder.status)">
               {{ getStatusText(currentOrder.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="用户">{{ currentOrder.userName }}</el-descriptions-item>
-          <el-descriptions-item label="咨询师">{{ currentOrder.counselorName }}</el-descriptions-item>
-          <el-descriptions-item label="预约日期">{{ currentOrder.date }}</el-descriptions-item>
-          <el-descriptions-item label="时间段">{{ currentOrder.timeSlot }}</el-descriptions-item>
-          <el-descriptions-item label="咨询方式">{{ getTypeText(currentOrder.type) }}</el-descriptions-item>
+          <el-descriptions-item label="用户">{{ currentOrder.user_name }}</el-descriptions-item>
+          <el-descriptions-item label="咨询师">{{ currentOrder.counselor_name }}</el-descriptions-item>
+          <el-descriptions-item label="预约日期">{{ formatDate(currentOrder.appointment_date) }}</el-descriptions-item>
+          <el-descriptions-item label="咨询方式">{{ getTypeText(currentOrder.consultation_type) }}</el-descriptions-item>
           <el-descriptions-item label="费用">¥{{ currentOrder.price }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间" :span="2">{{ currentOrder.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="问题描述" :span="2">
-            {{ currentOrder.description }}
-          </el-descriptions-item>
+          <el-descriptions-item label="创建时间" :span="2">{{ currentOrder.created_at }}</el-descriptions-item>
         </el-descriptions>
 
         <template v-if="currentOrder.status === 'completed'">
@@ -184,9 +179,9 @@ const loadOrders = async () => {
       page: currentPage.value,
       pageSize: pageSize.value
     })
-    orders.value = res.data.list || []
-    stats.value = res.data.stats || {}
+    orders.value = res.data.items || []
     total.value = res.data.total || 0
+    stats.value.total = res.data.total || 0
   } finally {
     loading.value = false
   }
@@ -200,21 +195,28 @@ const resetFilters = () => {
   loadOrders()
 }
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 const getTypeText = (type) => ({ video: '视频', voice: '语音', offline: '线下' }[type] || type)
 
 const getStatusText = (status) => {
   const map = {
     pending: '待确认',
     confirmed: '已确认',
-    inprogress: '进行中',
+    in_progress: '进行中',
     completed: '已完成',
-    cancelled: '已取消'
+    cancelled: '已取消',
+    refunded: '已退款'
   }
   return map[status] || status
 }
 
 const getStatusType = (status) => {
-  const types = { pending: 'warning', confirmed: 'primary', inprogress: 'info', completed: 'success', cancelled: 'danger' }
+  const types = { pending: 'warning', confirmed: 'primary', in_progress: 'primary', completed: 'success', cancelled: 'danger', refunded: 'info' }
   return types[status] || ''
 }
 

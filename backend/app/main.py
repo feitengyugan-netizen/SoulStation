@@ -131,6 +131,10 @@ app.include_router(consultation_router, prefix="/api")
 from app.api.knowledge import router as knowledge_router
 app.include_router(knowledge_router, prefix="/api")
 
+# 通知路由
+from app.api.notification import router as notification_router
+app.include_router(notification_router, prefix="/api")
+
 # 后台管理路由
 from app.api.admin import router as admin_router
 app.include_router(admin_router, prefix="/api")

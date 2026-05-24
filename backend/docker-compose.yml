@@ -30,7 +30,7 @@ services:
       - soulstation-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: soulstation-redis
     restart: always
     ports:

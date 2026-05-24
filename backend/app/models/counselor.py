@@ -156,7 +156,7 @@ class ConsultationMessage(Base):
     sender_type = Column(Enum('user', 'counselor'), nullable=False, comment="发送者类型")
 
     # 消息内容
-    message_type = Column(Enum('text', 'image', 'file', 'system'), default='text', comment="消息类型")
+    message_type = Column(String(30), default='text', comment="消息类型")
     content = Column(Text, comment="消息内容")
     file_url = Column(String(500), comment="文件URL")
     file_name = Column(String(255), comment="文件名")

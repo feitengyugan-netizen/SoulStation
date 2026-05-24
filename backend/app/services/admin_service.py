@@ -12,7 +12,7 @@ from app.models.user import User
 from app.models.counselor import Counselor, Appointment
 from app.models.knowledge import KnowledgeArticle
 from app.models.test import TestResult
-from app.models.chat import ChatDialogue
+from app.models.chat import ChatDialogue, ChatMessage, ChatTag, ChatDialogueTag
 from app.schemas.admin import (
     AdminResponse, DashboardStats, ChartDataPoint, ChartResponse,
     CounselorReviewResponse, ReviewCounselorRequest,
@@ -253,10 +253,18 @@ class AdminService:
         if review_data.action == "approve":
             counselor.is_verified = True
             counselor.status = "active"
+
+            # 发送通知给咨询师
+            from app.services.notification_service import NotificationService
+            NotificationService.notify_counselor_approved(db, counselor.user_id)
         elif review_data.action == "reject":
             # 拒绝后删除咨询师
             counselor.is_deleted = True
             counselor.deleted_at = datetime.now()
+
+            # 发送通知给咨询师
+            from app.services.notification_service import NotificationService
+            NotificationService.notify_counselor_rejected(db, counselor.user_id, review_data.reason)
         else:
             raise ValueError("无效的审核操作")
 
@@ -539,3 +547,130 @@ class AdminService:
         # 返回字节数据
         output.seek(0)
         return output.read().encode('utf-8-sig')
+
+    # ==================== 对话管理 ====================
+
+    @staticmethod
+    def get_dialogues(
+        db: Session,
+        user_id: Optional[int] = None,
+        tag_name: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """获取所有对话列表（管理员视角）"""
+        q = db.query(ChatDialogue).filter(
+            ChatDialogue.is_deleted == False
+        )
+
+        # 按用户筛选
+        if user_id:
+            q = q.filter(ChatDialogue.user_id == user_id)
+
+        # 按标签筛选
+        if tag_name:
+            q = q.join(ChatDialogue.tags).join(ChatDialogueTag.tag).filter(
+                and_(
+                    ChatTag.name == tag_name,
+                    ChatTag.is_deleted == False
+                )
+            ).distinct()
+
+        q = q.order_by(desc(ChatDialogue.updated_at))
+
+        total = q.count()
+        offset = (page - 1) * page_size
+        dialogues = q.offset(offset).limit(page_size).all()
+
+        items = []
+        for dialogue in dialogues:
+            user = db.query(User).filter(User.id == dialogue.user_id).first()
+
+            msg_count = db.query(func.count(ChatMessage.id)).filter(
+                and_(
+                    ChatMessage.dialogue_id == dialogue.id,
+                    ChatMessage.is_deleted == False
+                )
+            ).scalar() or 0
+
+            last_msg = db.query(ChatMessage).filter(
+                and_(
+                    ChatMessage.dialogue_id == dialogue.id,
+                    ChatMessage.is_deleted == False
+                )
+            ).order_by(desc(ChatMessage.created_at)).first()
+
+            tags = db.query(ChatTag).join(
+                ChatDialogueTag, ChatDialogueTag.tag_id == ChatTag.id
+            ).filter(
+                ChatDialogueTag.dialogue_id == dialogue.id
+            ).all()
+
+            items.append({
+                "id": dialogue.id,
+                "user_id": dialogue.user_id,
+                "user_name": user.nickname if user else f"用户{dialogue.user_id}",
+                "user_avatar": user.avatar if user else None,
+                "title": dialogue.title,
+                "message_count": msg_count,
+                "tags": [{"id": t.id, "name": t.name, "color": t.color} for t in tags],
+                "last_message": last_msg.content[:80] if last_msg else None,
+                "last_message_role": last_msg.role if last_msg else None,
+                "created_at": dialogue.created_at,
+                "updated_at": dialogue.updated_at
+            })
+
+        return {
+            "total": total,
+            "items": items,
+            "page": page,
+            "page_size": page_size
+        }
+
+    @staticmethod
+    def get_dialogue_detail(db: Session, dialogue_id: int) -> Optional[Dict[str, Any]]:
+        """获取对话详情（管理员视角）"""
+        dialogue = db.query(ChatDialogue).filter(
+            and_(
+                ChatDialogue.id == dialogue_id,
+                ChatDialogue.is_deleted == False
+            )
+        ).first()
+
+        if not dialogue:
+            return None
+
+        user = db.query(User).filter(User.id == dialogue.user_id).first()
+
+        messages = db.query(ChatMessage).filter(
+            and_(
+                ChatMessage.dialogue_id == dialogue_id,
+                ChatMessage.is_deleted == False
+            )
+        ).order_by(ChatMessage.created_at).all()
+
+        tags = db.query(ChatTag).join(
+            ChatDialogueTag, ChatDialogueTag.tag_id == ChatTag.id
+        ).filter(
+            ChatDialogueTag.dialogue_id == dialogue_id
+        ).all()
+
+        return {
+            "id": dialogue.id,
+            "user_id": dialogue.user_id,
+            "user_name": user.nickname if user else f"用户{dialogue.user_id}",
+            "user_avatar": user.avatar if user else None,
+            "title": dialogue.title,
+            "created_at": dialogue.created_at,
+            "updated_at": dialogue.updated_at,
+            "messages": [
+                {
+                    "id": msg.id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "created_at": msg.created_at
+                }
+                for msg in messages
+            ],
+            "tags": [{"id": t.id, "name": t.name, "color": t.color} for t in tags]
+        }

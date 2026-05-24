@@ -86,7 +86,6 @@
 
         <el-form-item label="发布设置">
           <el-checkbox v-model="form.published">立即发布</el-checkbox>
-          <el-checkbox v-model="form.top" style="margin-left: 20px">设为置顶</el-checkbox>
         </el-form-item>
       </el-form>
     </el-card>
@@ -112,14 +111,12 @@ const loading = ref(false)
 const saving = ref(false)
 
 const form = reactive({
-  id: route.params.id || '',
   title: '',
   category: '',
   cover: '',
   summary: '',
   content: '',
-  published: true,
-  top: false
+  published: true
 })
 
 const rules = {
@@ -133,7 +130,13 @@ const loadArticle = async () => {
   try {
     loading.value = true
     const res = await getKnowledgeDetail(route.params.id)
-    Object.assign(form, res.data)
+    const data = res.data
+    form.title = data.title || ''
+    form.category = data.category || ''
+    form.cover = data.cover_image || ''
+    form.summary = data.summary || ''
+    form.content = data.content || ''
+    form.published = data.status === 'published'
   } finally {
     loading.value = false
   }
@@ -199,7 +202,15 @@ const saveArticle = async () => {
   try {
     await formRef.value.validate()
     saving.value = true
-    await saveKnowledgeArticle(form)
+    await saveKnowledgeArticle({
+      id: isEdit ? Number(route.params.id) : null,
+      title: form.title,
+      category: form.category,
+      cover_image: form.cover,
+      summary: form.summary,
+      content: form.content,
+      status: form.published ? 'published' : 'draft'
+    })
     ElMessage.success(isEdit ? '更新成功' : '创建成功')
     goBack()
   } catch (error) {

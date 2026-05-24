@@ -71,10 +71,15 @@ export function createAppointment(data) {
  * @param {number} params.page - 页码
  */
 export function getUserAppointments(params) {
+  // 映射前端参数名到后端参数名
+  const requestParams = {}
+  if (params.status) requestParams.status_filter = params.status
+  if (params.page) requestParams.page = params.page
+  if (params.page_size) requestParams.page_size = params.page_size
   return request({
     url: '/appointment/user/list',
     method: 'get',
-    params
+    params: requestParams
   })
 }
 

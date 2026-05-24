@@ -7,10 +7,15 @@ import request from './index'
  * @param {string} params.status - 订单状态筛选
  */
 export function getCounselorOrders(params) {
+  // 映射前端参数名到后端参数名
+  const requestParams = {}
+  if (params.status) requestParams.status_filter = params.status
+  if (params.page) requestParams.page = params.page
+  if (params.page_size) requestParams.page_size = params.page_size
   return request({
     url: '/consultation/counselor/orders',
     method: 'get',
-    params
+    params: requestParams
   })
 }
 
@@ -95,5 +100,47 @@ export function addConsultationNote(appointmentId, data) {
     url: `/consultation/${appointmentId}/note`,
     method: 'post',
     data
+  })
+}
+
+// ── WebRTC 信令消息 ─────────────────────────────────
+
+const SIGNAL_TYPES = ['webrtc_offer', 'webrtc_answer', 'webrtc_ice', 'webrtc_hangup']
+
+export function getSignalMessages(appointmentId, lastId) {
+  return request({
+    url: `/consultation/${appointmentId}/messages`,
+    method: 'get',
+    params: { last_id: lastId, limit: 20 }
+  })
+}
+
+export function sendSignalMessage(appointmentId, messageType, content) {
+  return request({
+    url: `/consultation/${appointmentId}/message`,
+    method: 'post',
+    data: { message_type: messageType, content: JSON.stringify(content) }
+  })
+}
+
+export function isSignalMessage(msg) {
+  return msg && SIGNAL_TYPES.includes(msg.message_type)
+}
+
+/**
+ * 检查预约是否可以进行通话（预约状态验证）
+ * @param {string} appointmentId - 订单ID
+ */
+export function checkAppointmentCallable(appointmentId) {
+  return request({
+    url: `/consultation/${appointmentId}/callable`,
+    method: 'get'
+  })
+}
+
+export function clearSignals(appointmentId) {
+  return request({
+    url: `/consultation/${appointmentId}/signals`,
+    method: 'delete'
   })
 }

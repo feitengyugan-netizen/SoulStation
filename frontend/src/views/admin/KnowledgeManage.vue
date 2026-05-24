@@ -98,7 +98,7 @@ const loadArticles = async () => {
       page: currentPage.value,
       pageSize: pageSize.value
     })
-    articles.value = res.data.list || []
+    articles.value = res.data.items || []
     total.value = res.data.total || 0
   } finally {
     loading.value = false
@@ -124,11 +124,11 @@ const getCategoryText = (category) => {
 }
 
 const createArticle = () => {
-  router.push('/admin/knowledge/edit')
+  router.push('/admin/article-editor')
 }
 
 const editArticle = (row) => {
-  router.push(`/admin/knowledge/edit/${row.id}`)
+  router.push(`/admin/article-editor/${row.id}`)
 }
 
 const deleteArticle = async (row) => {

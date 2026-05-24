@@ -5,6 +5,8 @@ from .chat import ChatDialogue, ChatMessage, ChatTag, ChatDialogueTag
 from .counselor import Counselor, Appointment, ConsultationReview, ConsultationMessage, CounselorInquiry, InquiryMessage
 from .knowledge import KnowledgeArticle, KnowledgeComment, KnowledgeFavorite, KnowledgeLike
 
+from .notification import Notification
+
 __all__ = [
     "User",
     "Admin",
@@ -12,5 +14,6 @@ __all__ = [
     "ChatDialogue", "ChatMessage", "ChatTag", "ChatDialogueTag",
     "Counselor", "Appointment", "ConsultationReview", "ConsultationMessage",
     "CounselorInquiry", "InquiryMessage",
-    "KnowledgeArticle", "KnowledgeComment", "KnowledgeFavorite", "KnowledgeLike"
+    "KnowledgeArticle", "KnowledgeComment", "KnowledgeFavorite", "KnowledgeLike",
+    "Notification"
 ]

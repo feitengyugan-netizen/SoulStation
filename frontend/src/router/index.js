@@ -49,6 +49,9 @@ const ConsultationChatCounselor = () => import('@/views/consultation/Consultatio
 const KnowledgeList = () => import('@/views/knowledge/KnowledgeList.vue')
 const KnowledgeDetail = () => import('@/views/knowledge/KnowledgeDetail.vue')
 
+// 通知
+const NotificationCenter = () => import('@/views/notification/NotificationCenter.vue')
+
 // 后台管理
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 const Dashboard = () => import('@/views/admin/Dashboard.vue')
@@ -252,6 +255,12 @@ const routes = [
     name: 'KnowledgeDetail',
     component: KnowledgeDetail,
     meta: { title: '知识详情 - 心理咨询平台' }
+  },
+  {
+    path: '/notifications',
+    name: 'NotificationCenter',
+    component: NotificationCenter,
+    meta: { title: '消息通知 - 心理咨询平台', requiresAuth: true }
   },
   {
     path: '/admin',
