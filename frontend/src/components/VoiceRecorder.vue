@@ -1,6 +1,29 @@
 <template>
   <div class="voice-recorder">
     <div class="microphone-wrapper">
+      <!-- 麦克风设备选择器 -->
+      <div class="device-selector" v-if="audioDevices.length > 1">
+        <el-select
+          v-model="selectedDeviceId"
+          placeholder="选择麦克风"
+          size="small"
+          :popper-class="'device-select-popper'"
+          @change="onDeviceChanged"
+        >
+          <el-option
+            v-for="device in audioDevices"
+            :key="device.deviceId"
+            :label="device.label || `麦克风 ${device.deviceId.slice(0, 6)}`"
+            :value="device.deviceId"
+          >
+            <span class="device-option">
+              <span class="device-icon">🎤</span>
+              <span class="device-label">{{ device.label || `麦克风 ${device.deviceId.slice(0, 6)}` }}</span>
+            </span>
+          </el-option>
+        </el-select>
+      </div>
+
       <el-button
         :icon="Microphone"
         :type="isRecording ? 'danger' : 'default'"
@@ -25,14 +48,22 @@
 
     <!-- 音量过低警告 -->
     <div v-if="isRecording && lowVolumeWarning" class="low-volume-warning">
-      ⚠️ 检测不到声音，请靠近麦克风说话
+      ⚠️ 检测不到声音，请检查：麦克风是否开启、系统音量是否过低
+    </div>
+
+    <!-- 诊断信息（调试用） -->
+    <div v-if="showDiagnostics" class="diagnostics">
+      <div>设备: {{ currentDeviceLabel }}</div>
+      <div>音量: {{ (volumeLevel * 100).toFixed(1) }}%</div>
+      <div>采样值: {{ rawSampleValues.join(', ') }}</div>
+      <div>Context: {{ audioContext ? audioContext.state : 'N/A' }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Microphone } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/storage'
 
@@ -47,6 +78,15 @@ const isProcessing = ref(false)
 const recordingDuration = ref(0)
 const volumeLevel = ref(0)
 const lowVolumeWarning = ref(false)
+const showDiagnostics = ref(false)
+
+// 设备列表
+const audioDevices = ref([])
+const selectedDeviceId = ref('')
+const currentDeviceLabel = ref('')
+
+// 诊断数据
+const rawSampleValues = ref([])
 
 let mediaRecorder = null
 let audioChunks = []
@@ -57,57 +97,161 @@ let audioContext = null
 let analyser = null
 let microphone = null
 let animationFrame = null
+let mediaStream = null
 
 const formattedDuration = computed(() => {
   const s = Math.floor(recordingDuration.value / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 })
 
-const startRecording = async () => {
+/** 页面加载时枚举所有音频输入设备 */
+onMounted(async () => {
   try {
-    const audioConstraints = {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-      sampleRate: { ideal: 16000 },
-      channelCount: { ideal: 1 }
+    // 先请求一次麦克风权限，让设备 label 可读（浏览器安全限制，必须在用户手势中才读得到 label）
+    const preStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    preStream.getTracks().forEach(t => t.stop())
+
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const inputs = devices.filter(d => d.kind === 'audioinput')
+    audioDevices.value = inputs
+
+    if (inputs.length === 0) {
+      ElMessage.error('未检测到任何麦克风设备')
+      return
     }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
-    const track = stream.getAudioTracks()[0]
+    // 默认选中"default"设备
+    const def = inputs.find(d => d.deviceId === 'default') || inputs[0]
+    selectedDeviceId.value = def.deviceId
+    currentDeviceLabel.value = def.label || def.deviceId.slice(0, 8)
+  } catch (e) {
+    console.error('[录音] 设备枚举失败:', e)
+  }
+})
+
+/** 切换设备后如果正在录音则停止 */
+function onDeviceChanged() {
+  if (isRecording.value) {
+    stopRecording()
+    ElMessage.warning('已切换麦克风，请重新点击录音')
+  }
+}
+
+const startRecording = async () => {
+  try {
+    // 1. 枚举音频输入设备（每次录音前重新检测，设备可能已插拔）
+    const preStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    preStream.getTracks().forEach(t => t.stop())
+
+    const allDevices = await navigator.mediaDevices.enumerateDevices()
+    const inputs = allDevices.filter(d => d.kind === 'audioinput')
+
+    if (inputs.length === 0) {
+      ElMessage.error('未检测到任何麦克风设备，请检查麦克风是否已连接')
+      return
+    }
+
+    // 更新设备列表和选项
+    audioDevices.value = inputs
+
+    // 如果当前选中的设备已不存在，切换到默认/第一个
+    if (selectedDeviceId.value && !inputs.find(d => d.deviceId === selectedDeviceId.value)) {
+      const def = inputs.find(d => d.deviceId === 'default') || inputs[0]
+      selectedDeviceId.value = def.deviceId
+      ElMessage.info(`设备已切换至: ${def.label || '默认麦克风'}`)
+    }
+
+    const targetDevice = inputs.find(d => d.deviceId === selectedDeviceId.value)
+    currentDeviceLabel.value = targetDevice?.label || selectedDeviceId.value.slice(0, 8)
+
+    // 2. 在用户手势中同步创建 AudioContext
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    audioContext = new AudioCtx()
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume()
+      if (audioContext.state !== 'running') {
+        await new Promise(r => setTimeout(r, 100))
+        if (audioContext.state === 'suspended') await audioContext.resume()
+      }
+    }
+
+    // 3. 使用选中的设备获取麦克风流（禁用所有信号处理，避免 Windows AEC 干扰）
+    const audioConstraints = {
+      deviceId: { exact: selectedDeviceId.value },
+      // 关键：不使用 echoCancellation/noiseSuppression/autoGainControl
+      // 这些在 Windows 下会被系统 AEC 劫持，导致麦克风输入被静默丢弃
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    }
+
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
+    const track = mediaStream.getAudioTracks()[0]
     if (!track) throw new Error('未找到音频轨道，请检查麦克风设备')
-    if (track.muted) ElMessage.warning('麦克风已被系统静音，请在系统设置中启用')
 
-    audioContext = new (window.AudioContext || window.webkitAudioContext)()
-    if (audioContext.state === 'suspended') await audioContext.resume()
+    console.info('[录音] 轨道设置:', JSON.stringify(track.getSettings()))
 
+    // 4. 建立音频分析器（不连接 destination，避免反馈抑制）
     analyser = audioContext.createAnalyser()
     analyser.fftSize = 1024
-    analyser.smoothingTimeConstant = 0.3
-    microphone = audioContext.createMediaStreamSource(stream)
+    analyser.smoothingTimeConstant = 0.0  // 不平滑，实时反映真实采样值
+    microphone = audioContext.createMediaStreamSource(mediaStream)
     microphone.connect(analyser)
+    // ❌ 不连接 destination
 
+    // 5. 启动音量监测（直接读原始采样值，不做任何平均/平滑）
     const timeData = new Uint8Array(analyser.frequencyBinCount)
     let lowVolumeCount = 0
+    let highVolumeEver = false
+    let sampleIndex = 0
+
     const checkVolume = () => {
+      if (!analyser) return
       analyser.getByteTimeDomainData(timeData)
+
+      // 原始采样值展示（取前8个点）
+      if (sampleIndex % 6 === 0) {
+        rawSampleValues.value = Array.from(timeData.slice(0, 8))
+      }
+      sampleIndex++
+
+      let maxDeviation = 0
       let sumSq = 0
       for (let i = 0; i < timeData.length; i++) {
+        const dev = Math.abs(timeData[i] - 128)
+        if (dev > maxDeviation) maxDeviation = dev
         const n = (timeData[i] - 128) / 128
         sumSq += n * n
       }
-      volumeLevel.value = Math.min(Math.sqrt(sumSq / timeData.length) * 5, 1)
-      if (volumeLevel.value < 0.01) {
-        if (++lowVolumeCount > 50) lowVolumeWarning.value = true
-      } else {
+      const rms = maxDeviation / 128
+      volumeLevel.value = Math.min(rms * 4, 1)
+
+      if (rms > 0.02) {
+        highVolumeEver = true
         lowVolumeCount = 0
         lowVolumeWarning.value = false
+      } else {
+        lowVolumeCount++
+        if (lowVolumeCount > 180 && highVolumeEver) {
+          lowVolumeWarning.value = true
+        } else if (lowVolumeCount > 300 && !highVolumeEver) {
+          lowVolumeWarning.value = true
+        }
       }
       animationFrame = requestAnimationFrame(checkVolume)
     }
+
+    // 让音频数据先流入一帧
+    await new Promise(r => setTimeout(r, 100))
     checkVolume()
 
-    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+    // 6. 选择最佳 MIME 类型
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/mp4'
+    ]
     let options = { mimeType: 'audio/webm' }
     for (const type of types) {
       if (MediaRecorder.isTypeSupported(type)) {
@@ -117,7 +261,8 @@ const startRecording = async () => {
       }
     }
 
-    mediaRecorder = new MediaRecorder(stream, options)
+    // 7. 初始化 MediaRecorder
+    mediaRecorder = new MediaRecorder(mediaStream, options)
     audioChunks = []
 
     mediaRecorder.ondataavailable = (e) => {
@@ -125,20 +270,22 @@ const startRecording = async () => {
     }
 
     mediaRecorder.onstop = () => {
-      if (animationFrame) { cancelAnimationFrame(animationFrame); animationFrame = null }
-      volumeLevel.value = 0
-      stream.getTracks().forEach(t => t.stop())
-      if (audioContext) { audioContext.close(); audioContext = null }
+      const finalDuration = recordingDuration.value
+      cleanup()
       const blob = new Blob(audioChunks, { type: selectedMimeType })
-      transcribeAudio(blob, recordingDuration.value)
+      transcribeAudio(blob, finalDuration)
     }
 
-    track.onmute = () => ElMessage.warning('麦克风被系统静音，录音可能无声')
-    track.onunmute = () => ElMessage.success('麦克风已恢复')
+    mediaRecorder.onerror = () => {
+      ElMessage.error('录音发生错误')
+      cleanup()
+    }
 
     mediaRecorder.start(250)
     startTime = Date.now()
     isRecording.value = true
+    lowVolumeWarning.value = false
+    console.info('[录音] 已开始, MIME:', selectedMimeType, 'Context:', audioContext.state)
 
     recordingTimer = setInterval(() => {
       recordingDuration.value = Date.now() - startTime
@@ -149,17 +296,60 @@ const startRecording = async () => {
     }, 100)
 
   } catch (error) {
-    ElMessage.error(`无法访问麦克风: ${error.message}`)
+    handleStartError(error)
   }
+}
+
+function handleStartError(error) {
+  console.error('[录音] 启动失败:', error)
+  if (error.name === 'NotAllowedError' || error.message?.includes('permission')) {
+    ElMessageBox.alert(
+      '麦克风权限被拒绝。\n\n请在浏览器地址栏左侧的"🔒"或"ℹ️"图标中，将"麦克风"权限改为"允许"，然后刷新页面。',
+      '麦克风权限被拒绝',
+      { type: 'error', confirmButtonText: '知道了' }
+    )
+  } else if (error.name === 'NotFoundError') {
+    ElMessageBox.alert(
+      '未找到麦克风设备。请确认：\n1. 麦克风已正确连接\n2. 系统音频设置中麦克风已启用\n3. 未被其他应用独占使用',
+      '未找到麦克风',
+      { type: 'error', confirmButtonText: '知道了' }
+    )
+  } else if (error.name === 'NotReadableError') {
+    ElMessage.error('麦克风被其他应用占用，请关闭其他使用麦克风的程序后重试')
+  } else {
+    ElMessage.error(error.message || '无法启动录音')
+  }
+  cleanup()
+}
+
+function cleanup() {
+  if (animationFrame) { cancelAnimationFrame(animationFrame); animationFrame = null }
+  if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null }
+  volumeLevel.value = 0
+  rawSampleValues.value = []
+  lowVolumeWarning.value = false
+  isRecording.value = false
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(t => t.stop())
+    mediaStream = null
+  }
+  if (audioContext) {
+    audioContext.close().catch(() => {})
+    audioContext = null
+    analyser = null
+    microphone = null
+  }
+  mediaRecorder = null
+  recordingDuration.value = 0
 }
 
 const stopRecording = () => {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop()
     isRecording.value = false
-    clearInterval(recordingTimer)
-    lowVolumeWarning.value = false
     isProcessing.value = true
+  } else {
+    cleanup()
   }
 }
 
@@ -234,7 +424,52 @@ const transcribeAudio = async (blob, duration) => {
 .microphone-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.device-selector {
+  :deep(.el-select) {
+    .el-input__wrapper {
+      background: #f5f7fa;
+      border-radius: 20px;
+      padding: 0 12px 0 8px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #eef0f4;
+      }
+    }
+
+    .el-input__inner {
+      font-size: 12px;
+      color: #606266;
+    }
+
+    .el-input__suffix {
+      .el-select__caret {
+        font-size: 14px;
+        color: #c0c4cc;
+      }
+    }
+  }
+}
+
+.device-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .device-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .device-label {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .recording-info {
@@ -296,5 +531,57 @@ const transcribeAudio = async (blob, duration) => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+
+.diagnostics {
+  position: absolute;
+  top: -110px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: #f4f4f5;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #666;
+  font-family: monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}
+</style>
+
+<style lang="scss">
+.device-select-popper {
+  .el-select-dropdown__item {
+    padding: 6px 12px;
+
+    .device-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .device-icon {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .device-label {
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    &.selected {
+      .device-icon { filter: none; }
+    }
+  }
+
+  .el-select-dropdown__empty {
+    padding: 12px;
+    font-size: 12px;
+    color: #999;
+  }
 }
 </style>

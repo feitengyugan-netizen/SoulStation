@@ -15,7 +15,7 @@ from app.schemas.test import (
     FavoriteResultRequest, GetTrendRequest,
     TestListItemSchema, TestDetailSchema, StartTestResponseSchema,
     TestResultSchema, TestHistoryItemSchema, TestHistoryResponseSchema,
-    TestTrendResponseSchema, ApiResponse
+    TestTrendResponseSchema, ApiResponse, ComprehensiveAnalysisResponse
 )
 from app.services.test_service import TestService
 from app.services.ai_service import AIService
@@ -477,3 +477,37 @@ async def create_ai_chat_from_result(
             status_code=500,
             detail=f"创建AI对话失败: {str(e)}"
         )
+
+
+@router.get("/analysis/comprehensive", response_model=ApiResponse)
+async def get_comprehensive_analysis(
+    days: int = Query(90, ge=7, le=365, description="分析最近多少天的数据（7-365天）"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    生成综合心理分析报告
+
+    基于用户基本信息和近期测试记录，生成AI综合分析报告
+
+    - **days**: 分析最近多少天的数据，默认90天，范围7-365天
+    - **返回**: 包含用户信息、测试摘要、AI分析的完整报告
+    """
+    result = TestService.generate_comprehensive_analysis(db, current_user.id, days)
+
+    if not result:
+        raise HTTPException(status_code=500, detail="生成分析报告失败")
+
+    # 检查是否有错误
+    if "error" in result:
+        return ApiResponse(
+            code=400,
+            message=result.get("message", "生成失败"),
+            data=result
+        )
+
+    return ApiResponse(
+        code=200,
+        message="分析报告生成成功",
+        data=result
+    )

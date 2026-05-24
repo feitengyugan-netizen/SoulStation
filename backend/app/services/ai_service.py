@@ -2,6 +2,7 @@
 AI 服务 - 基于豆包 API
 """
 import os
+import time
 import httpx
 from typing import Iterator
 from openai import OpenAI
@@ -13,10 +14,11 @@ class AIService:
 
     def __init__(self):
         """初始化 AI 客户端"""
-        # 创建httpx客户端，避免proxies参数问题
+        # 创建httpx客户端，禁用SSL验证以避免Windows上的SSL错误
         http_client = httpx.Client(
             timeout=60.0,
-            limits=httpx.Limits(max_keepalive_connections=50, max_connections=100)
+            limits=httpx.Limits(max_keepalive_connections=50, max_connections=100),
+            verify=False  # 禁用SSL验证
         )
 
         self.client = OpenAI(
@@ -31,48 +33,70 @@ class AIService:
         messages: list,
         stream: bool = False,
         temperature: float = 0.7,
-        max_tokens: int = 2000
+        max_tokens: int = 2000,
+        max_retries: int = 3
     ) -> str:
         """
-        发起聊天请求
+        发起聊天请求（带重试机制）
 
         Args:
             messages: 消息列表，格式为 [{"role": "user", "content": "..."}]
             stream: 是否流式返回
             temperature: 温度参数（0-1），越高越随机
             max_tokens: 最大 token 数
+            max_retries: 最大重试次数
 
         Returns:
             str: AI 的回复内容
         """
-        try:
-            if stream:
-                # 流式返回
-                response = ""
-                stream_response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    stream=True,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
-                for chunk in stream_response:
-                    if chunk.choices and chunk.choices[0].delta.content:
-                        response += chunk.choices[0].delta.content
-                return response
-            else:
-                # 非流式返回
-                completion = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    stream=False,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
-                return completion.choices[0].message.content
+        for attempt in range(max_retries):
+            try:
+                if stream:
+                    # 流式返回
+                    response = ""
+                    stream_response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        stream=True,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    for chunk in stream_response:
+                        if chunk.choices and chunk.choices[0].delta.content:
+                            response += chunk.choices[0].delta.content
+                    return response
+                else:
+                    # 非流式返回
+                    completion = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        stream=False,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    return completion.choices[0].message.content
 
-        except Exception as e:
-            raise Exception(f"AI 服务调用失败: {str(e)}")
+            except Exception as e:
+                # 如果是最后一次尝试，抛出异常
+                if attempt == max_retries - 1:
+                    raise Exception(f"AI 服务调用失败（已重试{max_retries}次）: {str(e)}")
+
+                # 等待一段时间后重试
+                wait_time = (attempt + 1) * 2  # 2s, 4s, 6s
+                print(f"AI服务调用失败，{wait_time}秒后进行第{attempt + 2}次重试... 错误: {str(e)}")
+                time.sleep(wait_time)
+
+                # 重新创建客户端（连接可能已损坏）
+                http_client = httpx.Client(
+                    timeout=60.0,
+                    limits=httpx.Limits(max_keepalive_connections=50, max_connections=100),
+                    verify=False
+                )
+                self.client = OpenAI(
+                    base_url=settings.DOUBAO_BASE_URL,
+                    api_key=settings.DOUBAO_API_KEY,
+                    http_client=http_client
+                )
 
     def chat_stream(
         self,
@@ -123,7 +147,11 @@ class AIService:
 
 5. **注意事项**：
    - 不要给出明确的医学诊断
-   - 遇到严重心理危机（如自伤倾向），建议立即寻求专业帮助
+   - **危机干预（极其重要）**：如果用户表现出自伤、自杀、严重抑郁等危机信号，你必须：
+     * **首先**表达关怀和重视
+     * **必须在回复中最前面**呈现全国心理援助热线信息（400-161-9995, 24小时免费）
+     * 使用温暖、坚定、不评判的语气
+     * 鼓励用户立即联系专业帮助
    - 保持客观中立，不替用户做决定
    - 回复要简洁明了，通常不超过200字
 

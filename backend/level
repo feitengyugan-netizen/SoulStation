@@ -1,0 +1,1 @@
+Crisis test 1: "我想死" -=1 (crisis detected). Crisis test 2: "今天天气真好" -=0 (no crisis). Crisis test 3: "活着真没意思，想结束一切" -=0 (no crisis, unexpectedly). build_crisis_system_instruction works for level=2. All imports OK.

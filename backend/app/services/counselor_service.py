@@ -668,6 +668,8 @@ class AppointmentService:
         page_size: int = 10
     ) -> Dict[str, Any]:
         """获取用户预约列表"""
+        from sqlalchemy.orm import selectinload
+
         q = db.query(Appointment).filter(Appointment.user_id == user_id)
 
         # 状态筛选
@@ -682,7 +684,8 @@ class AppointmentService:
 
         # 分页
         offset = (page - 1) * page_size
-        appointments = q.offset(offset).limit(page_size).all()
+        # 使用 selectinload 主动加载 counselor 关系
+        appointments = q.options(selectinload(Appointment.counselor)).offset(offset).limit(page_size).all()
 
         # 转换为响应格式
         items = []

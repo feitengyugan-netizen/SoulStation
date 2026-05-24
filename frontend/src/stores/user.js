@@ -82,9 +82,10 @@ export const useUserStore = defineStore('user', {
         this.setToken(res.data.token)
         this.setUserInfo(res.data.userInfo)
 
-        // 根据后端返回的redirect路径跳转
+        // 根据后端返回的redirect路径跳转，添加时间戳避免缓存
         if (res.data.redirect) {
-          window.location.href = res.data.redirect
+          const redirectUrl = res.data.redirect + (res.data.redirect.includes('?') ? '&' : '?') + 't=' + Date.now()
+          window.location.href = redirectUrl
         }
 
         return res
@@ -124,10 +125,14 @@ export const useUserStore = defineStore('user', {
       } catch (error) {
         console.error('退出登录失败:', error)
       } finally {
-        this.setToken('')
-        this.setUserInfo(null)
-        // 跳转到登录页
-        window.location.href = '/login'
+        // 清除所有sessionStorage数据
+        sessionStorage.clear()
+        // 清除状态
+        this.token = ''
+        this.userInfo = null
+        this.isLoggedIn = false
+        // 跳转到登录页并强制刷新，避免缓存问题
+        window.location.href = '/login?t=' + Date.now()
       }
     }
   }

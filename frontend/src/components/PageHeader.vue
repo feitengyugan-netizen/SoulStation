@@ -51,7 +51,7 @@
             </el-badge>
 
             <!-- 用户下拉菜单 -->
-            <el-dropdown @command="handleCommand">
+            <el-dropdown @command="handleCommand" :key="userInfo?.role">
               <div class="user-info">
                 <el-avatar :size="36" :src="userInfo?.avatar">
                   <el-icon><User /></el-icon>
@@ -69,7 +69,7 @@
                     <el-icon><Calendar /></el-icon>
                     我的预约
                   </el-dropdown-item>
-                  <el-dropdown-item command="counselor-orders" v-if="isCounselor">
+                  <el-dropdown-item command="counselor-dashboard" v-if="isCounselor">
                     <el-icon><Calendar /></el-icon>
                     工作台
                   </el-dropdown-item>
@@ -161,8 +161,8 @@ const handleCommand = async (command) => {
     case 'orders':
       router.push('/counselor/orders')
       break
-    case 'counselor-orders':
-      router.push('/consultation/counselor/orders')
+    case 'counselor-dashboard':
+      router.push('/counselor/dashboard')
       break
     case 'admin':
       router.push('/admin/dashboard')

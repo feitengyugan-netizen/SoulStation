@@ -102,6 +102,20 @@
         <el-tab-pane label="我的测试" name="history">
           <!-- 我的测试历史 -->
           <el-card v-loading="historyLoading" class="history-card">
+            <!-- 综合分析按钮 -->
+            <div v-if="!historyLoading && history.length > 0" class="analysis-banner">
+              <div class="banner-content">
+                <div class="banner-text">
+                  <h3>🤖 生成您的综合心理分析报告</h3>
+                  <p>基于您最近的测试记录，AI将为您生成一份全面的心理分析报告</p>
+                </div>
+                <el-button type="primary" size="large" @click="goToAnalysis">
+                  <el-icon><MagicStick /></el-icon>
+                  立即生成
+                </el-button>
+              </div>
+            </div>
+
             <el-skeleton v-if="historyLoading && history.length === 0" :rows="5" animated />
             <el-empty v-else-if="!historyLoading && history.length === 0" description="您还没有测试记录">
               <el-button type="primary" @click="goToAllTests">去做测试</el-button>
@@ -160,7 +174,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { HotWater, DocumentCopy, Clock, User, ArrowRight } from '@element-plus/icons-vue'
+import { HotWater, DocumentCopy, Clock, User, ArrowRight, MagicStick } from '@element-plus/icons-vue'
 import { getTestList, getTestHistory } from '@/api/test'
 import { useUserStore } from '@/stores/user'
 import { formatNumber } from '@/utils/format'
@@ -340,6 +354,11 @@ const viewResult = (resultId) => {
 // 跳转到全部测试
 const goToAllTests = () => {
   activeTab.value = 'all'
+}
+
+// 跳转到综合分析页面
+const goToAnalysis = () => {
+  router.push('/test/analysis')
 }
 
 // 格式化日期
@@ -626,6 +645,40 @@ onMounted(() => {
 
   :deep(.el-card__body) {
     padding: 24px;
+  }
+}
+
+// ── 综合分析横幅 ────────────────────────────────────────
+.analysis-banner {
+  margin-bottom: 24px;
+  border-radius: 16px !important;
+  border: 1px solid $border-lighter !important;
+  box-shadow: 0 2px 12px rgba(107,82,68,0.06) !important;
+  overflow: hidden;
+
+  .banner-content {
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    .banner-text {
+      flex: 1;
+
+      h3 {
+        color: $text-primary;
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+      }
+
+      p {
+        color: $text-regular;
+        font-size: 14px;
+        margin: 0;
+      }
+    }
   }
 }
 

@@ -124,3 +124,16 @@ export function unfavoriteResult(resultId) {
     method: 'delete'
   })
 }
+
+/**
+ * 获取综合心理分析报告
+ * @param {Object} params
+ * @param {number} params.days - 分析最近多少天的数据（7-365天，默认90）
+ */
+export function getComprehensiveAnalysis(params = {}) {
+  return request({
+    url: '/test/analysis/comprehensive',
+    method: 'get',
+    params
+  })
+}

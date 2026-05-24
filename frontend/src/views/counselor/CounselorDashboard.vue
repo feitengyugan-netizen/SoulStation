@@ -42,7 +42,7 @@
             <div class="access-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
               <el-icon :size="32"><Calendar /></el-icon>
             </div>
-            <span>我的预约</span>
+            <span>预约管理</span>
           </div>
 
           <div class="access-item" @click="navigateTo('/profile')">
@@ -56,7 +56,7 @@
             <div class="access-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
               <el-icon :size="32"><View /></el-icon>
             </div>
-            <span>查看主页</span>
+            <span>我的主页</span>
           </div>
 
           <div class="access-item" @click="navigateTo('/chat')">

@@ -130,27 +130,74 @@
                 <div class="chat-item-content">
                   <div class="chat-title-row">
                     <h4 class="chat-title">{{ chat.title }}</h4>
-                    <el-dropdown
-                      trigger="click"
-                      @command="(cmd) => handleChatCommand(cmd, chat.id)"
-                      @click.stop
-                    >
-                      <el-icon class="more-icon"><MoreFilled /></el-icon>
-                      <template #dropdown>
-                        <el-dropdown-menu>
-                          <el-dropdown-item command="edit">
-                            <el-icon><Edit /></el-icon>
-                            编辑标题
-                          </el-dropdown-item>
-                          <el-dropdown-item command="delete" divided>
-                            <el-icon><Delete /></el-icon>
-                            删除对话
-                          </el-dropdown-item>
-                        </el-dropdown-menu>
-                      </template>
-                    </el-dropdown>
                   </div>
                   <p class="chat-preview">{{ chat.lastMessage }}</p>
+                  <div class="chat-tags-row" v-if="chat.tags && chat.tags.length > 0">
+                    <TransitionGroup name="tag" tag="div" class="chat-tags-inner">
+                      <el-tag
+                        v-for="tag in chat.tags"
+                        :key="tag.id"
+                        :color="tag.color"
+                        size="small"
+                        class="chat-tag-item"
+                      >
+                        {{ tag.name }}
+                      </el-tag>
+                    </TransitionGroup>
+                  </div>
+                </div>
+                <div class="chat-item-actions">
+                  <el-dropdown
+                    trigger="click"
+                    @command="(cmd) => handleChatCommand(cmd, chat.id)"
+                    @click.stop
+                  >
+                    <el-icon class="more-icon"><MoreFilled /></el-icon>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="edit">
+                          <el-icon><Edit /></el-icon>
+                          编辑标题
+                        </el-dropdown-item>
+                        <el-dropdown-item command="delete" divided>
+                          <el-icon><Delete /></el-icon>
+                          删除对话
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                  <el-popover
+                    :visible="tagPopoverChatId === chat.id"
+                    placement="right"
+                    :width="200"
+                    :teleported="false"
+                    trigger="manual"
+                  >
+                    <template #reference>
+                      <el-icon
+                        class="tag-assign-icon"
+                        @click.stop="toggleTagPopover(chat.id)"
+                      >
+                        <PriceTag />
+                      </el-icon>
+                    </template>
+                    <div class="tag-popover-content" @click.stop>
+                      <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #5a4a3a;">为对话分配标签</div>
+                      <el-checkbox-group
+                        :model-value="chat.tags ? chat.tags.map(t => t.id) : []"
+                        @change="(val) => onChatTagsChange(val, chat.id)"
+                      >
+                        <div v-for="tag in tags" :key="tag.id" style="margin-bottom: 6px;">
+                          <el-checkbox :label="tag.id" :value="tag.id">
+                            <el-tag :color="tag.color" size="small" style="cursor: pointer;">{{ tag.name }}</el-tag>
+                          </el-checkbox>
+                        </div>
+                      </el-checkbox-group>
+                      <div v-if="tags.length === 0" style="color: #999; font-size: 12px; text-align: center; padding: 8px 0;">
+                        暂无标签，请先在标签管理中创建
+                      </div>
+                    </div>
+                  </el-popover>
                 </div>
               </div>
             </div>
@@ -214,20 +261,12 @@
 
           <!-- 输入区域 -->
           <div class="chat-input-area">
-            <!-- 工具栏?-->
+            <!-- 工具栏-->
             <div class="input-toolbar">
-              <el-upload
-                :auto-upload="false"
-                :show-file-list="false"
-                accept="image/*,.pdf,.doc,.docx"
-                :on-change="handleFileChange"
-              >
-                <el-button circle :icon="Paperclip" />
-              </el-upload>
               <VoiceRecorder @transcription-result="handleTranscriptionResult" />
             </div>
 
-            <!-- 输入框?-->
+            <!-- 输入框-->
             <div class="input-box">
               <el-input
                 v-model="inputMessage"
@@ -249,12 +288,6 @@
               />
             </div>
 
-            <!-- 附件预览 -->
-            <div v-if="selectedFile" class="file-preview">
-              <el-tag closable @close="removeFile">
-                📎 {{ selectedFile.name }}
-              </el-tag>
-            </div>
           </div>
         </div>
       </div>
@@ -320,7 +353,6 @@ import {
   MoreFilled,
   Edit,
   Delete,
-  Paperclip,
   Microphone,
   Promotion,
   ArrowLeft,
@@ -330,7 +362,7 @@ import {
   DocumentCopy
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail } from '@/api/chat'
+import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail, addTagToChat, removeTagFromChat } from '@/api/chat'
 import { getTags } from '@/api/chat'
 import { getToken } from '@/utils/storage'
 import VoiceRecorder from '@/components/VoiceRecorder.vue'
@@ -361,12 +393,22 @@ const messageListRef = ref(null)
 
 // 输入相关
 const inputMessage = ref('')
-const selectedFile = ref(null)
 // 标签列表
 const tags = ref([])
 const showTagManager = ref(false)
 const newTagName = ref('')
 const newTagColor = ref('#e8845a')
+// 标签分配
+const tagPopoverChatId = ref(null)
+
+const toggleTagPopover = (chatId) => {
+  tagPopoverChatId.value = tagPopoverChatId.value === chatId ? null : chatId
+}
+
+// 点击 popover 外部时关闭
+const handleDocumentClick = () => {
+  tagPopoverChatId.value = null
+}
 
 // 当前对话标题
 const currentChatTitle = computed(() => {
@@ -389,7 +431,7 @@ const filteredChats = computed(() => {
 
   // 标签过滤
   if (selectedTag.value) {
-    result = result.filter(chat => chat.tagId === selectedTag.value)
+    result = result.filter(chat => chat.tags && chat.tags.some(t => t.id === selectedTag.value))
   }
 
   // 按更新时间排序
@@ -472,6 +514,53 @@ const loadTags = async () => {
     tags.value = res.data || []
   } catch (error) {
     console.error('加载标签失败:', error)
+  }
+}
+
+// 打开标签分配弹窗
+const openTagPopover = (chatId) => {
+  const chat = chatList.value.find(c => c.id === chatId)
+  if (chat && chat.tags) {
+    chatTagSelection.value = chat.tags.map(t => t.id)
+  } else {
+    chatTagSelection.value = []
+  }
+  tagPopoverChatId.value = chatId
+}
+
+// 处理对话标签变化（乐观更新 + 背景 API 同步）
+const onChatTagsChange = async (selectedTagIds, chatId) => {
+  const chat = chatList.value.find(c => c.id === chatId)
+  if (!chat) return
+
+  const currentTagIds = chat.tags ? chat.tags.map(t => t.id) : []
+
+  // 找出新增和移除的标签
+  const addedIds = selectedTagIds.filter(id => !currentTagIds.includes(id))
+  const removedIds = currentTagIds.filter(id => !selectedTagIds.includes(id))
+
+  if (addedIds.length === 0 && removedIds.length === 0) return
+
+  // 乐观更新：立即修改本地状态，无需重刷列表
+  const originalTags = chat.tags ? [...chat.tags] : []
+  chat.tags = selectedTagIds
+    .map(id => tags.value.find(t => t.id === id))
+    .filter(Boolean)
+
+  try {
+    // 背景同步 API
+    for (const tagId of addedIds) {
+      await addTagToChat(chatId, tagId)
+    }
+    for (const tagId of removedIds) {
+      await removeTagFromChat(chatId, tagId)
+    }
+    // API 全部成功后再静默刷新列表（保持本地状态优先）
+    loadChatList()
+  } catch (error) {
+    // 失败时回滚本地状态
+    chat.tags = originalTags
+    ElMessage.error('更新标签失败')
   }
 }
 
@@ -726,16 +815,6 @@ const scrollToBottom = () => {
   })
 }
 
-// 处理文件选择
-const handleFileChange = (file) => {
-  selectedFile.value = file
-}
-
-// 移除文件
-const removeFile = () => {
-  selectedFile.value = null
-}
-
 // 处理语音识别结果
 const handleTranscriptionResult = (text) => {
   // 将识别结果填充到输入框
@@ -887,11 +966,12 @@ const handleUserCommand = async (command) => {
 onMounted(() => {
   loadChatList()
   loadTags()
+  document.addEventListener('click', handleDocumentClick)
 })
 
 // 组件卸载时
 onBeforeUnmount(() => {
-  // 清理工作
+  document.removeEventListener('click', handleDocumentClick)
 })
 </script>
 
@@ -1039,6 +1119,37 @@ onBeforeUnmount(() => {
     cursor: pointer;
     transition: $transition-base;
     margin-bottom: 2px;
+    display: flex;
+    align-items: flex-start;
+
+    .chat-item-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      flex-shrink: 0;
+
+      .more-icon, .tag-assign-icon {
+        opacity: 0;
+        padding: 4px;
+        border-radius: 6px;
+        font-size: 16px;
+        color: $text-secondary;
+        transition: $transition-base;
+        cursor: pointer;
+
+        &:hover {
+          color: $primary-color;
+          background: rgba(232, 132, 90, 0.1);
+        }
+      }
+    }
+
+    &:hover .chat-item-actions .more-icon,
+    &:hover .chat-item-actions .tag-assign-icon {
+      opacity: 1;
+    }
 
     &:hover {
       background: $bg-subtle;
@@ -1053,6 +1164,8 @@ onBeforeUnmount(() => {
     }
 
     .chat-item-content {
+      flex: 1;
+      min-width: 0;
       .chat-title-row {
         display: flex;
         justify-content: space-between;
@@ -1080,24 +1193,48 @@ onBeforeUnmount(() => {
       }
     }
 
-    .more-icon {
-      flex-shrink: 0;
-      margin-left: 4px;
-      opacity: 0;
-      transition: $transition-base;
-      padding: 4px;
-      border-radius: 6px;
-      font-size: 16px;
-      color: $text-secondary;
-
-      &:hover {
-        color: $primary-color;
-        background: rgba(232, 132, 90, 0.1);
-      }
+    .chat-tags-row {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      min-height: 0;
     }
 
-    &:hover .more-icon { opacity: 1; }
+    .chat-tags-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chat-tag-item {
+      margin-right: 4px;
+      margin-bottom: 2px;
+    }
   }
+}
+
+.tag-enter-active,
+.tag-leave-active {
+  transition: all 0.3s ease;
+}
+
+.tag-enter-from,
+.tag-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.tag-leave-active {
+  position: absolute;
+}
+
+.tag-move {
+  transition: transform 0.3s ease;
+}
+
+.tag-popover-content {
+  padding: 4px 0;
 }
 
 // ---- 右侧主区域 ----?----
@@ -1248,9 +1385,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.file-preview { margin-top: 10px; }
-
-// ---- 响应式 ----?----
+// ---- 响应式 ----
 @media (max-width: $breakpoint-md) {
   .chat-sidebar {
     position: absolute;

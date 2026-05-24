@@ -39,7 +39,7 @@ class UserService:
             birth_date=user.birth_date,
             phone=user.phone,
             bio=user.bio,
-            role="user",
+            role=user.role,  # 使用用户的实际角色，而不是硬编码为"user"
             status=user.status,
             is_verified=user.is_verified,
             created_at=user.created_at,

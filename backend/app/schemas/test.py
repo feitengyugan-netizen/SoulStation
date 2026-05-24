@@ -180,3 +180,30 @@ class ApiResponse(BaseModel):
     code: int = 200
     message: str = "成功"
     data: Optional[Any] = None
+
+
+# ==================== 综合分析相关 Schemas ====================
+
+class UserInfoSchema(BaseModel):
+    """用户信息 Schema"""
+    nickname: Optional[str] = None
+    gender: Optional[str] = None
+    age: Optional[int] = None
+    bio: Optional[str] = None
+
+
+class AnalysisPeriodSchema(BaseModel):
+    """分析周期 Schema"""
+    days: int
+    test_count: int
+    earliest_test: str
+    latest_test: str
+
+
+class ComprehensiveAnalysisResponse(BaseModel):
+    """综合分析响应 Schema"""
+    user_info: UserInfoSchema
+    analysis_period: AnalysisPeriodSchema
+    test_summary: List[Dict[str, Any]]
+    ai_analysis: str
+    generated_at: str

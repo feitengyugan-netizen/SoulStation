@@ -1111,3 +1111,253 @@ class TestService:
         db.commit()
 
         return True
+
+    @staticmethod
+    def generate_comprehensive_analysis(db: Session, user_id: int, days: int = 90) -> Optional[Dict[str, Any]]:
+        """
+        生成综合心理分析报告
+
+        Args:
+            db: 数据库会话
+            user_id: 用户ID
+            days: 分析最近多少天的数据（默认90天）
+
+        Returns:
+            包含分析报告的字典
+        """
+        try:
+            # 1. 获取用户信息
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return None
+
+            # 2. 计算时间范围
+            from datetime import datetime, timedelta
+            cutoff_date = datetime.now() - timedelta(days=days)
+
+            # 3. 获取近期所有测试结果（未删除的）
+            recent_results = db.query(TestResult).filter(
+                and_(
+                    TestResult.user_id == user_id,
+                    TestResult.is_deleted == False,
+                    TestResult.created_at >= cutoff_date
+                )
+            ).order_by(desc(TestResult.created_at)).all()
+
+            if not recent_results:
+                return {
+                    "error": "近期无测试记录",
+                    "message": f"最近{days}天内没有找到测试记录，请先完成一些心理测试后再生成分析报告。"
+                }
+
+            # 4. 整理测试数据
+            test_summary = []
+            test_by_category = {}
+
+            for result in recent_results:
+                test = db.query(PsychologicalTest).filter(
+                    PsychologicalTest.id == result.test_id
+                ).first()
+
+                if test:
+                    category = test.category or "other"
+
+                    test_info = {
+                        "test_code": test.test_code,
+                        "test_title": test.title,
+                        "category": category,
+                        "total_score": result.total_score,
+                        "result_level": result.result_level,
+                        "result_title": result.result_title,
+                        "result_description": result.result_description,
+                        "dimension_scores": result.dimension_scores,
+                        "completed_at": result.created_at.strftime("%Y-%m-%d")
+                    }
+
+                    test_summary.append(test_info)
+
+                    # 按分类汇总（取最近一次）
+                    if category not in test_by_category:
+                        test_by_category[category] = test_info
+
+            # 5. 计算用户年龄
+            age = None
+            if user.birth_date:
+                today = datetime.now().date()
+                birth_date = user.birth_date
+                age = today.year - birth_date.year - (
+                    (today.month, today.day) < (birth_date.month, birth_date.day)
+                )
+
+            # 6. 调用AI生成综合分析
+            ai_service = AIService()
+            analysis_report = TestService._generate_ai_analysis_report(
+                ai_service,
+                user,
+                age,
+                test_summary,
+                test_by_category,
+                days
+            )
+
+            return {
+                "user_info": {
+                    "nickname": user.nickname,
+                    "gender": user.gender,
+                    "age": age,
+                    "bio": user.bio
+                },
+                "analysis_period": {
+                    "days": days,
+                    "test_count": len(recent_results),
+                    "earliest_test": recent_results[-1].created_at.strftime("%Y-%m-%d"),
+                    "latest_test": recent_results[0].created_at.strftime("%Y-%m-%d")
+                },
+                "test_summary": test_summary,
+                "ai_analysis": analysis_report,
+                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+        except Exception as e:
+            print(f"生成综合分析失败: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "error": "生成失败",
+                "message": f"生成分析报告时出错: {str(e)}"
+            }
+
+    @staticmethod
+    def _generate_ai_analysis_report(
+        ai_service: AIService,
+        user: User,
+        age: Optional[int],
+        test_summary: List[Dict],
+        test_by_category: Dict,
+        days: int
+    ) -> str:
+        """
+        使用AI生成综合分析报告
+
+        Args:
+            ai_service: AI服务实例
+            user: 用户对象
+            age: 用户年龄
+            test_summary: 测试摘要列表
+            test_by_category: 按分类的测试数据
+            days: 分析天数
+
+        Returns:
+            AI生成的分析报告文本
+        """
+        # 构建用户信息描述
+        user_info = f"""【用户基本信息】
+- 昵称：{user.nickname or '未设置'}
+- 性别：{'男' if user.gender == 'male' else '女' if user.gender == 'female' else '未设置'}
+- 年龄：{age}岁（{user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '未设置'}）
+- 个人简介：{user.bio or '无'}"""
+
+        # 构建测试记录摘要
+        test_info = f"\n\n【近期测试记录】（最近{days}天，共{len(test_summary)}次）\n"
+
+        # 按分类展示测试结果
+        category_order = ['anxiety', 'depression', 'stress', 'personality', 'sleep']
+        category_names = {
+            'anxiety': '焦虑',
+            'depression': '抑郁',
+            'stress': '压力',
+            'personality': '人格',
+            'sleep': '睡眠',
+            'other': '其他'
+        }
+
+        for category in category_order:
+            if category in test_by_category:
+                test = test_by_category[category]
+                level_text = {
+                    'none': '正常',
+                    'mild': '轻度',
+                    'moderate': '中度',
+                    'severe': '重度',
+                    'high': '高',
+                    'medium': '中等',
+                    'low': '低',
+                    'good': '良好',
+                    'fair': '一般',
+                    'poor': '较差'
+                }.get(test.get('result_level', ''), test.get('result_level', ''))
+
+                test_info += f"""
+【{category_names.get(category, category)}测试】
+- 测试：{test['test_title']}
+- 得分：{test['total_score']}分（{level_text}）
+- 结果：{test['result_title']}
+- 测试时间：{test['completed_at']}"""
+
+                # 添加维度得分
+                if test.get('dimension_scores'):
+                    test_info += "\n- 各维度得分："
+                    for dim in test['dimension_scores']:
+                        test_info += f"\n  · {dim.get('dimension', '未知')}：{dim.get('score', 0)}分"
+
+        # 添加其他分类
+        for category, test in test_by_category.items():
+            if category not in category_order:
+                level_text = {
+                    'none': '正常',
+                    'mild': '轻度',
+                    'moderate': '中度',
+                    'severe': '重度'
+                }.get(test.get('result_level', ''), test.get('result_level', ''))
+
+                test_info += f"""
+【{category_names.get(category, category)}测试】
+- 测试：{test['test_title']}
+- 得分：{test['total_score']}分（{level_text}）
+- 结果：{test['result_title']}
+- 测试时间：{test['completed_at']}"""
+
+        # 构建AI Prompt
+        prompt = f"""你是一位温暖、专业的心理咨询师"小宁"。用户请求生成一份综合心理分析报告。
+
+{user_info}
+{test_info}
+
+请根据以上信息，为用户生成一份全面、温暖、专业的心理分析报告，包含以下内容：
+
+## 📊 整体心理状况评估
+对用户当前的心理状况进行整体评估（100-150字）
+
+## 🔍 各维度详细分析
+分析用户在焦虑、抑郁、压力等各维度的表现（200-250字）
+
+## 📈 心理状况趋势与建议
+根据测试结果，给出具体的改善建议（250-300字），包括：
+- 生活方式调整建议
+- 情绪管理技巧
+- 是否需要寻求专业帮助的建议
+
+## 💪 积极特质与优势
+肯定用户在心理健康方面的积极面（50-100字）
+
+要求：
+- 语气温和、友善，不带评判色彩
+- 使用通俗易懂的语言，避免专业术语
+- 每个部分用emoji图标开头
+- 用加粗标注重点内容
+- 保持积极和支持的态度
+- 如果出现重度指标，温和地建议寻求专业帮助
+- 总字数控制在600-800字
+
+请直接生成报告文本："""
+
+        messages = [{"role": "user", "content": prompt}]
+
+        # 调用AI生成报告
+        ai_report = ai_service.chat(
+            messages=messages,
+            temperature=0.7,
+            max_tokens=2000
+        )
+
+        return ai_report.strip()

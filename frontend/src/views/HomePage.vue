@@ -60,15 +60,25 @@
       <!-- 背景装饰 -->
       <div class="hero-bg-blob blob-1"></div>
       <div class="hero-bg-blob blob-2"></div>
+      <div class="hero-bg-blob blob-3"></div>
     </section>
+
+    <!-- Her → Features 装饰分隔 -->
+    <div class="section-divider">
+      <svg class="wave-svg" viewBox="0 0 1440 80" preserveAspectRatio="none">
+        <path d="M0,40 C360,80 720,0 1440,40 L1440,0 L0,0 Z" fill="#fdf6ee"/>
+      </svg>
+    </div>
 
     <!-- 功能导航 -->
     <section class="features-section">
+      <div class="section-ornament orn-top"></div>
+      <div class="section-ornament orn-right"></div>
       <div class="container">
         <div class="section-header">
           <div class="section-badge">核心功能</div>
           <h2>您需要的，都在这里</h2>
-          <p>专为您的心理健康设计的全套服务</p>
+          <p>专为您的心理健康设计的一整套温暖服务</p>
         </div>
         <div class="features-grid">
           <div
@@ -91,6 +101,7 @@
 
     <!-- 热门心理知识 -->
     <section class="knowledge-section">
+      <div class="section-ornament orn-left"></div>
       <div class="container">
         <div class="section-header">
           <div class="section-badge">知识专区</div>
@@ -127,6 +138,7 @@
 
     <!-- 推荐咨询师 -->
     <section class="counselor-section">
+      <div class="section-ornament orn-bottom"></div>
       <div class="container">
         <div class="section-header">
           <div class="section-badge">专家团队</div>
@@ -366,28 +378,37 @@ onMounted(() => {
 // ===================== Hero =====================
 .hero-section {
   position: relative;
-  padding: 72px 0 80px;
+  padding: 100px 0 110px;
   overflow: hidden;
   background: linear-gradient(160deg, #fff8f2 0%, #fdf0e8 50%, #f8eefd 100%);
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
 }
 
 .hero-bg-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
+  filter: blur(80px);
   pointer-events: none;
   z-index: 0;
 
   &.blob-1 {
-    width: 400px; height: 400px;
+    width: 600px; height: 600px;
     background: rgba(232, 132, 90, 0.12);
-    top: -100px; right: -80px;
+    top: -180px; right: -120px;
   }
 
   &.blob-2 {
-    width: 300px; height: 300px;
+    width: 450px; height: 450px;
     background: rgba(155, 139, 180, 0.1);
-    bottom: -60px; left: -60px;
+    bottom: -120px; left: -100px;
+  }
+
+  &.blob-3 {
+    width: 200px; height: 200px;
+    background: rgba(144, 196, 216, 0.08);
+    top: 40%; left: 10%;
   }
 }
 
@@ -396,31 +417,33 @@ onMounted(() => {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 64px;
+  gap: 80px;
 }
 
 .hero-text {
   flex: 1;
+  padding: 20px 0;
 
   .hero-badge {
     display: inline-block;
-    padding: 6px 16px;
+    padding: 8px 20px;
     background: rgba(232, 132, 90, 0.1);
     border: 1px solid rgba(232, 132, 90, 0.25);
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: $primary-dark;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    letter-spacing: 0.5px;
   }
 
   .hero-title {
-    font-size: 48px;
+    font-size: 56px;
     font-weight: 800;
     line-height: 1.2;
     color: $text-primary;
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
 
     .highlight {
       background: linear-gradient(135deg, #f4a57a, #c96f42);
@@ -431,11 +454,11 @@ onMounted(() => {
   }
 
   .hero-desc {
-    font-size: 16px;
-    line-height: 1.75;
+    font-size: 17px;
+    line-height: 1.8;
     color: $text-regular;
-    max-width: 480px;
-    margin-bottom: 36px;
+    max-width: 540px;
+    margin-bottom: 40px;
   }
 
   .hero-actions {
@@ -443,9 +466,9 @@ onMounted(() => {
     gap: 16px;
 
     .hero-btn-primary {
-      height: 50px;
-      padding: 0 32px;
-      font-size: 16px;
+      height: 54px;
+      padding: 0 36px;
+      font-size: 17px;
       font-weight: 700;
       border-radius: 14px !important;
       background: linear-gradient(135deg, #f4a57a 0%, #c96f42 100%) !important;
@@ -460,9 +483,9 @@ onMounted(() => {
     }
 
     .hero-btn-secondary {
-      height: 50px;
-      padding: 0 28px;
-      font-size: 15px;
+      height: 54px;
+      padding: 0 32px;
+      font-size: 16px;
       font-weight: 600;
       border-radius: 14px !important;
       background: white !important;
@@ -478,9 +501,9 @@ onMounted(() => {
 }
 
 .hero-visual {
-  flex: 0 0 420px;
+  flex: 0 0 480px;
   position: relative;
-  height: 380px;
+  height: 440px;
 }
 
 .hero-card-stack {
@@ -494,40 +517,40 @@ onMounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   background: linear-gradient(140deg, #fde8d8 0%, #f4cdd8 100%);
-  border-radius: 40px;
+  border-radius: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 16px 48px rgba(107, 82, 68, 0.18);
+  box-shadow: 0 20px 56px rgba(107, 82, 68, 0.18);
 
-  .hmc-emoji { font-size: 56px; margin-bottom: 10px; }
-  p { font-size: 15px; font-weight: 700; color: #3d2b1f; }
-  .hmc-sub { font-size: 11px; color: #9e8070; margin-top: 2px; }
+  .hmc-emoji { font-size: 64px; margin-bottom: 12px; }
+  p { font-size: 17px; font-weight: 700; color: #3d2b1f; }
+  .hmc-sub { font-size: 12px; color: #9e8070; margin-top: 4px; }
 }
 
 .floating-card {
   position: absolute;
   background: white;
-  border-radius: 16px;
-  padding: 12px 16px;
+  border-radius: 18px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 24px rgba(107, 82, 68, 0.12);
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(107, 82, 68, 0.12);
   border: 1px solid $border-lighter;
   white-space: nowrap;
 
-  .fc-icon { font-size: 24px; }
-  .fc-title { font-size: 13px; font-weight: 600; color: $text-primary; }
-  .fc-sub { font-size: 11px; color: $text-secondary; }
+  .fc-icon { font-size: 28px; }
+  .fc-title { font-size: 14px; font-weight: 600; color: $text-primary; }
+  .fc-sub { font-size: 12px; color: $text-secondary; }
 
-  &.card-1 { top: 20px; left: 20px; animation: float1 4s ease-in-out infinite; }
-  &.card-2 { bottom: 40px; left: 0; animation: float2 5s ease-in-out 1s infinite; }
-  &.card-3 { top: 30px; right: 10px; animation: float3 4.5s ease-in-out 0.5s infinite; }
+  &.card-1 { top: 20px; left: 0; animation: float1 4s ease-in-out infinite; }
+  &.card-2 { bottom: 50px; left: 20px; animation: float2 5s ease-in-out 1s infinite; }
+  &.card-3 { top: 25px; right: 0; animation: float3 4.5s ease-in-out 0.5s infinite; }
 }
 
 @keyframes float1 {
@@ -545,10 +568,8 @@ onMounted(() => {
 
 // ===================== Stats =====================
 .stats-section {
-  padding: 40px 0;
-  background: white;
-  border-top: 1px solid $border-lighter;
-  border-bottom: 1px solid $border-lighter;
+  padding: 0;
+  background: linear-gradient(135deg, #fff8f2 0%, #fdf0e8 50%, #f8eefd 100%);
 }
 
 .stats-grid {
@@ -561,51 +582,111 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 20px;
-  border-right: 1px solid $border-lighter;
+  gap: 20px;
+  padding: 48px 24px;
+  border-right: 1px solid rgba(232, 132, 90, 0.12);
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(232, 132, 90, 0.04);
+  }
 
   &:last-child { border-right: none; }
 
-  .stat-icon { font-size: 40px; }
-  .stat-value { font-size: 28px; font-weight: 800; color: $primary-color; line-height: 1; }
-  .stat-label { font-size: 13px; color: $text-secondary; margin-top: 4px; }
+  .stat-icon { font-size: 48px; }
+  .stat-value { font-size: 36px; font-weight: 800; color: $primary-color; line-height: 1; }
+  .stat-label { font-size: 14px; color: $text-secondary; margin-top: 6px; font-weight: 500; }
+}
+
+// ===================== Section Divider (Wave) =====================
+.section-divider {
+  width: 100%;
+  height: 80px;
+  overflow: hidden;
+  line-height: 0;
+  background: transparent;
+
+  .wave-svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ===================== Section Ornaments =====================
+.section-ornament {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+
+  &.orn-top {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(232, 132, 90, 0.06) 0%, transparent 70%);
+    top: -100px;
+    right: -60px;
+  }
+
+  &.orn-right {
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(155, 139, 180, 0.06) 0%, transparent 70%);
+    top: 40%;
+    right: -50px;
+  }
+
+  &.orn-left {
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(144, 196, 216, 0.06) 0%, transparent 70%);
+    bottom: -80px;
+    left: -60px;
+  }
+
+  &.orn-bottom {
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(232, 181, 90, 0.06) 0%, transparent 70%);
+    bottom: -80px;
+    right: -40px;
+  }
 }
 
 // ===================== Sections 通用 =====================
 .features-section,
 .knowledge-section,
 .counselor-section {
-  padding: 72px 0;
+  position: relative;
+  padding: 96px 0;
 }
 
 .section-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 52px;
 
   .section-badge {
     display: inline-block;
-    padding: 4px 14px;
+    padding: 6px 18px;
     background: rgba(232, 132, 90, 0.1);
     border-radius: 999px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: $primary-dark;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
   }
 
   h2 {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 800;
     color: $text-primary;
-    margin-bottom: 10px;
-    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
   }
 
   p {
-    font-size: 15px;
+    font-size: 16px;
     color: $text-secondary;
   }
 }
@@ -633,13 +714,13 @@ onMounted(() => {
 .features-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  gap: 28px;
 }
 
 .feature-card {
   background: white;
   border-radius: 24px;
-  padding: 32px 24px;
+  padding: 40px 28px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid $border-lighter;
@@ -650,7 +731,7 @@ onMounted(() => {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 3px;
+    height: 4px;
     background: var(--card-color);
     transform: scaleX(0);
     transition: transform 0.3s;
@@ -658,50 +739,50 @@ onMounted(() => {
   }
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 48px rgba(107, 82, 68, 0.14);
+    transform: translateY(-10px);
+    box-shadow: 0 24px 56px rgba(107, 82, 68, 0.14);
     border-color: rgba(232, 132, 90, 0.2);
 
     &::before { transform: scaleX(1); }
   }
 
   .feature-icon-wrap {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
     background: var(--card-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     transition: $transition-base;
 
-    .feature-emoji { font-size: 32px; }
+    .feature-emoji { font-size: 36px; }
   }
 
   h3 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: $text-primary;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   p {
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.7;
     color: $text-secondary;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .feature-arrow {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--card-color);
     font-weight: 700;
     transition: $transition-base;
   }
 
   &:hover .feature-arrow {
-    letter-spacing: 2px;
+    letter-spacing: 3px;
   }
 }
 
@@ -713,7 +794,7 @@ onMounted(() => {
 .knowledge-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .knowledge-card {
@@ -725,14 +806,14 @@ onMounted(() => {
   border: 1px solid $border-lighter;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: $box-shadow-dark;
   }
 
   .article-cover {
     position: relative;
     width: 100%;
-    height: 150px;
+    height: 180px;
     overflow: hidden;
 
     img {
@@ -744,28 +825,28 @@ onMounted(() => {
 
     .article-tag {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.92);
       border-radius: 999px;
-      padding: 3px 10px;
-      font-size: 11px;
+      padding: 4px 12px;
+      font-size: 12px;
       font-weight: 600;
       color: $primary-dark;
       backdrop-filter: blur(4px);
     }
   }
 
-  &:hover .article-cover img { transform: scale(1.06); }
+  &:hover .article-cover img { transform: scale(1.08); }
 
   .article-body {
-    padding: 14px 16px;
+    padding: 18px 20px;
 
     h3 {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       color: $text-primary;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
@@ -774,7 +855,7 @@ onMounted(() => {
     }
 
     .article-meta {
-      font-size: 12px;
+      font-size: 13px;
       color: $text-secondary;
     }
   }
@@ -784,19 +865,19 @@ onMounted(() => {
 .counselor-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .counselor-card {
   background: white;
   border-radius: 24px;
-  padding: 28px 20px;
+  padding: 32px 24px;
   text-align: center;
   transition: $transition-base;
   border: 1px solid $border-lighter;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: $box-shadow-dark;
     border-color: rgba(232, 132, 90, 0.2);
   }
@@ -805,62 +886,62 @@ onMounted(() => {
     position: relative;
     display: flex;
     justify-content: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 
     .counselor-badge {
       position: absolute;
-      top: 0;
-      right: calc(50% - 46px);
+      top: -2px;
+      right: calc(50% - 48px);
       background: $primary-color;
       color: white;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 999px;
     }
   }
 
   h3 {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
     color: $text-primary;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .counselor-rating {
-    margin-bottom: 12px;
-    :deep(.el-rate__icon) { font-size: 16px !important; }
+    margin-bottom: 14px;
+    :deep(.el-rate__icon) { font-size: 18px !important; }
   }
 
   .counselor-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     justify-content: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 
     .tag {
       background: rgba(232, 132, 90, 0.08);
       color: $primary-dark;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 999px;
       border: 1px solid rgba(232, 132, 90, 0.2);
     }
   }
 
   .counselor-price {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 
-    .price-num { font-size: 22px; font-weight: 800; color: $primary-color; }
-    .price-unit { font-size: 12px; color: $text-secondary; }
+    .price-num { font-size: 24px; font-weight: 800; color: $primary-color; }
+    .price-unit { font-size: 13px; color: $text-secondary; }
   }
 
   .book-btn {
     width: 100%;
     border-radius: 12px !important;
-    height: 38px !important;
+    height: 42px !important;
     font-weight: 600;
   }
 }
@@ -869,7 +950,7 @@ onMounted(() => {
 .page-footer {
   background: #2d1f17;
   color: rgba(255, 255, 255, 0.85);
-  padding: 60px 0 24px;
+  padding: 80px 0 32px;
 }
 
 .footer-grid {
@@ -939,26 +1020,41 @@ onMounted(() => {
 }
 
 // ===================== 响应式 =====================
+@media (max-width: 1280px) {
+  .hero-text .hero-title { font-size: 46px; }
+  .hero-visual { flex: 0 0 400px; }
+}
+
 @media (max-width: 1024px) {
+  .hero-section { min-height: auto; padding: 72px 0 80px; }
   .features-grid,
   .knowledge-grid,
   .counselor-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-item { padding: 36px 20px; }
   .stat-item:nth-child(2) { border-right: none; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .footer-brand { grid-column: 1 / -1; }
-  .hero-visual { flex: 0 0 320px; }
+  .hero-visual { flex: 0 0 320px; height: 340px; }
   .hero-text .hero-title { font-size: 38px; }
+  .hero-content { gap: 48px; }
 }
 
 @media (max-width: 768px) {
-  .hero-content { flex-direction: column; gap: 40px; }
-  .hero-visual { flex: none; width: 100%; height: 280px; }
-  .hero-text .hero-title { font-size: 30px; }
+  .hero-content { flex-direction: column; gap: 48px; }
+  .hero-visual { flex: none; width: 100%; height: 300px; }
+  .hero-text .hero-title { font-size: 32px; }
   .features-grid,
   .knowledge-grid,
   .counselor-grid { grid-template-columns: 1fr; }
+  .features-section,
+  .knowledge-section,
+  .counselor-section { padding: 64px 0; }
+  .section-header h2 { font-size: 28px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-item { padding: 28px 16px; }
+  .stat-item .stat-value { font-size: 28px; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+  .page-footer { padding: 48px 0 24px; }
 }
 </style>

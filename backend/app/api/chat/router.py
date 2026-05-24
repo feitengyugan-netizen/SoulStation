@@ -281,6 +281,29 @@ async def delete_dialogue(
         "message": "删除成功"
     }
 
+@router.delete("/{dialogue_id}/tag/{tag_id}", summary="移除对话标签")
+async def remove_tag_from_dialogue(
+    dialogue_id: int,
+    tag_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
+):
+    """
+    为指定对话移除标签
+
+    - **dialogue_id**: 对话ID
+    - **tag_id**: 标签ID
+    """
+    success = chat_service.remove_tag_from_dialogue(db, dialogue_id, tag_id, user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="对话或标签不存在，或无权访问"
+        )
+    return {
+        "code": 200,
+        "message": "移除成功"
+    }
 
 @router.post("/{dialogue_id}/message", summary="发送消息")
 async def send_message(
@@ -387,9 +410,18 @@ async def send_message_stream(
                     + "\n\n---\n\n".join(parts)
                 )
 
+            # ── 危机检测 ────────────────────────────────────────────────
+            from app.services.crisis_service import detect_crisis, build_crisis_system_instruction
+            crisis_level, crisis_keywords = detect_crisis(message_data.content)
+            is_crisis = crisis_level > 0
+
             # 构建消息列表
+            base_system_prompt = ai_service.generate_system_prompt(kb_context)
+            if is_crisis:
+                base_system_prompt += build_crisis_system_instruction(is_crisis)
+
             messages_list = [
-                {"role": "system", "content": ai_service.generate_system_prompt(kb_context)}
+                {"role": "system", "content": base_system_prompt}
             ]
             for msg in reversed(history_messages):
                 messages_list.append({
@@ -442,7 +474,15 @@ async def send_message_stream(
 
             # 立即发送完成信号，不等标题生成
             msg_id = ai_message.id if should_save else None
-            yield f"data: {json.dumps({'content': '', 'done': True, 'message_id': msg_id}, ensure_ascii=False)}\n\n"
+            done_data = {
+                'content': '',
+                'done': True,
+                'message_id': msg_id,
+                'crisis_detected': is_crisis,
+                'crisis_level': crisis_level,
+                'crisis_keywords': crisis_keywords if is_crisis else []
+            }
+            yield f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
 
             # 后台异步生成标题，结束后推送 title_update 事件
             if needs_title:

@@ -48,6 +48,9 @@ dist-ssr/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Model files
+backend/models/
 .DS_Store
 *.swp
 *.swo

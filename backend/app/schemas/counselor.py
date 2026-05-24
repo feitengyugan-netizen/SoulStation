@@ -125,7 +125,7 @@ class AppointmentResponse(BaseModel):
     """预约响应"""
     id: int
     appointment_no: str
-    counselor_id: int
+    counselor_id: Optional[int] = None
     user_id: int
     consultation_type: str
     appointment_date: datetime

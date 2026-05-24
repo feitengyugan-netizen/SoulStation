@@ -294,7 +294,7 @@ class AuthService:
         if user.role == "admin":
             redirect_path = "/admin"
         elif user.role == "counselor":
-            redirect_path = "/counselor/orders"  # 咨询师工作台
+            redirect_path = "/counselor/dashboard"  # 咨询师工作台
         else:
             redirect_path = "/"
 

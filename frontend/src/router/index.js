@@ -19,6 +19,7 @@ const TestList = () => import('@/views/test/TestList.vue')
 const TestTaking = () => import('@/views/test/TestTaking.vue')
 const TestResult = () => import('@/views/test/TestResult.vue')
 const TestTrend = () => import('@/views/test/TestTrend.vue')
+const ComprehensiveAnalysis = () => import('@/views/test/ComprehensiveAnalysis.vue')
 
 // 个人中心
 const Profile = () => import('@/views/profile/Profile.vue')
@@ -127,6 +128,12 @@ const routes = [
     name: 'TestTrend',
     component: TestTrend,
     meta: { title: '测试趋势 - 心理咨询平台', requiresAuth: true }
+  },
+  {
+    path: '/test/analysis',
+    name: 'ComprehensiveAnalysis',
+    component: ComprehensiveAnalysis,
+    meta: { title: '综合分析 - 心理咨询平台', requiresAuth: true }
   },
   {
     path: '/profile',

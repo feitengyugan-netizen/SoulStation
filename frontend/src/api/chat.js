@@ -1,6 +1,6 @@
 // 智能问答相关API
-import request from './index'
 import { getToken } from '@/utils/storage'
+import request from './index'
 
 // 获取API基础URL
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
@@ -168,7 +168,19 @@ export function addTagToChat(chatId, tagId) {
   return request({
     url: `/chat/${chatId}/tag`,
     method: 'post',
-    data: { tagId }
+    params: { tag_id: tagId }
+  })
+}
+
+/**
+ * 移除对话的标签
+ * @param {string} chatId - 对话ID
+ * @param {string} tagId - 标签ID
+ */
+export function removeTagFromChat(chatId, tagId) {
+  return request({
+    url: `/chat/${chatId}/tag/${tagId}`,
+    method: 'delete'
   })
 }
 

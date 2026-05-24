@@ -13,6 +13,11 @@ from app.schemas.chat import (
 )
 from app.services.ai_service import ai_service
 from app.services.rag_service import rag_service
+from app.services.crisis_service import (
+    detect_crisis,
+    build_crisis_system_instruction,
+    get_crisis_level_label,
+)
 
 
 class ChatService:
@@ -356,9 +361,18 @@ class ChatService:
                 + "\n\n---\n\n".join(parts)
             )
 
+        # ── 危机检测 ────────────────────────────────────────────────────
+        crisis_level, crisis_keywords = detect_crisis(message_data.content)
+        is_crisis = crisis_level > 0
+
         # 构建消息列表（按时间正序）
+        base_system_prompt = ai_service.generate_system_prompt(kb_context)
+        if is_crisis:
+            crisis_instruction = build_crisis_system_instruction(is_crisis)
+            base_system_prompt += crisis_instruction
+
         messages_list = [
-            {"role": "system", "content": ai_service.generate_system_prompt(kb_context)}
+            {"role": "system", "content": base_system_prompt}
         ]
         for msg in reversed(history_messages):
             messages_list.append({
@@ -404,7 +418,10 @@ class ChatService:
                 "content": ai_message.content,
                 "created_at": ai_message.created_at
             },
-            "dialogue_title": final_dialogue_title
+            "dialogue_title": final_dialogue_title,
+            "crisis_detected": is_crisis,
+            "crisis_level": crisis_level,
+            "crisis_keywords": crisis_keywords if is_crisis else []
         }
 
     # ========== 标签管理 ==========
@@ -541,6 +558,47 @@ class ChatService:
             tag_id=tag_id
         )
         db.add(dialogue_tag)
+        db.commit()
+        return True
+
+    @staticmethod
+    def remove_tag_from_dialogue(db: Session, dialogue_id: int, tag_id: int, user_id: int) -> bool:
+        """
+        从对话中移除标签
+
+        Args:
+            db: 数据库会话
+            dialogue_id: 对话ID
+            tag_id: 标签ID
+            user_id: 用户ID
+
+        Returns:
+            bool: 是否移除成功
+        """
+        # 验证对话是否属于该用户
+        dialogue = db.query(ChatDialogue).filter(
+            and_(
+                ChatDialogue.id == dialogue_id,
+                ChatDialogue.user_id == user_id,
+                ChatDialogue.is_deleted == False
+            )
+        ).first()
+
+        if not dialogue:
+            return False
+
+        # 查找关联并删除
+        existing = db.query(ChatDialogueTag).filter(
+            and_(
+                ChatDialogueTag.dialogue_id == dialogue_id,
+                ChatDialogueTag.tag_id == tag_id
+            )
+        ).first()
+
+        if not existing:
+            return False
+
+        db.delete(existing)
         db.commit()
         return True
 

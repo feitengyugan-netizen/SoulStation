@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 class RAGService:
     """RAG 向量检索服务，延迟初始化避免启动时加载大模型"""
 
+    # 模型本地路径（相对于 backend/ 目录）
+    _LOCAL_MODEL_PATH = "models/"
+
     def __init__(self):
         self._client = None
         self._collection = None
@@ -20,12 +23,21 @@ class RAGService:
         self._lock = threading.Lock()  # 防止并发初始化时的竞争条件
 
     def _get_embedding_function(self):
-        """懒加载 Sentence-Transformers 嵌入函数"""
+        """懒加载 Sentence-Transformers 嵌入函数（先从本地加载）"""
         if self._ef is None:
+            import os
             from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-            self._ef = SentenceTransformerEmbeddingFunction(
-                model_name="paraphrase-multilingual-MiniLM-L12-v2"
-            )
+            # 优先从本地目录加载，避免连 huggingface.co
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            local_path = os.path.join(base_dir, self._LOCAL_MODEL_PATH)
+            if os.path.isdir(local_path):
+                logger.info(f"[RAG] 从本地加载嵌入模型: {local_path}")
+                self._ef = SentenceTransformerEmbeddingFunction(model_name=local_path)
+            else:
+                logger.info("[RAG] 未找到本地模型，从 HuggingFace 在线加载")
+                self._ef = SentenceTransformerEmbeddingFunction(
+                    model_name="paraphrase-multilingual-MiniLM-L12-v2"
+                )
         return self._ef
 
     def _get_client(self):
