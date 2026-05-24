@@ -31,6 +31,9 @@
       <div class="header-right">
         <!-- 功能按钮区?-->
         <div class="header-actions">
+          <el-tooltip content="历史记录" placement="bottom">
+            <el-button circle :icon="Clock" @click="showHistory = true" />
+          </el-tooltip>
           <el-tooltip content="标签管理" placement="bottom">
             <el-button circle :icon="PriceTag" @click="showTagManager = true" />
           </el-tooltip>
@@ -336,6 +339,16 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 历史记录抽屉 -->
+    <el-drawer
+      v-model="showHistory"
+      title="历史对话"
+      size="380px"
+      :with-header="true"
+    >
+      <ChatHistory @select="handleHistorySelect" />
+    </el-drawer>
   </div>
 </template>
 
@@ -359,8 +372,10 @@ import {
   PriceTag,
   Download,
   Setting,
-  DocumentCopy
+  DocumentCopy,
+  Clock
 } from '@element-plus/icons-vue'
+import ChatHistory from '@/components/chat/ChatHistory.vue'
 import { useUserStore } from '@/stores/user'
 import { getChatList, createChat, deleteChat, updateChatTitle, sendMessage as sendMessageApi, sendMessageStream, getChatDetail, addTagToChat, removeTagFromChat } from '@/api/chat'
 import { getTags } from '@/api/chat'
@@ -400,6 +415,7 @@ const newTagName = ref('')
 const newTagColor = ref('#e8845a')
 // 标签分配
 const tagPopoverChatId = ref(null)
+const showHistory = ref(false)
 
 const toggleTagPopover = (chatId) => {
   tagPopoverChatId.value = tagPopoverChatId.value === chatId ? null : chatId
@@ -959,6 +975,16 @@ const handleUserCommand = async (command) => {
     case 'logout':
       await userStore.logout()
       break
+  }
+}
+
+// 历史记录选择
+const handleHistorySelect = ({ type, id }) => {
+  showHistory.value = false
+  if (type === 'chat') {
+    selectChat(id)
+  } else if (type === 'test') {
+    router.push({ name: 'TestResult', params: { id } })
   }
 }
 
