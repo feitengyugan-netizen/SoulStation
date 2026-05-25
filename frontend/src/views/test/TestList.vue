@@ -106,7 +106,7 @@
             <div v-if="!historyLoading && history.length > 0" class="analysis-banner">
               <div class="banner-content">
                 <div class="banner-text">
-                  <h3>🤖 生成您的综合心理分析报告</h3>
+                  <h3>生成您的综合心理分析报告</h3>
                   <p>基于您最近的测试记录，AI将为您生成一份全面的心理分析报告</p>
                 </div>
                 <el-button type="primary" size="large" @click="goToAnalysis">
@@ -146,6 +146,7 @@
                   <p v-if="item.result_title" class="result-title">{{ item.result_title }}</p>
                 </div>
                 <div class="history-action">
+                  <el-button type="danger" :icon="Delete" circle size="small" @click.stop="handleDelete(item.id)" />
                   <el-button type="primary" :icon="ArrowRight" circle />
                 </div>
               </div>
@@ -173,9 +174,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { HotWater, DocumentCopy, Clock, User, ArrowRight, MagicStick } from '@element-plus/icons-vue'
-import { getTestList, getTestHistory } from '@/api/test'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { HotWater, DocumentCopy, Clock, User, ArrowRight, MagicStick, Delete } from '@element-plus/icons-vue'
+import { getTestList, getTestHistory, deleteTestResult } from '@/api/test'
 import { useUserStore } from '@/stores/user'
 import { formatNumber } from '@/utils/format'
 
@@ -349,6 +350,29 @@ const handleHistoryPageChange = () => {
 // 查看结果
 const viewResult = (resultId) => {
   router.push(`/test/${resultId}/result`)
+}
+
+// 删除结果
+const handleDelete = async (resultId) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除此测试记录吗？删除后无法恢复。',
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    await deleteTestResult(resultId)
+    ElMessage.success('删除成功')
+    loadHistory()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error(error.response?.data?.detail || '删除失败')
+    }
+  }
 }
 
 // 跳转到全部测试

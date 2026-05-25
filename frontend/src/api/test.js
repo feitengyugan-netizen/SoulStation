@@ -54,6 +54,17 @@ export function saveProgress(testId, data) {
 }
 
 /**
+ * 获取答题进度（用于断点续答）
+ * @param {string} testId - 测试ID
+ */
+export function getProgress(testId) {
+  return request({
+    url: `/test/${testId}/progress`,
+    method: 'get'
+  })
+}
+
+/**
  * 提交测试答案
  * @param {string} testId - 测试ID
  * @param {Object} data
@@ -121,6 +132,17 @@ export function favoriteResult(resultId) {
 export function unfavoriteResult(resultId) {
   return request({
     url: `/test/result/${resultId}/favorite`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 删除测试结果
+ * @param {string} resultId - 结果ID
+ */
+export function deleteTestResult(resultId) {
+  return request({
+    url: `/test/result/${resultId}`,
     method: 'delete'
   })
 }

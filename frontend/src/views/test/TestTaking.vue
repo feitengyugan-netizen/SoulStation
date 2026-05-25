@@ -76,7 +76,6 @@
             <el-button
               v-if="currentIndex < questions.length - 1"
               type="primary"
-              :disabled="currentAnswer === null"
               @click="nextQuestion"
             >
               下一题
@@ -85,7 +84,6 @@
             <el-button
               v-else
               type="primary"
-              :disabled="currentAnswer === null"
               :loading="submitting"
               @click="submitAnswers"
             >
@@ -143,8 +141,8 @@
       title="确认退出"
       width="400px"
     >
-      <p>您确定要退出测试吗？</p>
-      <p class="tip">已答题目会自动保存，您可以在"我的测试"中继续完成。</p>
+      <p>退出后将自动保存当前作答进度，下次可继续作答。</p>
+      <p class="tip">已提交的测试记录可在"我的测试"中查看。</p>
       <template #footer>
         <el-button @click="exitDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmExit">
@@ -160,7 +158,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Clock } from '@element-plus/icons-vue'
-import { getTestDetail, startTest, saveProgress as saveProgressApi, submitTest } from '@/api/test'
+import { getTestDetail, startTest, saveProgress as saveProgressApi, getProgress, submitTest } from '@/api/test'
 
 const router = useRouter()
 const route = useRoute()
@@ -248,6 +246,27 @@ const startTesting = async () => {
     // 初始化答案数组
     answers.value = new Array(questions.value.length).fill(null)
 
+    // 尝试获取已保存的进度（断点续答）
+    try {
+      const progressRes = await getProgress(testId)
+      if (progressRes.data) {
+        const savedAnswers = progressRes.data.answers || {}
+        Object.keys(savedAnswers).forEach((key) => {
+          const idx = parseInt(key, 10)
+          if (idx >= 0 && idx < answers.value.length) {
+            answers.value[idx] = savedAnswers[key]
+          }
+        })
+        // 跳转到已答的最后一道题
+        if (progressRes.data.current_question) {
+          currentIndex.value = progressRes.data.current_question
+        }
+      }
+    } catch (e) {
+      // 没有进度记录，从头开始
+      console.log('无进度记录，从头开始')
+    }
+
     // 开始计时
     startTimer()
   } catch (error) {
@@ -287,11 +306,6 @@ const previousQuestion = () => {
 
 // 下一题
 const nextQuestion = () => {
-  if (currentAnswer === null) {
-    ElMessage.warning('请先选择一个答案')
-    return
-  }
-
   if (currentIndex.value < questions.value.length - 1) {
     currentIndex.value++
   }
@@ -368,10 +382,29 @@ const handleExit = () => {
   exitDialogVisible.value = true
 }
 
-// 确认退出
-const confirmExit = () => {
+// 确认退出（保存当前进度，退出测试）
+const confirmExit = async () => {
   stopTimer()
   exitDialogVisible.value = false
+
+  // 检查是否有已答题目
+  const hasAnswers = answers.value.some(a => a !== null)
+  if (hasAnswers) {
+    try {
+      saving.value = true
+      await saveProgressApi(testId, {
+        answers: answersToObject(answers.value)
+      })
+      ElMessage.success('进度已保存')
+    } catch (error) {
+      console.error('保存失败:', error)
+      ElMessage.error('保存失败')
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // 退出后返回测试列表
   router.push('/test')
 }
 
@@ -593,6 +626,46 @@ onBeforeUnmount(() => {
     &:hover:not(.current) {
       border-color: rgba(232,132,90,0.5);
       background: rgba(232,132,90,0.06);
+    }
+  }
+}
+
+.answer-legend {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0 0;
+  border-top: 1px solid $border-lighter;
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: $text-secondary;
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+
+      &.answered {
+        background: rgba(232,132,90,0.12);
+        border: 1.5px solid $primary-color;
+      }
+
+      &.current {
+        background: $primary-gradient;
+        border: 1.5px solid transparent;
+        box-shadow: 0 2px 6px rgba(200,110,60,0.35);
+      }
+
+      &.skipped {
+        background: transparent;
+        border: 1.5px solid $border-lighter;
+      }
     }
   }
 }

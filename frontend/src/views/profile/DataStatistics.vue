@@ -19,28 +19,28 @@
           <div class="ds-stat-icon" style="--c:#e8845a">
             <el-icon :size="22"><DocumentCopy /></el-icon>
           </div>
-          <div class="ds-stat-num">{{ overviewData.testCount || 0 }}</div>
+            <div class="ds-stat-num">{{ overviewData.test_count || 0 }}</div>
           <div class="ds-stat-lbl">心理测试</div>
         </div>
         <div class="ds-stat-card">
           <div class="ds-stat-icon" style="--c:#9b8bb4">
             <el-icon :size="22"><ChatDotSquare /></el-icon>
           </div>
-          <div class="ds-stat-num">{{ overviewData.chatCount || 0 }}</div>
+            <div class="ds-stat-num">{{ overviewData.chat_count || 0 }}</div>
           <div class="ds-stat-lbl">对话次数</div>
         </div>
         <div class="ds-stat-card">
           <div class="ds-stat-icon" style="--c:#56ab91">
             <el-icon :size="22"><Calendar /></el-icon>
           </div>
-          <div class="ds-stat-num">{{ overviewData.appointmentCount || 0 }}</div>
+            <div class="ds-stat-num">{{ overviewData.appointment_count || 0 }}</div>
           <div class="ds-stat-lbl">预约次数</div>
         </div>
         <div class="ds-stat-card">
           <div class="ds-stat-icon" style="--c:#f4a57a">
             <el-icon :size="22"><Star /></el-icon>
           </div>
-          <div class="ds-stat-num">{{ overviewData.favoriteCount || 0 }}</div>
+            <div class="ds-stat-num">{{ overviewData.favorite_count || 0 }}</div>
           <div class="ds-stat-lbl">收藏文章</div>
         </div>
       </div>
@@ -112,10 +112,10 @@ const allowTrendAnalysis = ref(true)
 
 // 总览数据
 const overviewData = ref({
-  testCount: 0,
-  chatCount: 0,
-  appointmentCount: 0,
-  favoriteCount: 0
+  test_count: 0,
+  chat_count: 0,
+  appointment_count: 0,
+  favorite_count: 0
 })
 
 // 加载统计数据

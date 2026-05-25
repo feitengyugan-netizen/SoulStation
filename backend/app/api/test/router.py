@@ -304,18 +304,7 @@ async def favorite_result(
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
 
-    result = TestService.toggle_favorite(db, result_id, current_user.id)
-
-    if not result:
-        raise HTTPException(status_code=404, detail="结果不存在")
-
-    return ApiResponse(
-        code=200,
-        message="收藏状态已更新",
-        data={
-            "is_favorite": result.is_favorite
-        }
-    )
+    result = TestService.add_favorite(db, result_id, current_user.id)
 
 
 @router.delete("/result/{result_id}/favorite", response_model=ApiResponse)
@@ -330,18 +319,36 @@ async def unfavorite_result(
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
 
-    result = TestService.toggle_favorite(db, result_id, current_user.id)
-
-    if not result:
-        raise HTTPException(status_code=404, detail="结果不存在")
+    result = TestService.remove_favorite(db, result_id, current_user.id)
 
     return ApiResponse(
         code=200,
-        message="已取消收藏",
-        data={
-            "is_favorite": result.is_favorite
-        }
+        message="成功",
+        data=result
     )
+
+
+@router.delete("/result/{result_id}", response_model=ApiResponse)
+async def delete_test_result(
+    result_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """
+    删除测试结果（软删除）
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    try:
+        TestService.delete_test_result(db, result_id, current_user.id)
+        return ApiResponse(
+            code=200,
+            message="删除成功",
+            data=None
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/{test_id}/progress", response_model=ApiResponse)

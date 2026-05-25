@@ -104,8 +104,17 @@ const formattedDuration = computed(() => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 })
 
+/** 检查浏览器是否支持麦克风（需要 HTTPS 或 localhost） */
+function isMediaDevicesSupported() {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+}
+
 /** 页面加载时枚举所有音频输入设备 */
 onMounted(async () => {
+  if (!isMediaDevicesSupported()) {
+    console.warn('[录音] 当前页面不是安全上下文（需要 HTTPS 或 localhost），无法访问麦克风')
+    return
+  }
   try {
     // 先请求一次麦克风权限，让设备 label 可读（浏览器安全限制，必须在用户手势中才读得到 label）
     const preStream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -138,6 +147,15 @@ function onDeviceChanged() {
 }
 
 const startRecording = async () => {
+  // 检查浏览器是否支持麦克风访问
+  if (!isMediaDevicesSupported()) {
+    ElMessageBox.alert(
+      '浏览器无法访问麦克风。\n\n可能原因：\n1. 当前页面未通过 HTTPS 访问（非 localhost 环境需要 HTTPS）\n2. 浏览器不支持麦克风功能\n\n建议：\n• 使用 localhost 访问\n• 或配置 HTTPS 证书后通过 https:// 访问',
+      '麦克风不可用',
+      { type: 'error', confirmButtonText: '知道了' }
+    )
+    return
+  }
   try {
     // 1. 枚举音频输入设备（每次录音前重新检测，设备可能已插拔）
     const preStream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -316,6 +334,12 @@ function handleStartError(error) {
     )
   } else if (error.name === 'NotReadableError') {
     ElMessage.error('麦克风被其他应用占用，请关闭其他使用麦克风的程序后重试')
+  } else if (error.name === 'TypeError' && error.message?.includes('getUserMedia')) {
+    ElMessageBox.alert(
+      '浏览器无法访问麦克风。\n\n可能原因：\n1. 当前页面未通过 HTTPS 访问（非 localhost 环境需要 HTTPS）\n2. 浏览器不支持麦克风功能\n\n建议：\n• 使用 localhost 访问\n• 或配置 HTTPS 证书后通过 https:// 访问',
+      '麦克风不可用',
+      { type: 'error', confirmButtonText: '知道了' }
+    )
   } else {
     ElMessage.error(error.message || '无法启动录音')
   }
@@ -401,8 +425,9 @@ const transcribeAudio = async (blob, duration) => {
     }
 
     const result = await response.json()
-    if (result.code === 200 && result.data?.text) {
-      emit('transcription-result', result.data.text)
+    if (result.code === 200 && result.data?.text?.trim()) {
+      ElMessage.success('语音识别成功')
+      emit('transcription-result', result.data.text.trim())
     } else {
       throw new Error('识别结果为空')
     }

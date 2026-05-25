@@ -137,6 +137,9 @@
             <el-button :icon="RefreshRight" @click="retakeTest">
               重新测试
             </el-button>
+            <el-button type="danger" :icon="Delete" @click="handleDelete">
+              删除记录
+            </el-button>
           </div>
         </div>
       </el-card>
@@ -170,7 +173,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
   Share,
@@ -180,9 +183,10 @@ import {
   Star,
   StarFilled,
   RefreshRight,
-  ArrowRight
+  ArrowRight,
+  Delete
 } from '@element-plus/icons-vue'
-import { getTestResult, favoriteResult, unfavoriteResult } from '@/api/test'
+import { getTestResult, favoriteResult, unfavoriteResult, deleteTestResult } from '@/api/test'
 
 const router = useRouter()
 const route = useRoute()
@@ -329,6 +333,29 @@ const viewTrend = () => {
 // 重新测试
 const retakeTest = () => {
   router.push(`/test/${resultData.value.testId}/taking`)
+}
+
+// 删除结果
+const handleDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除此测试记录吗？删除后无法恢复。',
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    await deleteTestResult(resultId)
+    ElMessage.success('删除成功')
+    router.push('/test')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error(error.response?.data?.detail || '删除失败')
+    }
+  }
 }
 
 // 开始AI深度咨询

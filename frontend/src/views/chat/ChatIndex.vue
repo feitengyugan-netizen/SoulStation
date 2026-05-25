@@ -835,7 +835,6 @@ const scrollToBottom = () => {
 const handleTranscriptionResult = (text) => {
   // 将识别结果填充到输入框
   inputMessage.value += (inputMessage.value ? ' ' : '') + text
-  ElMessage.success('语音识别成功')
 }
 
 // 标签管理方法

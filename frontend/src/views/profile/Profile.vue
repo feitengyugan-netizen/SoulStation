@@ -26,25 +26,25 @@
         <div class="stats-row">
           <div class="stat-cell" @click="navigateTo('/test')">
             <el-icon :size="20" color="#e8845a"><DocumentCopy /></el-icon>
-            <span class="num">{{ statistics.testCount || 0 }}</span>
+            <span class="num">{{ statistics.test_count || 0 }}</span>
             <span class="lbl">心理测试</span>
           </div>
           <div class="stat-divider" />
           <div class="stat-cell" @click="navigateTo('/chat')">
             <el-icon :size="20" color="#9b8bb4"><ChatDotSquare /></el-icon>
-            <span class="num">{{ statistics.chatCount || 0 }}</span>
+            <span class="num">{{ statistics.chat_count || 0 }}</span>
             <span class="lbl">智能问答</span>
           </div>
           <div class="stat-divider" />
           <div class="stat-cell" @click="navigateTo('/counselor/orders')">
             <el-icon :size="20" color="#56ab91"><Calendar /></el-icon>
-            <span class="num">{{ statistics.appointmentCount || 0 }}</span>
+            <span class="num">{{ statistics.appointment_count || 0 }}</span>
             <span class="lbl">咨询预约</span>
           </div>
           <div class="stat-divider" />
           <div class="stat-cell" @click="navigateTo('/knowledge')">
             <el-icon :size="20" color="#f4a57a"><Star /></el-icon>
-            <span class="num">{{ statistics.favoriteCount || 0 }}</span>
+            <span class="num">{{ statistics.favorite_count || 0 }}</span>
             <span class="lbl">收藏内容</span>
           </div>
         </div>

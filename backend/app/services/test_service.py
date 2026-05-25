@@ -652,6 +652,11 @@ class TestService:
         if save_record:
             db.add(result)
             db.flush()  # 先flush以获得result.id
+        else:
+            # 即使不保存到用户历史，仍写入数据库并标记为删除（用于数据追溯）
+            result.is_deleted = True
+            db.add(result)
+            db.flush()
 
         # 生成AI建议（异步，不阻塞用户）
         try:
@@ -674,8 +679,7 @@ class TestService:
         ).delete()
 
         db.commit()
-        if save_record:
-            db.refresh(result)
+        db.refresh(result)
 
         # 附加测试信息
         result.test_code = test.test_code
@@ -844,7 +848,10 @@ class TestService:
     def get_test_history(db: Session, user_id: int, test_id: Optional[int] = None,
                         page: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """获取用户测试历史"""
-        q = db.query(TestResult).filter(TestResult.user_id == user_id)
+        q = db.query(TestResult).filter(
+            TestResult.user_id == user_id,
+            TestResult.is_deleted == False
+        )
 
         if test_id:
             q = q.filter(TestResult.test_id == test_id)
@@ -924,6 +931,78 @@ class TestService:
                 result.test_title = test.title
 
         return result
+
+    @staticmethod
+    def add_favorite(db: Session, result_id: int, user_id: int) -> Optional[TestResult]:
+        """收藏结果（幂等）"""
+        result = db.query(TestResult).filter(
+            and_(
+                TestResult.id == result_id,
+                TestResult.user_id == user_id
+            )
+        ).first()
+
+        if result:
+            result.is_favorite = True
+            db.commit()
+            db.refresh(result)
+
+            test = db.query(PsychologicalTest).filter(PsychologicalTest.id == result.test_id).first()
+            if test:
+                result.test_code = test.test_code
+                result.test_title = test.title
+
+        return result
+
+    @staticmethod
+    def remove_favorite(db: Session, result_id: int, user_id: int) -> Optional[TestResult]:
+        """取消收藏（幂等）"""
+        result = db.query(TestResult).filter(
+            and_(
+                TestResult.id == result_id,
+                TestResult.user_id == user_id
+            )
+        ).first()
+
+        if result:
+            result.is_favorite = False
+            db.commit()
+            db.refresh(result)
+
+            test = db.query(PsychologicalTest).filter(PsychologicalTest.id == result.test_id).first()
+            if test:
+                result.test_code = test.test_code
+                result.test_title = test.title
+
+        return result
+
+    @staticmethod
+    def delete_test_result(db: Session, result_id: int, user_id: int) -> bool:
+        """
+        软删除测试结果
+
+        Args:
+            db: 数据库会话
+            result_id: 结果ID
+            user_id: 用户ID
+
+        Returns:
+            是否删除成功
+        """
+        result = db.query(TestResult).filter(
+            and_(
+                TestResult.id == result_id,
+                TestResult.user_id == user_id,
+                TestResult.is_deleted == False
+            )
+        ).first()
+
+        if not result:
+            raise ValueError("测试结果不存在")
+
+        result.is_deleted = True
+        db.commit()
+        return True
 
     @staticmethod
     def get_progress(db: Session, user_id: int, test_id: int) -> Optional[TestProgress]:

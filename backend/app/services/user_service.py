@@ -12,6 +12,8 @@ import os
 from app.models.user import User
 from app.models.chat import ChatDialogue, ChatMessage, ChatTag, ChatDialogueTag
 from app.models.test import TestResult
+from app.models.counselor import Appointment
+from app.models.knowledge import KnowledgeFavorite
 from app.schemas.user import (
     UserProfileResponse, UserProfileUpdate, PrivacySettings,
     UserStatistics, ActivityTrendItem, TestDistributionItem, ChatDistributionItem
@@ -229,9 +231,22 @@ class UserService:
             )
         ).scalar() or 0
 
-        # TODO: 预约次数和收藏次数需要相应的表支持
-        appointment_count = 0
-        favorite_count = 0
+        # 统计预约次数
+        appointment_count = db.query(func.count(Appointment.id)).filter(
+            and_(
+                Appointment.user_id == user_id,
+                Appointment.created_at >= start_date,
+                Appointment.status.in_(['pending', 'confirmed', 'in_progress', 'completed'])
+            )
+        ).scalar() or 0
+
+        # 统计收藏文章次数
+        favorite_count = db.query(func.count(KnowledgeFavorite.id)).filter(
+            and_(
+                KnowledgeFavorite.user_id == user_id,
+                KnowledgeFavorite.created_at >= start_date
+            )
+        ).scalar() or 0
 
         return UserStatistics(
             test_count=test_count,
