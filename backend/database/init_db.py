@@ -58,14 +58,14 @@ def seed_data(db: Session):
         if db.query(User).filter(User.email == u["email"]).first():
             print(f"  [SKIP] {u['email']} 已存在，跳过")
             continue
-        db.add(User(password=hash_password, is_verified=True, status="active",
+        db.add(User(password=password_hash, is_verified=True, status="active",
                     **u))
         print(f"  [OK] {u['email']} ({u['nickname']})")
 
     # ── 管理员 ──
     admin_email = "admin@soulstation.com"
     if not db.query(User).filter(User.email == admin_email).first():
-        db.add(User(email=admin_email, password=hash_password,
+        db.add(User(email=admin_email, password=password_hash,
                     nickname="系统管理员", role="admin",
                     is_verified=True, status="active"))
         print(f"  [OK] {admin_email} (系统管理员)")
@@ -137,7 +137,7 @@ def seed_data(db: Session):
         if db.query(User).filter(User.email == c["email"]).first():
             print(f"  [SKIP] {c['email']} 已存在，跳过")
             continue
-        user = User(email=c["email"], password=hash_password,
+        user = User(email=c["email"], password=password_hash,
                     nickname=c["nickname"], role="counselor",
                     is_verified=True, status="active")
         db.add(user)
