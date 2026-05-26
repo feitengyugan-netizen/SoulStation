@@ -63,10 +63,14 @@ request.interceptors.response.use(
           ElMessage.error(errorMessage)
           break
         case 401:
-          ElMessage.error('未登录或登录已过期')
-          sessionStorage.removeItem('token')
-          sessionStorage.removeItem('userInfo')
-          window.location.href = '/login'
+          // 显示后端返回的具体错误信息（如"邮箱或密码错误"）
+          ElMessage.error(errorMessage)
+          // 不在登录页时再跳转登录页，避免登录失败也被重定向
+          if (!window.location.pathname.includes('/login')) {
+            sessionStorage.removeItem('token')
+            sessionStorage.removeItem('userInfo')
+            window.location.href = '/login'
+          }
           break
         case 403:
           ElMessage.error(errorMessage || '没有权限访问')

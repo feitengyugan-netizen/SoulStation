@@ -108,15 +108,19 @@ async def register(
 
 
 @router.post("/send-code", summary="发送验证码")
-async def send_code(request: SendCodeRequest):
+async def send_code(
+    request: SendCodeRequest,
+    db: Session = Depends(get_db)
+):
     """
     发送邮箱验证码
 
     - **email**: 邮箱地址
+    - **purpose**: 验证码用途，"register" 注册 / "reset" 找回密码
 
     验证码有效期为5分钟，每个邮箱间隔60秒才能重新发送。
     """
-    success, message, remaining = AuthService.send_verification_code(request.email)
+    success, message, remaining = AuthService.send_verification_code(db, request.email, request.purpose)
 
     if success:
         return {

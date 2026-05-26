@@ -4,12 +4,13 @@ import request from './index'
 /**
  * 发送邮箱验证码
  * @param {string} email - 邮箱地址
+ * @param {string} purpose - 验证码用途（register/reset）
  */
-export function sendEmailCode(email) {
+export function sendEmailCode(email, purpose) {
   return request({
     url: '/auth/send-code',
     method: 'post',
-    data: { email }
+    data: { email, purpose }
   })
 }
 

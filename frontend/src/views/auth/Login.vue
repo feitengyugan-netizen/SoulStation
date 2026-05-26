@@ -152,9 +152,7 @@ const handleLogin = async () => {
       router.push(redirectPath)
     }, 500)
   } catch (error) {
-    if (error.message) {
-      ElMessage.error(error.message || '登录失败，请检查账号密码')
-    }
+    // 错误提示已在请求拦截器中处理，此处无需重复显示
   } finally {
     loading.value = false
   }

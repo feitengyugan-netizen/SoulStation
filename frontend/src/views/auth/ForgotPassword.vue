@@ -249,7 +249,7 @@ const sendVerificationCode = async () => {
 
   try {
     sendingCode.value = true
-    await sendEmailCode(emailForm.email)
+    await sendEmailCode(emailForm.email, 'reset')
     ElMessage.success('验证码已发送至您的邮箱')
 
     // 开始倒计时

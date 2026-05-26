@@ -212,17 +212,13 @@
       <div class="chat-main">
         <!-- 未选择对话时的空状态 -->
         <div v-if="!currentChatId" class="chat-empty">
-          <el-result
-            icon="info"
-            title="选择一个对话或创建新对话"
-            sub-title="AI助手随时为您提供帮助"
-          >
-            <template #extra>
-              <el-button type="primary" :icon="Plus" @click="createNewChat">
-                开始新对话
-              </el-button>
-            </template>
-          </el-result>
+          <div style="text-align: center; padding: 80px 20px;">
+            <h3 style="margin-bottom: 12px; color: #5a4a3a; font-size: 18px; font-weight: 500;">选择一个对话或创建新对话</h3>
+            <p style="margin-bottom: 24px; color: #999; font-size: 14px;">AI助手随时为您提供帮助</p>
+            <el-button type="primary" :icon="Plus" @click="createNewChat">
+              开始新对话
+            </el-button>
+          </div>
         </div>
 
         <!-- 对话内容 -->

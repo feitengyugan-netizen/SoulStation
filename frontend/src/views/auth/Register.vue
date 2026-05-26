@@ -220,7 +220,7 @@ const sendVerificationCode = async () => {
   if (!emailReg.test(registerForm.email)) { ElMessage.error('请输入正确的邮箱格式'); return }
   try {
     sendingCode.value = true
-    await sendEmailCode(registerForm.email)
+    await sendEmailCode(registerForm.email, 'register')
     ElMessage.success('验证码已发送至您的邮箱，请注意查收')
     countdown.value = 60
     countdownTimer = setInterval(() => {

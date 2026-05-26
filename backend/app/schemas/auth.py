@@ -8,6 +8,7 @@ from typing import Optional
 class SendCodeRequest(BaseModel):
     """发送验证码请求"""
     email: EmailStr
+    purpose: Optional[str] = None  # "register" 注册 / "reset" 找回密码
 
 
 class RegisterRequest(BaseModel):

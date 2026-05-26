@@ -25,17 +25,34 @@ class AuthService:
         return ''.join(random.choices(string.digits, k=length))
 
     @staticmethod
-    def send_verification_code(email: str) -> Tuple[bool, str, int]:
+    def send_verification_code(db: Session, email: str, purpose: Optional[str] = None) -> Tuple[bool, str, int]:
         """
         发送验证码
 
         Args:
+            db: 数据库会话
             email: 邮箱地址
+            purpose: 验证码用途，"register" 注册 / "reset" 找回密码
 
         Returns:
             tuple: (是否成功, 消息, 剩余冷却时间)
         """
         try:
+            # 根据用途检查用户状态
+            if purpose == "reset":
+                # 找回密码：用户必须存在且账号正常
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    return False, "该邮箱未注册账号", 0
+                if user.is_deleted:
+                    return False, "账号已注销，无法找回密码", 0
+                if not user.is_active:
+                    return False, "账号已停用，无法找回密码", 0
+            elif purpose == "register":
+                # 注册：邮箱不能已被注册
+                user = db.query(User).filter(User.email == email).first()
+                if user:
+                    return False, "该邮箱已被注册", 0
             # 检查是否可以发送（防止频繁发送）
             can_send, remaining = VerificationCodeService.can_send_code(email, cooldown=60)
             if not can_send:

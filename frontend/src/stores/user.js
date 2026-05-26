@@ -82,13 +82,7 @@ export const useUserStore = defineStore('user', {
         this.setToken(res.data.token)
         this.setUserInfo(res.data.userInfo)
 
-        // 根据后端返回的redirect路径跳转，添加时间戳避免缓存
-        if (res.data.redirect) {
-          const redirectUrl = res.data.redirect + (res.data.redirect.includes('?') ? '&' : '?') + 't=' + Date.now()
-          window.location.href = redirectUrl
-        }
-
-        return res
+        return res.data
       } catch (error) {
         throw error
       }
