@@ -61,10 +61,11 @@ def main():
 
     items = load_json_data(limit=args.limit)
 
-    print("[2/4] 初始化 Sentence-Transformers 嵌入模型（首次运行需下载模型，约 400MB）...")
+    print("[2/4] 初始化 Sentence-Transformers 嵌入模型（使用本地模型）...")
     from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+    model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
     ef = SentenceTransformerEmbeddingFunction(
-        model_name="paraphrase-multilingual-MiniLM-L12-v2"
+        model_name=model_path
     )
 
     print(f"[3/4] 连接 ChromaDB: {CHROMA_DB_PATH}")

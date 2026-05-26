@@ -2,6 +2,7 @@
 RAG 服务 - 基于 ChromaDB 的向量检索增强生成
 """
 import logging
+import os
 import threading
 from typing import List, Dict
 
