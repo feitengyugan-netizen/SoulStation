@@ -55,7 +55,10 @@
           <span>分数变化趋势</span>
         </template>
 
-        <el-empty v-if="!loading && trendData.length === 0" description="暂无数据" />
+        <el-empty 
+          v-if="!loading && trendData.length === 0" 
+          :description="filters.testId ? '暂无数据' : '请选择一个测试查看趋势'" 
+        />
 
         <div v-else class="chart-container" ref="chartRef"></div>
       </el-card>
@@ -79,7 +82,7 @@
           <el-table-column prop="level" label="等级" width="120">
             <template #default="{ row }">
               <el-tag :type="getLevelType(row.level)">
-                {{ row.level }}
+                {{ levelLabel(row.level) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -138,6 +141,7 @@ const historyRecords = ref([])
 
 // 获取分数类型
 const getScoreType = (score, maxScore) => {
+  if (!score || !maxScore) return 'info'
   const percentage = (score / maxScore) * 100
   if (percentage >= 75) return 'success'
   if (percentage >= 50) return 'warning'
@@ -147,12 +151,26 @@ const getScoreType = (score, maxScore) => {
 // 获取等级类型
 const getLevelType = (level) => {
   const typeMap = {
-    '无': 'info',
-    '轻度': 'warning',
-    '中度': 'warning',
-    '重度': 'danger'
+    'normal': 'info',
+    'none': 'info',
+    'mild': 'warning',
+    'moderate': 'warning',
+    'severe': 'danger'
   }
   return typeMap[level] || 'info'
+}
+
+// 等级中文标签
+const levelLabel = (level) => {
+  const map = {
+    'none': '正常',
+    'normal': '正常',
+    'mild': '轻度',
+    'moderate': '中度',
+    'severe': '重度',
+    'unknown': '正常'
+  }
+  return map[level] || '正常'
 }
 
 // 加载历史记录
@@ -160,22 +178,32 @@ const loadHistory = async () => {
   try {
     loading.value = true
     const params = {
-      testId: filters.testId || undefined,
-      timeRange: filters.timeRange
+      testId: filters.testId || undefined
     }
     const res = await getTestHistory(params)
-    historyRecords.value = res.data.list || []
-
-    // 填充测试选项
-    if (testOptions.value.length === 1) {
-      const tests = res.data.tests || []
-      testOptions.value.push(
-        ...tests.map(test => ({
-          label: test.name,
-          value: test.id
-        }))
-      )
+    // 映射后端 snake_case 字段到前端 camelCase 字段
+    let items = (res.data.items || []).map(item => ({
+      id: item.id,
+      testId: item.test_id,
+      date: item.created_at ? item.created_at.slice(0, 10) : '',
+      testName: item.test_title || '未知测试',
+      score: item.total_score,
+      maxScore: item.max_score,
+      level: item.result_level,
+      levelTitle: item.result_title
+    }))
+    // 客户端时间范围过滤
+    if (filters.timeRange && filters.timeRange !== 'all') {
+      const now = new Date()
+      const cutoff = new Date()
+      const msMap = { '1month': 30, '3months': 90, '6months': 180, '1year': 365 }
+      cutoff.setDate(cutoff.getDate() - (msMap[filters.timeRange] || 180))
+      items = items.filter(item => {
+        if (!item.date) return true
+        return new Date(item.date) >= cutoff
+      })
     }
+    historyRecords.value = items
   } catch (error) {
     console.error('加载历史记录失败:', error)
     ElMessage.error('加载失败')
@@ -194,7 +222,11 @@ const loadTrend = async () => {
   try {
     loading.value = true
     const res = await getTestTrend(filters.testId)
-    trendData.value = res.data || []
+    // 映射后端趋势数据
+    trendData.value = (res.data?.trend_data || []).map(item => ({
+      date: item.date,
+      score: item.score
+    }))
 
     // 更新图表
     await nextTick()
@@ -311,8 +343,16 @@ const goBack = () => {
 }
 
 // 组件挂载
-onMounted(() => {
-  loadHistory()
+onMounted(async () => {
+  await loadHistory()
+  // 自动选取最近一次测试，加载趋势图
+  if (historyRecords.value.length > 0 && !filters.testId) {
+    const firstRecord = historyRecords.value[0]
+    if (firstRecord.testId) {
+      filters.testId = firstRecord.testId
+      await loadTrend()
+    }
+  }
 })
 
 // 组件卸载

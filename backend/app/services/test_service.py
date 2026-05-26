@@ -872,6 +872,8 @@ class TestService:
             if test:
                 result.test_code = test.test_code
                 result.test_title = test.title
+                result._total_questions = test.total_questions
+                result._option_type = test.option_type
 
         return {
             "total": total,

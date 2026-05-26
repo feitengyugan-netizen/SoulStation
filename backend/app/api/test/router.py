@@ -78,6 +78,16 @@ async def get_test_history(
     """
     result = TestService.get_test_history(db, current_user.id, test_id, page, page_size)
 
+    # 计算每项的 max_score
+    def calc_max_score(item):
+        total = getattr(item, '_total_questions', None)
+        opt = getattr(item, '_option_type', None)
+        if total and opt:
+            if '5' in opt:
+                return total * 5
+            return total * 4
+        return None
+
     items_data = [
         {
             "id": item.id,
@@ -85,6 +95,7 @@ async def get_test_history(
             "test_code": item.test_code,
             "test_title": item.test_title,
             "total_score": item.total_score,
+            "max_score": calc_max_score(item),
             "result_level": item.result_level,
             "result_title": item.result_title,
             "is_favorite": item.is_favorite,
