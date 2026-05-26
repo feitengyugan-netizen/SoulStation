@@ -27,6 +27,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Backend models (local ML models, not source)
+backend/models/
+
 # FastAPI
 .appveyor*
 .coverage
