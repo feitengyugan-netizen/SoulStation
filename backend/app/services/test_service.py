@@ -211,8 +211,8 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "躯体性焦虑", "score": physical_score, "level": level},
-                {"dimension": "精神性焦虑", "score": mental_score, "level": level}
+                {"dimension": "躯体性焦虑", "score": physical_score, "max_score": 32, "level": level},
+                {"dimension": "精神性焦虑", "score": mental_score, "max_score": 48, "level": level}
             ],
             "result_level": level,
             "result_title": title,
@@ -255,9 +255,9 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "情绪低落", "score": emotional_score, "level": level},
-                {"dimension": "兴趣减退", "score": interest_score, "level": level},
-                {"dimension": "躯体症状", "score": physical_score, "level": level}
+                {"dimension": "情绪低落", "score": emotional_score, "max_score": 32, "level": level},
+                {"dimension": "兴趣减退", "score": interest_score, "max_score": 20, "level": level},
+                {"dimension": "躯体症状", "score": physical_score, "max_score": 28, "level": level}
             ],
             "result_level": level,
             "result_title": title,
@@ -328,6 +328,7 @@ class TestService:
             dimension_descs.append({
                 "dimension": d["dimension"],
                 "score": d["score"],
+                "max_score": 20,  # 每个维度4题×5分
                 "level": level,
                 "description": desc
             })
@@ -376,9 +377,9 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "工作/学习压力", "score": work_score, "level": level},
-                {"dimension": "生活压力", "score": life_score, "level": level},
-                {"dimension": "人际关系压力", "score": relationship_score, "level": level}
+                {"dimension": "工作/学习压力", "score": work_score, "max_score": 28, "level": level},
+                {"dimension": "生活压力", "score": life_score, "max_score": 24, "level": level},
+                {"dimension": "人际关系压力", "score": relationship_score, "max_score": 28, "level": level}
             ],
             "result_level": level,
             "result_title": title,
@@ -454,8 +455,8 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "恐惧", "score": fear_score, "level": level},
-                {"dimension": "回避", "score": avoidance_score, "level": level}
+                {"dimension": "恐惧", "score": fear_score, "max_score": 40, "level": level},
+                {"dimension": "回避", "score": avoidance_score, "max_score": 40, "level": level}
             ],
             "result_level": level,
             "result_title": title,
@@ -539,9 +540,9 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "情绪衰竭", "score": exhaustion_score, "level": level},
-                {"dimension": "去人格化", "score": depersonalization_score, "level": level},
-                {"dimension": "个人成就感", "score": achievement_score, "level": level}
+                {"dimension": "情绪衰竭", "score": exhaustion_score, "max_score": 35, "level": level},
+                {"dimension": "去人格化", "score": depersonalization_score, "max_score": 35, "level": level},
+                {"dimension": "个人成就感", "score": achievement_score, "max_score": 35, "level": level}
             ],
             "result_level": level,
             "result_title": title,
@@ -582,9 +583,9 @@ class TestService:
         return {
             "total_score": total_score,
             "dimension_scores": [
-                {"dimension": "睡眠问题", "score": problem_score, "level": level},
-                {"dimension": "主观质量", "score": quality_score, "level": level},
-                {"dimension": "睡眠时间", "score": time_score, "level": level}
+                {"dimension": "睡眠问题", "score": problem_score, "max_score": 36, "level": level},
+                {"dimension": "主观质量", "score": quality_score, "max_score": 9, "level": level},
+                {"dimension": "睡眠时间", "score": time_score, "max_score": 9, "level": level}
             ],
             "result_level": level,
             "result_title": title,

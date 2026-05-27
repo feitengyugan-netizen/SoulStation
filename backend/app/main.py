@@ -144,16 +144,6 @@ uploads_dir = Path("uploads")
 uploads_dir.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# 开发人员 A 的路由
-# from app.api.member_a.chat import router as chat_router
-# from app.api.member_a.profile import router as profile_router
-
-# 开发人员 B 的路由
-# from app.api.member_b.consultation import router as consultation_router
-# from app.api.member_b.dialogue import router as dialogue_router
-# from app.api.member_b.admin import router as admin_router
-# from app.api.member_b.public import router as public_router
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

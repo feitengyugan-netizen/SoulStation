@@ -2,6 +2,8 @@
 邮件服务
 """
 import smtplib
+import socket
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
@@ -17,23 +19,78 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """邮件服务类"""
 
+    # SMTP 默认超时（秒）
+    SMTP_TIMEOUT = 30
+    # 最大重试次数
+    MAX_RETRIES = 2
+    # IP 直连回退（绕过 DNS 解析）
+    SMTP_IPS = {
+        "smtp.163.com": ["111.124.203.45", "111.124.203.55"],
+    }
+
+    @staticmethod
+    def _resolve_smtp_host() -> str:
+        """尝试解析 SMTP 服务器 IP，必要时直接返回 IP 直连"""
+        host = settings.MAIL_SERVER
+        if host not in EmailService.SMTP_IPS:
+            return host
+        # 尝试 DNS 解析
+        try:
+            socket.getaddrinfo(host, settings.MAIL_PORT, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            return host  # DNS 正常，使用域名
+        except socket.gaierror:
+            logger.warning(f"DNS 解析失败，尝试 IP 直连 {host}")
+            return EmailService.SMTP_IPS[host][0]
+
+    @staticmethod
+    def _create_connection(host: str, timeout: int):
+        """创建带超时的 SMTP/SSL 连接"""
+        if settings.MAIL_TLS:
+            server = smtplib.SMTP(host, settings.MAIL_PORT, timeout=timeout)
+            server.starttls()
+        elif settings.MAIL_SSL:
+            server = smtplib.SMTP_SSL(host, settings.MAIL_PORT, timeout=timeout)
+        else:
+            server = smtplib.SMTP(host, settings.MAIL_PORT, timeout=timeout)
+        return server
+
     @staticmethod
     def create_smtp_connection():
-        """创建SMTP连接"""
-        try:
-            if settings.MAIL_TLS:
-                server = smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT)
-                server.starttls()
-            elif settings.MAIL_SSL:
-                server = smtplib.SMTP_SSL(settings.MAIL_SERVER, settings.MAIL_PORT)
-            else:
-                server = smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT)
+        """创建SMTP连接（带超时 + IP直连回退）"""
+        host = EmailService._resolve_smtp_host()
+        last_error = None
 
-            server.login(settings.MAIL_USERNAME, settings.MAIL_PASSWORD)
-            return server
-        except Exception as e:
-            logger.error(f"创建SMTP连接失败: {e}")
-            raise
+        for attempt in range(1, EmailService.MAX_RETRIES + 2):  # 最多 3 次
+            try:
+                logger.info(f"SMTP 连接尝试 {attempt}: {host}:{settings.MAIL_PORT}")
+                server = EmailService._create_connection(host, EmailService.SMTP_TIMEOUT)
+                server.login(settings.MAIL_USERNAME, settings.MAIL_PASSWORD)
+                logger.info(f"SMTP 登录成功 ({host})")
+                return server
+            except (socket.gaierror, socket.timeout) as e:
+                last_error = e
+                logger.warning(f"SMTP 连接失败 (尝试 {attempt}): {e}")
+                # DNS 失败时尝试 IP 直连
+                if isinstance(e, socket.gaierror) and host == settings.MAIL_SERVER:
+                    ips = EmailService.SMTP_IPS.get(host)
+                    if ips and len(ips) > 0:
+                        host = ips[min(attempt - 1, len(ips) - 1)]
+                        logger.info(f"切换到 IP 直连: {host}")
+                    else:
+                        host = settings.MAIL_SERVER
+                if attempt <= EmailService.MAX_RETRIES:
+                    time.sleep(attempt * 2)  # 指数退避
+            except smtplib.SMTPAuthenticationError:
+                logger.error("SMTP 认证失败，请检查邮箱账号和授权码")
+                raise
+            except Exception as e:
+                last_error = e
+                logger.error(f"创建SMTP连接失败 (尝试 {attempt}): {e}")
+                if attempt <= EmailService.MAX_RETRIES:
+                    time.sleep(attempt * 2)
+
+        logger.error(f"所有 SMTP 连接尝试均失败")
+        raise last_error or Exception("无法连接到SMTP服务器")
 
     @staticmethod
     def send_email(to_email: str, subject: str, html_content: str) -> bool:

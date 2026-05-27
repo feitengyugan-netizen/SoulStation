@@ -97,6 +97,7 @@
               >
                 <div class="dimension-info">
                   <span class="dimension-name">{{ dimension.name }}</span>
+                  <span v-if="dimension.level" class="dimension-level">{{ getDimLevelText(dimension.level) }}</span>
                   <span class="dimension-score">{{ dimension.score }}/{{ dimension.maxScore }}</span>
                 </div>
                 <el-progress
@@ -200,13 +201,14 @@ const loading = ref(true)
 // 结果数据
 const resultData = ref({
   testName: '',
+  testId: null,
   score: 0,
   maxScore: 0,
   level: '',
   levelClass: '',
-  levelDescription: '',  // 新增：等级描述
+  levelDescription: '',
   description: '',
-  aiSuggestion: '',  // AI建议
+  aiSuggestion: '',
   dimensions: [],
   suggestions: [],
   isFavorited: false
@@ -236,7 +238,24 @@ const getDimensionPercentage = (dimension) => {
   return Math.round((dimension.score / dimension.maxScore) * 100)
 }
 
-// 获取维度颜色
+// 维度水平文字映射
+const dimLevelMapping = {
+  'none': '无',
+  'mild': '轻度',
+  'moderate': '中度',
+  'severe': '重度',
+  'low': '偏低',
+  'medium': '中等',
+  'high': '偏高',
+  'medium_low': '偏低',
+  'medium_high': '偏高',
+  'good': '良好',
+  'fair': '一般',
+  'poor': '较差'
+}
+
+const getDimLevelText = (level) => dimLevelMapping[level] || '无'
+
 const getDimensionColor = (dimension) => {
   const percentage = getDimensionPercentage(dimension)
   if (percentage >= 75) return '#67C23A'
@@ -252,16 +271,27 @@ const loadResult = async () => {
 
     const data = res.data
 
-    // 处理等级配置 - 映射后端返回的等级到前端配置
-    const levelMapping = {
-      'none': '正常',
-      'mild': '轻度',
-      'moderate': '中度',
-      'severe': '重度'
+    // 处理等级配置 - 判断测试类型，适配临床量表和非临床量表
+    const clinicalLevels = ['none', 'mild', 'moderate', 'severe']
+    const isClinical = clinicalLevels.includes(data.result_level)
+
+    let levelText, levelClass, levelDesc
+    if (isClinical) {
+      const levelMapping = {
+        'none': '正常',
+        'mild': '轻度',
+        'moderate': '中度',
+        'severe': '重度'
+      }
+      levelText = levelMapping[data.result_level] || '正常'
+      levelDesc = levelDescriptions[levelText] || ''
+      levelClass = levelConfig[levelText]?.class || 'level-none'
+    } else {
+      // 非临床量表（大五人格、自尊、情绪稳定性、睡眠等），直接使用后端返回的标题
+      levelText = data.result_title || '分析完成'
+      levelDesc = data.result_description || ''
+      levelClass = 'level-neutral'
     }
-    const levelText = levelMapping[data.result_level] || '正常'
-    const levelData = levelConfig[levelText] || levelConfig['正常']
-    const levelDesc = levelDescriptions[levelText] || ''
 
     // 处理建议文本 - 转换为数组
     let suggestionsArray = []
@@ -279,18 +309,19 @@ const loadResult = async () => {
       dimensionsArray = data.dimension_scores.map(dim => ({
         name: dim.dimension,
         score: dim.score,
-        maxScore: 80, // 默认最大分，可以根据实际调整
+        maxScore: dim.max_score || Math.round(dim.score * 2) || 100,
         level: dim.level
       }))
     }
 
     resultData.value = {
       testName: data.test_title || '测试',
-      score: data.total_score || 0,  // 保留但不显示
-      maxScore: 100,  // 保留但不显示
+      testId: data.test_id,
+      score: data.total_score || 0,
+      maxScore: 100,
       level: levelText,
-      levelClass: levelData.class,
-      levelDescription: levelDesc,  // 新增等级描述
+      levelClass: levelClass,
+      levelDescription: levelDesc,
       description: data.result_description || '',
       aiSuggestion: data.ai_suggestion || '',
       dimensions: dimensionsArray,
@@ -489,6 +520,11 @@ onMounted(() => {
         color: white;
       }
 
+      &.level-neutral {
+        background: linear-gradient(135deg, #a0c4f0 0%, #6b8fc4 100%);
+        color: white;
+      }
+
       .level-content {
         display: flex;
         flex-direction: column;
@@ -564,7 +600,8 @@ onMounted(() => {
 
       .dimension-info {
         display: flex;
-        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
         margin-bottom: 6px;
 
         .dimension-name {
@@ -572,9 +609,19 @@ onMounted(() => {
           color: $text-primary;
         }
 
+        .dimension-level {
+          font-size: 11px;
+          color: #909399;
+          background: #f0f2f5;
+          padding: 1px 8px;
+          border-radius: 10px;
+        }
+
         .dimension-score {
+          margin-left: auto;
           color: $text-secondary;
           font-size: 13px;
+          font-weight: 600;
         }
       }
     }

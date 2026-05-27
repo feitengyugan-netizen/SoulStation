@@ -415,9 +415,17 @@ const getLevelText = (level) => {
     'none': '无',
     'mild': '轻度',
     'moderate': '中度',
-    'severe': '重度'
+    'severe': '重度',
+    'high': '高',
+    'medium': '中等',
+    'low': '低',
+    'medium_low': '偏低',
+    'medium_high': '偏高',
+    'good': '良好',
+    'fair': '一般',
+    'poor': '较差'
   }
-  return levelMap[level] || level
+  return levelMap[level] || '无'
 }
 
 // 获取等级标签类型
@@ -426,7 +434,15 @@ const getLevelType = (level) => {
     'none': 'success',
     'mild': 'warning',
     'moderate': 'warning',
-    'severe': 'danger'
+    'severe': 'danger',
+    'high': 'success',
+    'medium': 'info',
+    'low': 'warning',
+    'medium_low': 'warning',
+    'medium_high': 'info',
+    'good': 'success',
+    'fair': 'warning',
+    'poor': 'danger'
   }
   return typeMap[level] || 'info'
 }

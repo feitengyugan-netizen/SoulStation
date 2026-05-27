@@ -18,7 +18,7 @@ engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=3600,
-    echo=settings.DEBUG,
+    echo=settings.APP_DEBUG,
     # 隐式开启只读模式的事务（可以避免不必要的 ROLLBACK 日志）
     connect_args={
         "charset": "utf8mb4",

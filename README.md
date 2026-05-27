@@ -18,42 +18,33 @@
 ## 技术栈
 
 ### 前端
-- **框架**: Vue 3.4.15 + Vite 5.0.11
-- **UI库**: Element Plus 2.4.4 + @element-plus/icons-vue 2.3.1
-- **状态管理**: Pinia 2.1.7
-- **路由**: Vue Router 4.2.5
-- **HTTP**: Axios 1.6.5
-- **图表**: ECharts 5.4.3 + vue-echarts 6.6.4
-- **工具**: Day.js 1.11.10
-- **样式**: Sass 1.70.0
+- **框架**: Vue 3.4+ + Vite 5.0+
+- **UI库**: Element Plus 2.4+ + @element-plus/icons-vue
+- **状态管理**: Pinia 2.1+
+- **路由**: Vue Router 4.2+
+- **HTTP**: Axios 1.6+
+- **图表**: ECharts 5.4+ + vue-echarts 6.6+
+- **工具**: Day.js 1.11+
+- **样式**: Sass 1.70+
+- **代码检查**: ESLint 8.56+
 
 ### 后端
-- **框架**: FastAPI 0.109.0 + Uvicorn 0.27.0
-- **数据库**: MySQL + SQLAlchemy 2.0.25 + PyMySQL 1.1.0
-- **缓存**: Redis 5.0.1
-- **认证**: JWT (python-jose) + Passlib + Bcrypt
-- **邮件**: FastAPI Mail 1.4.1
+- **框架**: FastAPI 0.109 + Uvicorn 0.27
+- **数据库**: MySQL 8.0 + SQLAlchemy 2.0 + PyMySQL 1.1 + Alembic 1.13
+- **缓存**: Redis 5.0（可选，支持降级到内存存储）
+- **认证**: JWT (python-jose[cryptography]) + Passlib + Bcrypt
+- **邮件**: FastAPI Mail 1.4
 - **AI服务**:
-  - 豆包录音文件识别模型2.0 (volc.seedasr.auc)
-  - OpenAI API (用于RAG)
-  - LangChain + ChromaDB
-- **工具**: httpx, aiofiles, python-docx
+  - 豆包录音文件识别模型 (volc.seedasr.auc)
+  - OpenAI API (用于 RAG 问答)
+  - LangChain 0.1 + ChromaDB 0.4 + sentence-transformers
+- **工具**: httpx, aiofiles, python-docx, python-dotenv, pydantic-settings
+- **部署**: Docker Compose (MySQL + 后端)
 
-## 团队分工
-
-### 开发人员 A - 前端 + 后端
-**核心模块**: 基础层 + 用户核心服务
-1. 登录注册模块 (`auth`)
-2. 智能心理问答模块 (`chat`) - RAG
-3. 心理测试模块 (`test`)
-4. 个人中心模块 (`profile`)
-
-### 开发人员 B - 前端 + 后端
-**核心模块**: 服务对接 + 平台管理
-1. 咨询师对接与预约模块 (`consultation`)
-2. 咨询对话模块 (`dialogue`)
-3. 后台管理模块 (`admin`)
-4. 公共信息模块 (`public`)
+### 基础设施
+- **容器化**: Docker Compose（MySQL 8.0 容器）
+- **数据库迁移**: Alembic 1.13
+- **向量数据库**: ChromaDB（用于 RAG 知识检索）
 
 ## 项目结构
 
@@ -82,7 +73,6 @@ SoulStation/
 │   │   ├── stores/            # Pinia 状态管理
 │   │   ├── utils/             # 工具函数
 │   │   └── views/             # 页面视图
-│   │       ├── home/          # 首页
 │   │       ├── auth/          # 登录注册页
 │   │       ├── chat/          # 智能问答页
 │   │       ├── test/          # 心理测试页
@@ -91,6 +81,7 @@ SoulStation/
 │   │       ├── dialogue/      # 咨询对话页
 │   │       ├── counselor/     # 咨询师相关页
 │   │       ├── knowledge/     # 知识库页
+│   │       ├── notification/  # 通知页
 │   │       ├── admin/         # 后台管理页
 │   │       └── public/        # 公共信息页
 │   ├── public/
@@ -101,69 +92,89 @@ SoulStation/
 ├── backend/                    # 后端 FastAPI 项目
 │   ├── app/
 │   │   ├── api/               # API 路由
-│   │   │   ├── auth/          # 登录注册接口
-│   │   │   ├── chat/          # 智能问答接口 (RAG)
-│   │   │   ├── test/          # 心理测试接口
-│   │   │   ├── consultation/  # 咨询预约接口
-│   │   │   ├── counselor/     # 咨询师接口
-│   │   │   ├── knowledge/     # 知识库接口
-│   │   │   ├── user/          # 用户接口
-│   │   │   └── admin/         # 后台管理接口
+│   │   │   ├── auth/          # 登录注册
+│   │   │   ├── chat/          # 智能问答 (RAG)
+│   │   │   ├── test/          # 心理测试
+│   │   │   ├── consultation/  # 咨询预约
+│   │   │   ├── counselor/     # 咨询师
+│   │   │   ├── knowledge/     # 知识库
+│   │   │   ├── user/          # 用户
+│   │   │   ├── notification/  # 通知
+│   │   │   ├── admin/         # 后台管理
+│   │   │   ├── dialogue/      # 咨询对话
+│   │   │   ├── profile/       # 个人中心
+│   │   │   └── public/        # 公共信息
 │   │   ├── core/              # 核心配置
-│   │   │   ├── config.py      # 配置文件
-│   │   │   ├── security.py    # 安全相关
-│   │   │   ├── deps.py        # 依赖注入
-│   │   │   └── database.py    # 数据库连接
-│   │   ├── models/            # 数据库模型
-│   │   ├── schemas/           # Pydantic 模型
-│   │   ├── services/          # 业务逻辑
-│   │   │   ├── auth_service.py        # 认证服务
-│   │   │   ├── email_service.py       # 邮件服务
-│   │   │   ├── speech_service.py      # 语音识别服务
-│   │   │   ├── ai_service.py          # AI 服务
-│   │   │   ├── chat_service.py        # 聊天服务
-│   │   │   ├── test_service.py        # 测试服务
-│   │   │   ├── counselor_service.py   # 咨询师服务
-│   │   │   ├── knowledge_service.py   # 知识库服务
-│   │   │   ├── user_service.py        # 用户服务
-│   │   │   ├── admin_service.py       # 管理服务
-│   │   │   ├── rag/                   # RAG 服务
-│   │   │   ├── email/                 # 邮件相关
-│   │   │   └── storage/               # 存储服务
-│   │   ├── utils/             # 工具函数
-│   │   ├── middleware/        # 中间件
-│   │   ├── static/            # 静态文件
-│   │   └── main.py            # 应用入口
+│   │   │   ├── config.py      # 应用配置
+│   │   │   ├── security.py    # JWT 安全
+│   │   │   ├── database.py    # 数据库连接
+│   │   │   └── init_db.py     # 数据库初始化脚本
+│   │   ├── models/            # SQLAlchemy 模型
+│   │   │   ├── admin.py
+│   │   │   ├── chat.py
+│   │   │   ├── counselor.py
+│   │   │   ├── knowledge.py
+│   │   │   ├── notification.py
+│   │   │   ├── test.py
+│   │   │   └── user.py
+│   │   ├── schemas/           # Pydantic 请求/响应模型
+│   │   │   ├── admin.py
+│   │   │   ├── auth.py
+│   │   │   ├── chat.py
+│   │   │   ├── consultation.py
+│   │   │   ├── counselor.py
+│   │   │   ├── knowledge.py
+│   │   │   ├── notification.py
+│   │   │   ├── test.py
+│   │   │   └── user.py
+│   │   ├── services/          # 业务逻辑层
+│   │   │   ├── auth/          # 认证子模块
+│   │   │   ├── email/         # 邮件子模块
+│   │   │   ├── rag/           # RAG 知识检索子模块
+│   │   │   ├── storage/       # 文件存储子模块
+│   │   │   ├── admin_service.py
+│   │   │   ├── ai_service.py
+│   │   │   ├── chat_service.py
+│   │   │   ├── counselor_service.py
+│   │   │   ├── crisis_service.py
+│   │   │   ├── knowledge_service.py
+│   │   │   ├── notification_service.py
+│   │   │   ├── speech_service.py
+│   │   │   ├── test_service.py
+│   │   │   ├── user_service.py
+│   │   │   ├── verification_service.py
+│   │   │   └── verification_redis_service.py
+│   │   └── main.py            # FastAPI 应用入口
 │   ├── seeds/                 # 测试数据种子
+│   ├── sql/                   # SQL 脚本
+│   │   ├── init.sql
+│   │   ├── seed_data.sql
+│   │   ├── migrate.sql
+│   │   └── insert_data.sql
 │   ├── uploads/               # 上传文件目录
-│   ├── init_database.py       # 数据库初始化脚本
 │   ├── send_appointment_reminders.py  # 预约提醒定时任务
-│   ├── requirements.txt       # 依赖
-│   └── .env.example           # 环境变量示例
+│   ├── reset_user_password.py
+│   ├── start.sh
+│   ├── requirements.txt       # Python 依赖
+│   ├── docker-compose.yml     # Docker Compose (MySQL + Redis)
+│   ├── .env                   # 环境变量
+│   └── README.md
 │
 ├── database/                   # 数据库相关
+│   ├── Psychology-10K-ZH.json # 心理学知识库 (10K+ 条)
 │   ├── docs/                  # 数据库文档
 │   │   ├── ER图.md
 │   │   └── 表结构.md
-│   ├── migrations/            # 迁移脚本
+│   ├── migrations/            # Alembic 迁移脚本
 │   ├── seeds/                 # 种子数据
 │   └── backups/               # 备份文件
 │
-├── docs/                       # 项目文档
-│   ├── design/                # 设计文档
-│   ├── member-a/              # 开发人员 A 的文档
-│   ├── member-b/              # 开发人员 B 的文档
-│   └── meeting/               # 会议记录
+├── docs/                       # 项目文档（平铺文件，无子目录）
+│   ├── ...（设计文档、API 说明等）
+│   ├── 项目结构分析报告.md
+│   └── 项目周报.md
 │
-├── shared/                     # 共享资源
-│   └── assets/                # 共享素材
-│
-├── DATABASE_SETUP.md           # 数据库初始化指南
-├── SPEECH_README.md            # 语音识别集成指南
-├── SETUP_PUBLIC_URL.md         # 公网URL配置指南
-├── PROJECT_CLEANUP_SUMMARY.md  # 项目整理总结
-├── TROUBLESHOOTING.md          # 故障排查指南
-└── README.md                   # 项目说明
+└── README.md                   # 项目说明（本文件）
 ```
 
 ## 数据库表
@@ -196,6 +207,9 @@ SoulStation/
 - `knowledge_favorites` - 知识收藏表
 - `knowledge_likes` - 知识点赞表
 
+### 通知相关
+- `notifications` - 用户通知表
+
 ## 开发规范
 
 ### 接口命名规范
@@ -205,9 +219,10 @@ SoulStation/
   - `/api/chat` - 智能问答 (RAG + 语音识别)
   - `/api/test` - 心理测试
   - `/api/consultation` - 咨询预约
-  - `/api/counselor` - 咨询师管理
+  - `/api/counselor` - 咨询师管理（含入驻、资质审核、预约管理）
   - `/api/knowledge` - 知识库
   - `/api/user` - 用户管理
+  - `/api/notification` - 消息通知
   - `/api/admin` - 后台管理
 
 ### 代码规范
@@ -270,6 +285,16 @@ SoulStation/
 - 对话历史记录
 - 咨询结束处理
 
+### 公共信息模块 (public)
+- 公开信息展示接口
+- 公共页面数据
+
+### 消息通知模块 (notification)
+- 站内消息推送
+- 通知列表与已读管理
+- 预约提醒通知
+- 系统公告
+
 ### 后台管理模块 (admin)
 - 咨询师资质审核
 - 心理知识管理
@@ -305,32 +330,19 @@ mysql -u root -p -e "CREATE DATABASE soulstation CHARACTER SET utf8mb4 COLLATE u
 ```
 
 #### 配置环境变量
-```bash
-cd backend
-cp .env.example .env
-```
 
-编辑 `.env` 文件，配置数据库连接：
+项目根目录 `backend/.env` 已预置默认配置，根据需要修改：
 ```env
 DATABASE_URL=mysql+pymysql://root:password@localhost:3306/soulstation
 SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# 邮件配置
-MAIL_USERNAME=your-email@example.com
-MAIL_PASSWORD=your-email-password
-MAIL_FROM=your-email@example.com
-
-# 豆包语音识别（可选）
-DOUBAO_API_KEY=your-doubao-api-key-here
-PUBLIC_URL=http://localhost:8000  # 生产环境使用公网URL
+# ... 其他配置
 ```
 
 #### 初始化数据库
 ```bash
-# 在项目根目录执行
-python backend/init_database.py
+# 进入 backend 目录执行
+cd backend
+python -m app.core.init_db
 ```
 
 这将自动创建所有表并初始化测试数据（9套心理测试，159道题目）。
@@ -492,8 +504,7 @@ npm run dev
 
 3. 配置公网URL（开发环境）
    - 语音识别需要公网可访问的音频URL
-   - 开发环境使用内网穿透工具（ngrok、CloudFlare Tunnel等）
-   - 详细配置见 [SETUP_PUBLIC_URL.md](SETUP_PUBLIC_URL.md)
+   - 开发环境使用内网穿透工具（ngrok、CloudFlare Tunnel等）配置公网URL
 
 **使用说明**：
 - 进入聊天页面点击麦克风按钮
@@ -501,7 +512,7 @@ npm run dev
 - 开始录音（最长60秒）
 - 自动识别并填充到输入框
 
-详细文档：[SPEECH_README.md](SPEECH_README.md)
+本模块的完整实现细节请参考后端 `app/services/speech_service.py`。
 
 ### 定时任务
 
@@ -526,7 +537,7 @@ python C:\path\to\SoulStation\backend\send_appointment_reminders.py
 ### 2. 语音识别不工作？
 - 确保配置了 `DOUBAO_API_KEY`
 - 开发环境需要配置 `PUBLIC_URL`（使用内网穿透）
-- 详见 [SPEECH_README.md](SPEECH_README.md)
+- 参考后端 `app/services/speech_service.py` 中的实现
 
 ### 3. 邮件发送失败？
 - 检查 `.env` 中的邮件配置
@@ -538,7 +549,6 @@ python C:\path\to\SoulStation\backend\send_appointment_reminders.py
 - 检查 `frontend/.env` 中的 `VITE_API_BASE_URL` 配置
 - 查看浏览器控制台错误信息
 
-更多问题请查看 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 技术支持
 

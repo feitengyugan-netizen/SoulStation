@@ -31,7 +31,7 @@ DEALLOCATE PREPARE stmt;
 
 -- 如果旧表和新表同时存在，将旧表数据插入新表 (忽略重复)
 SELECT IF(@old_exists > 0 AND @new_exists > 0,
-    'INSERT IGNORE INTO psychological_tests SELECT * FROM questionnaires',
+    'SELECT 1',
     'SELECT 1')
 INTO @stmt2;
 PREPARE stmt2 FROM @stmt2;
@@ -40,7 +40,7 @@ DEALLOCATE PREPARE stmt2;
 
 -- 如果旧表和新表都存在，且数据已迁移，删除旧表
 SELECT IF(@old_exists > 0 AND @new_exists > 0,
-    'DROP TABLE IF EXISTS questionnaires',
+    'SELECT 1',
     'SELECT 1')
 INTO @stmt3;
 PREPARE stmt3 FROM @stmt3;
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS test_results (
     questionnaire_id BIGINT UNSIGNED COMMENT '问卷ID（旧字段）',
     test_id BIGINT UNSIGNED COMMENT '测试ID',
     answers JSON NOT NULL COMMENT '答题记录',
-    total_score INT COMMENT '总得分',
+    total_score INT DEFAULT NULL COMMENT '总得分',
     dimension_scores JSON COMMENT '各维度得分',
     result_level VARCHAR(50) COMMENT '结果等级',
     result_title VARCHAR(100) COMMENT '结果标题',

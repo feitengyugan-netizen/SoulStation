@@ -155,7 +155,13 @@ const getLevelType = (level) => {
     'none': 'info',
     'mild': 'warning',
     'moderate': 'warning',
-    'severe': 'danger'
+    'severe': 'danger',
+    'high': 'success',
+    'medium': 'info',
+    'low': 'warning',
+    'good': 'success',
+    'fair': 'warning',
+    'poor': 'danger'
   }
   return typeMap[level] || 'info'
 }
@@ -168,7 +174,13 @@ const levelLabel = (level) => {
     'mild': '轻度',
     'moderate': '中度',
     'severe': '重度',
-    'unknown': '正常'
+    'high': '高',
+    'medium': '中等',
+    'low': '低',
+    'good': '良好',
+    'fair': '一般',
+    'poor': '较差',
+    'unknown': '无'
   }
   return map[level] || '正常'
 }

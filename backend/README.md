@@ -24,11 +24,7 @@ mysql -u root -p soulstation < sql/init.sql
 
 ### 2. 配置环境变量
 
-复制 `.env.example` 为 `.env` 并修改配置：
-
-```bash
-cp .env.example .env
-```
+项目根目录已包含 `.env` 环境变量文件，直接修改其中的配置：
 
 主要配置项：
 
@@ -56,7 +52,7 @@ FRONTEND_URL=http://localhost:5173
 **邮件配置说明**：
 - QQ邮箱需要使用"授权码"而不是QQ密码
 - 获取授权码：QQ邮箱 → 设置 → 账户 → SMTP服务
-- 其他邮箱配置请参考 `.env.example` 文件
+- 其他邮箱配置请参考 `.env` 文件中的注释
 
 ### 3. 安装依赖
 
@@ -207,7 +203,6 @@ python test_email.py
 - ✅ 注册成功后自动发送欢迎邮件
 - ✅ 开发环境在控制台打印验证码
 
-**详细说明**：查看 [EMAIL_README.md](EMAIL_README.md)
 
 ## 项目结构
 
@@ -239,13 +234,11 @@ backend/
 │   └── insert_data.sql   # 测试数据
 ├── requirements.txt      # Python 依赖
 ├── .env                  # 环境变量
-├── .env.example          # 环境变量示例
 ├── start.bat             # 启动脚本（Windows）
 ├── start.sh              # 启动脚本（Linux/Mac）
 ├── test_login.py         # 登录功能测试
 ├── test_email.py         # 邮件功能测试
 ├── README.md             # 项目说明
-└── EMAIL_README.md       # 邮件功能说明
 ```
 
 ## 开发说明
