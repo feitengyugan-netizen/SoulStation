@@ -67,6 +67,7 @@ backend/models/
 *.sqlite
 *.db
 database/backups/*
+!backend/sql/*.sql
 
 # Logs
 logs/
