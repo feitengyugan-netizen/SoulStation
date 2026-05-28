@@ -1,7 +1,7 @@
 """
 心理知识相关数据库模型
 """
-from sqlalchemy import Column, BigInteger, String, DateTime, Text, Integer, Boolean, Enum, ForeignKey, func
+from sqlalchemy import Column, BigInteger, String, DateTime, Text, Integer, Boolean, Enum, ForeignKey, func, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -90,6 +90,9 @@ class KnowledgeComment(Base):
 class KnowledgeFavorite(Base):
     """知识收藏表"""
     __tablename__ = "knowledge_favorites"
+    __table_args__ = (
+        UniqueConstraint('article_id', 'user_id', name='uq_knowledge_favorites_article_user'),
+    )
 
     id = Column(BigInteger, primary_key=True, index=True, comment="收藏ID")
     article_id = Column(BigInteger, ForeignKey("knowledge_articles.id"), nullable=False, comment="文章ID")
@@ -105,6 +108,9 @@ class KnowledgeFavorite(Base):
 class KnowledgeLike(Base):
     """知识点赞表"""
     __tablename__ = "knowledge_likes"
+    __table_args__ = (
+        UniqueConstraint('article_id', 'user_id', name='uq_knowledge_likes_article_user'),
+    )
 
     id = Column(BigInteger, primary_key=True, index=True, comment="点赞ID")
     article_id = Column(BigInteger, ForeignKey("knowledge_articles.id"), nullable=False, comment="文章ID")
@@ -115,3 +121,21 @@ class KnowledgeLike(Base):
 
     def __repr__(self):
         return f"<KnowledgeLike(article_id={self.article_id}, user_id={self.user_id})>"
+
+
+class KnowledgeCommentLike(Base):
+    """评论点赞表"""
+    __tablename__ = "knowledge_comment_likes"
+    __table_args__ = (
+        UniqueConstraint('comment_id', 'user_id', name='uq_comment_likes_comment_user'),
+    )
+
+    id = Column(BigInteger, primary_key=True, index=True, comment="点赞ID")
+    comment_id = Column(BigInteger, ForeignKey("knowledge_comments.id"), nullable=False, comment="评论ID")
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False, comment="用户ID")
+
+    # 时间字段
+    created_at = Column(DateTime, server_default=func.now(), comment="点赞时间")
+
+    def __repr__(self):
+        return f"<KnowledgeCommentLike(comment_id={self.comment_id}, user_id={self.user_id})>"

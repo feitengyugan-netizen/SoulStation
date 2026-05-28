@@ -1,6 +1,7 @@
 """
 心理知识相关的 Pydantic Schemas
 """
+from __future__ import annotations
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
@@ -70,6 +71,13 @@ class CommentResponse(BaseModel):
     user_name: Optional[str] = None
     user_avatar: Optional[str] = None
 
+    # 交互状态
+    is_liked: Optional[bool] = False
+
+    # 子回复
+    reply_count: int = 0
+    children: Optional[List['CommentResponse']] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -85,13 +93,4 @@ class CommentListResponse(BaseModel):
     items: List[CommentResponse]
 
 
-# ==================== 交互相关 ====================
-
-class KnowledgeStatsResponse(BaseModel):
-    """知识统计响应"""
-    is_liked: bool
-    is_favorited: bool
-    like_count: int
-    favorite_count: int
-    view_count: int
-    comment_count: int
+CommentResponse.model_rebuild()

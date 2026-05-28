@@ -319,16 +319,18 @@ async def get_comments(
     article_id: int,
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(10, ge=1, le=50, description="每页数量"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
     获取文章评论列表
 
-    返回顶级评论（不包含回复）
+    返回顶级评论及一级子回复（最多2层嵌套）
     按创建时间倒序排列
+    未登录用户亦可查看，但不含点赞状态
     """
     try:
-        result = KnowledgeService.get_comments(db, article_id, page, page_size)
+        result = KnowledgeService.get_comments(db, article_id, page, page_size, user_id)
         return {
             "code": 200,
             "message": "获取成功",
@@ -387,6 +389,107 @@ async def create_comment(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"提交评论失败: {str(e)}"
+        )
+
+
+# ==================== 评论互动接口 ====================
+
+@router.post("/comments/{comment_id}/like", summary="点赞评论")
+async def like_comment(
+    comment_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """点赞评论"""
+    try:
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="请先登录"
+            )
+        result = KnowledgeService.toggle_comment_like(db, comment_id, user_id, "add")
+        return {
+            "code": 200,
+            "message": "点赞成功",
+            "data": result
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"评论点赞失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"评论点赞失败: {str(e)}"
+        )
+
+
+@router.delete("/comments/{comment_id}/like", summary="取消点赞评论")
+async def unlike_comment(
+    comment_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """取消点赞评论"""
+    try:
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="请先登录"
+            )
+        result = KnowledgeService.toggle_comment_like(db, comment_id, user_id, "remove")
+        return {
+            "code": 200,
+            "message": "已取消点赞",
+            "data": result
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"取消评论点赞失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"取消评论点赞失败: {str(e)}"
+        )
+
+
+@router.delete("/comments/{comment_id}", summary="删除评论")
+async def delete_comment(
+    comment_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """删除评论（仅评论作者可删除，会级联删除所有子回复）"""
+    try:
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="请先登录"
+            )
+        deleted_count = KnowledgeService.delete_comment(db, comment_id, user_id)
+        return {
+            "code": 200,
+            "message": f"已删除 {deleted_count} 条评论",
+            "data": {"deleted_count": deleted_count}
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"删除评论失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除评论失败: {str(e)}"
         )
 
 
